@@ -1,3 +1,8 @@
+(****************************************************************************
+
+Queue representation type (REP) from Herlihy & Wing 1990
+
+****************************************************************************)
 ------------------------------ MODULE QueueRep ------------------------------
 EXTENDS Naturals, Sequences
 
@@ -11,7 +16,7 @@ TypeOk(r) == r \in [back:Nat, items:Seq(items \union null)]
 --algorithm Rep
 
 variables rep = [back|->1, items|->[n \in Nat|->null]],
-          rVal = [processes|->null];
+          rVal = [p \in processes|->null];
 
 macro INC(x)
 begin
@@ -35,11 +40,12 @@ begin
 end macro
 
 procedure Enq(q, x)
-variable i;
+variable j;
 begin
 E1:    INC(q.back);
-E2:    i := rVal[self];
-E3:    STORE(q.items[i], x);
+E2:    j := rVal[self];
+E3:    STORE(q.items[j], x);
+E4:    return;
 end procedure
 
 procedure Deq(q)
@@ -77,22 +83,21 @@ end process
 end algorithm
 *)
 \* BEGIN TRANSLATION
-\* Procedure variable i of procedure Enq at line 39 col 10 changed to i_
-\* Parameter q of procedure Enq at line 38 col 15 changed to q_
+\* Parameter q of procedure Enq at line 42 col 15 changed to q_
 CONSTANT defaultInitValue
-VARIABLES rep, rVal, pc, stack, q_, x, i_, q, i, range
+VARIABLES rep, rVal, pc, stack, q_, x, j, q, i, range
 
-vars == << rep, rVal, pc, stack, q_, x, i_, q, i, range >>
+vars == << rep, rVal, pc, stack, q_, x, j, q, i, range >>
 
 ProcSet == (processes)
 
 Init == (* Global variables *)
         /\ rep = [back|->1, items|->[n \in Nat|->null]]
-        /\ rVal = [processes|->null]
+        /\ rVal = [p \in processes|->null]
         (* Procedure Enq *)
         /\ q_ = [ self \in ProcSet |-> defaultInitValue]
         /\ x = [ self \in ProcSet |-> defaultInitValue]
-        /\ i_ = [ self \in ProcSet |-> defaultInitValue]
+        /\ j = [ self \in ProcSet |-> defaultInitValue]
         (* Procedure Deq *)
         /\ q = [ self \in ProcSet |-> defaultInitValue]
         /\ i = [ self \in ProcSet |-> defaultInitValue]
@@ -101,60 +106,68 @@ Init == (* Global variables *)
         /\ pc = [self \in ProcSet |-> "P1"]
 
 E1(self) == /\ pc[self] = "E1"
-            /\ q_' = [q_ EXCEPT ![self].back = (q_[self].back)+1]
-            /\ rVal' = [rVal EXCEPT ![self] = q_'[self].back]
+            /\ /\ q_' = [q_ EXCEPT ![self].back = (q_[self].back)+1]
+               /\ rVal' = [rVal EXCEPT ![self] = q_[self].back]
             /\ pc' = [pc EXCEPT ![self] = "E2"]
-            /\ UNCHANGED << rep, stack, x, i_, q, i, range >>
+            /\ UNCHANGED << rep, stack, x, j, q, i, range >>
 
 E2(self) == /\ pc[self] = "E2"
-            /\ i_' = [i_ EXCEPT ![self] = rVal[self]]
+            /\ j' = [j EXCEPT ![self] = rVal[self]]
             /\ pc' = [pc EXCEPT ![self] = "E3"]
             /\ UNCHANGED << rep, rVal, stack, q_, x, q, i, range >>
 
 E3(self) == /\ pc[self] = "E3"
-            /\ q_' = [q_ EXCEPT ![self].items[i_[self]] = x[self]]
-            /\ pc' = [pc EXCEPT ![self] = "Error"]
-            /\ UNCHANGED << rep, rVal, stack, x, i_, q, i, range >>
+            /\ q_' = [q_ EXCEPT ![self].items[j[self]] = x[self]]
+            /\ pc' = [pc EXCEPT ![self] = "E4"]
+            /\ UNCHANGED << rep, rVal, stack, x, j, q, i, range >>
 
-Enq(self) == E1(self) \/ E2(self) \/ E3(self)
+E4(self) == /\ pc[self] = "E4"
+            /\ pc' = [pc EXCEPT ![self] = Head(stack[self]).pc]
+            /\ j' = [j EXCEPT ![self] = Head(stack[self]).j]
+            /\ q_' = [q_ EXCEPT ![self] = Head(stack[self]).q_]
+            /\ x' = [x EXCEPT ![self] = Head(stack[self]).x]
+            /\ stack' = [stack EXCEPT ![self] = Tail(stack[self])]
+            /\ UNCHANGED << rep, rVal, q, i, range >>
+
+Enq(self) == E1(self) \/ E2(self) \/ E3(self) \/ E4(self)
 
 D1(self) == /\ pc[self] = "D1"
             /\ pc' = [pc EXCEPT ![self] = "D2"]
-            /\ UNCHANGED << rep, rVal, stack, q_, x, i_, q, i, range >>
+            /\ UNCHANGED << rep, rVal, stack, q_, x, j, q, i, range >>
 
 D2(self) == /\ pc[self] = "D2"
             /\ rVal' = [rVal EXCEPT ![self] = q[self].back]
             /\ pc' = [pc EXCEPT ![self] = "D3"]
-            /\ UNCHANGED << rep, stack, q_, x, i_, q, i, range >>
+            /\ UNCHANGED << rep, stack, q_, x, j, q, i, range >>
 
 D3(self) == /\ pc[self] = "D3"
             /\ range' = [range EXCEPT ![self] = rVal[self]-1]
             /\ pc' = [pc EXCEPT ![self] = "D4"]
-            /\ UNCHANGED << rep, rVal, stack, q_, x, i_, q, i >>
+            /\ UNCHANGED << rep, rVal, stack, q_, x, j, q, i >>
 
 D4(self) == /\ pc[self] = "D4"
             /\ i' = [i EXCEPT ![self] = 1]
             /\ pc' = [pc EXCEPT ![self] = "D5"]
-            /\ UNCHANGED << rep, rVal, stack, q_, x, i_, q, range >>
+            /\ UNCHANGED << rep, rVal, stack, q_, x, j, q, range >>
 
 D5(self) == /\ pc[self] = "D5"
             /\ IF (i[self]<=range[self])
                   THEN /\ pc' = [pc EXCEPT ![self] = "D6"]
                   ELSE /\ pc' = [pc EXCEPT ![self] = "D1"]
-            /\ UNCHANGED << rep, rVal, stack, q_, x, i_, q, i, range >>
+            /\ UNCHANGED << rep, rVal, stack, q_, x, j, q, i, range >>
 
 D6(self) == /\ pc[self] = "D6"
             /\ /\ q' = [q EXCEPT ![self].items[i[self]] = null]
                /\ rVal' = [rVal EXCEPT ![self] = q[self].items[i[self]]]
             /\ pc' = [pc EXCEPT ![self] = "D7"]
-            /\ UNCHANGED << rep, stack, q_, x, i_, i, range >>
+            /\ UNCHANGED << rep, stack, q_, x, j, i, range >>
 
 D7(self) == /\ pc[self] = "D7"
             /\ x' = [x EXCEPT ![self] = rVal[self]]
             /\ IF x'[self] = null
                   THEN /\ pc' = [pc EXCEPT ![self] = "D8"]
                   ELSE /\ pc' = [pc EXCEPT ![self] = "D9"]
-            /\ UNCHANGED << rep, rVal, stack, q_, i_, q, i, range >>
+            /\ UNCHANGED << rep, rVal, stack, q_, j, q, i, range >>
 
 D8(self) == /\ pc[self] = "D8"
             /\ rVal' = [rVal EXCEPT ![self] = x[self]]
@@ -163,12 +176,12 @@ D8(self) == /\ pc[self] = "D8"
             /\ range' = [range EXCEPT ![self] = Head(stack[self]).range]
             /\ q' = [q EXCEPT ![self] = Head(stack[self]).q]
             /\ stack' = [stack EXCEPT ![self] = Tail(stack[self])]
-            /\ UNCHANGED << rep, q_, x, i_ >>
+            /\ UNCHANGED << rep, q_, x, j >>
 
 D9(self) == /\ pc[self] = "D9"
             /\ i' = [i EXCEPT ![self] = i[self]+1]
             /\ pc' = [pc EXCEPT ![self] = "D5"]
-            /\ UNCHANGED << rep, rVal, stack, q_, x, i_, q, range >>
+            /\ UNCHANGED << rep, rVal, stack, q_, x, j, q, range >>
 
 Deq(self) == D1(self) \/ D2(self) \/ D3(self) \/ D4(self) \/ D5(self)
                 \/ D6(self) \/ D7(self) \/ D8(self) \/ D9(self)
@@ -176,19 +189,19 @@ Deq(self) == D1(self) \/ D2(self) \/ D3(self) \/ D4(self) \/ D5(self)
 P1(self) == /\ pc[self] = "P1"
             /\ \/ /\ pc' = [pc EXCEPT ![self] = "P2"]
                \/ /\ pc' = [pc EXCEPT ![self] = "P3"]
-            /\ UNCHANGED << rep, rVal, stack, q_, x, i_, q, i, range >>
+            /\ UNCHANGED << rep, rVal, stack, q_, x, j, q, i, range >>
 
 P2(self) == /\ pc[self] = "P2"
             /\ \E item \in items:
                  /\ /\ q_' = [q_ EXCEPT ![self] = rep]
                     /\ stack' = [stack EXCEPT ![self] = << [ procedure |->  "Enq",
                                                              pc        |->  "Done",
-                                                             i_        |->  i_[self],
+                                                             j         |->  j[self],
                                                              q_        |->  q_[self],
                                                              x         |->  x[self] ] >>
                                                          \o stack[self]]
                     /\ x' = [x EXCEPT ![self] = item]
-                 /\ i_' = [i_ EXCEPT ![self] = defaultInitValue]
+                 /\ j' = [j EXCEPT ![self] = defaultInitValue]
                  /\ pc' = [pc EXCEPT ![self] = "E1"]
             /\ UNCHANGED << rep, rVal, q, i, range >>
 
@@ -203,7 +216,7 @@ P3(self) == /\ pc[self] = "P3"
             /\ i' = [i EXCEPT ![self] = defaultInitValue]
             /\ range' = [range EXCEPT ![self] = defaultInitValue]
             /\ pc' = [pc EXCEPT ![self] = "D1"]
-            /\ UNCHANGED << rep, rVal, q_, x, i_ >>
+            /\ UNCHANGED << rep, rVal, q_, x, j >>
 
 Proc(self) == P1(self) \/ P2(self) \/ P3(self)
 
@@ -221,5 +234,5 @@ Termination == <>(\A self \in ProcSet: pc[self] = "Done")
 
 =============================================================================
 \* Modification History
-\* Last modified Wed Oct 24 19:29:04 PDT 2018 by lhochstein
+\* Last modified Wed Oct 24 19:45:55 PDT 2018 by lhochstein
 \* Created Wed Oct 24 18:53:25 PDT 2018 by lhochstein
