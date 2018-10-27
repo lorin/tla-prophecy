@@ -16,10 +16,6 @@ Deq(val, q, qp) == /\ q /= << >>
                    /\ qp = Tail(q)
                    
                    
-LOCAL SequenceOf(S) == UNION {[1..n -> S] : n \in Nat}
-                   
-LOCAL Histories == SequenceOf([op:{"E", "D"}, val:Values])
-
 Init == /\ items = << >>
         /\ H = << >>
 
@@ -42,34 +38,6 @@ IsFIFO == LET FilterByOp(op) == SelectSeq(H, LAMBDA e: e.op = op)
 
 THEOREM Spec => IsFIFO
               
-RECURSIVE IsLegal(_, _)
-
-IsLegal(h, q) == \/ h = << >>
-                 \/ LET first == Head(h)
-                        rest == Tail(h)
-                    IN \/ /\ first.op = "E"
-                          /\ \E qp \in SequenceOf(Values) : /\ Enq(first.val, q, qp)
-                                                            /\ IsLegal(rest, qp)
-                       \/ /\ first.op = "D"
-                          /\ \E qp \in SequenceOf(Values) : /\ Deq(first.val, q, qp)
-                                                            /\ IsLegal(rest, qp)
-            
-RECURSIVE IsValidHelper(_, _)
-
-IsValidHelper(h, q) == \/ h = << >>
-                       /\ LET first == Head(h)
-                              rest == Tail(h)
-                          IN \/ /\ first.op = "E" 
-                                /\ IsValidHelper(rest, Append(q, first.val))
-                             \/ /\ first.op = "D"
-                                /\ Len(q)>0
-                                /\ first.val = Head(q)
-                                /\ IsValidHelper(rest, Tail(q))
-
-
-IsValid(h) == /\ h \in Histories
-              /\ IsValidHelper(h, << >>)
-                 
 
 =============================================================================
 \* Modification History
