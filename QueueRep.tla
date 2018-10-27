@@ -11,6 +11,7 @@ CONSTANT null
 CONSTANT producers
 CONSTANT consumers
 
+
 TypeOk(r) == r \in [back:Nat, items:Seq(items \union null)]
 
 (*
@@ -43,10 +44,10 @@ end macro
 procedure Enq(q, x)
 variable j;
 begin
-E1:    INC(q.back);
-E2:    j := rVal[self];
-E3:    STORE(q.items[j], x);
-E4:    return;
+E1: INC(q.back);
+E2: j := rVal[self];
+E3: STORE(q.items[j], x);
+E4: return;
 end procedure
 
 procedure Deq(q)
@@ -55,7 +56,7 @@ begin
 D1: while(TRUE) do
     D2: READ(q.back);
     D3: range := rVal[self]-1;
-    D4: i:=1;
+    D4: i := 1;
     D5: while(i<=range) do
         D6: SWAP(q.items[i], null);
         D7: x := rVal[self];
@@ -85,7 +86,7 @@ end process
 end algorithm
 *)
 \* BEGIN TRANSLATION
-\* Parameter q of procedure Enq at line 43 col 15 changed to q_
+\* Parameter q of procedure Enq at line 44 col 15 changed to q_
 CONSTANT defaultInitValue
 VARIABLES rep, rVal, pc, stack, q_, x, j, q, i, range
 
@@ -235,5 +236,5 @@ Termination == <>(\A self \in ProcSet: pc[self] = "Done")
 
 =============================================================================
 \* Modification History
-\* Last modified Sat Oct 27 11:56:00 PDT 2018 by lhochstein
+\* Last modified Sat Oct 27 11:58:17 PDT 2018 by lhochstein
 \* Created Wed Oct 24 18:53:25 PDT 2018 by lhochstein
