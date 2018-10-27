@@ -8,7 +8,8 @@ EXTENDS Naturals, Sequences
 
 CONSTANT items
 CONSTANT null
-CONSTANT processes
+CONSTANT producers
+CONSTANT consumers
 
 TypeOk(r) == r \in [back:Nat, items:Seq(items \union null)]
 
@@ -16,7 +17,7 @@ TypeOk(r) == r \in [back:Nat, items:Seq(items \union null)]
 --algorithm Rep
 
 variables rep = [back|->1, items|->[n \in Nat|->null]],
-          rVal = [p \in processes|->null];
+          rVal = [p \in producers \union consumers|->null];
 
 macro INC(x)
 begin
@@ -67,33 +68,34 @@ D1: while(TRUE) do
 end while
 end procedure
 
-process Proc \in processes
+
+process p \in producers
 begin
-P1: either
-    P2: with item \in items do
-            call Enq(rep, item);
-        end with;
-    or
-    P3: call Deq(rep);
-    end either;
-        
+P1: with item \in items do
+    call Enq(rep, item);
+end with;
+end process
+
+process c \in consumers
+begin
+C1: call Deq(rep);
 end process
 
 
 end algorithm
 *)
 \* BEGIN TRANSLATION
-\* Parameter q of procedure Enq at line 42 col 15 changed to q_
+\* Parameter q of procedure Enq at line 43 col 15 changed to q_
 CONSTANT defaultInitValue
 VARIABLES rep, rVal, pc, stack, q_, x, j, q, i, range
 
 vars == << rep, rVal, pc, stack, q_, x, j, q, i, range >>
 
-ProcSet == (processes)
+ProcSet == (producers) \cup (consumers)
 
 Init == (* Global variables *)
         /\ rep = [back|->1, items|->[n \in Nat|->null]]
-        /\ rVal = [p \in processes|->null]
+        /\ rVal = [p \in producers \union consumers|->null]
         (* Procedure Enq *)
         /\ q_ = [ self \in ProcSet |-> defaultInitValue]
         /\ x = [ self \in ProcSet |-> defaultInitValue]
@@ -103,7 +105,8 @@ Init == (* Global variables *)
         /\ i = [ self \in ProcSet |-> defaultInitValue]
         /\ range = [ self \in ProcSet |-> defaultInitValue]
         /\ stack = [self \in ProcSet |-> << >>]
-        /\ pc = [self \in ProcSet |-> "P1"]
+        /\ pc = [self \in ProcSet |-> CASE self \in producers -> "P1"
+                                        [] self \in consumers -> "C1"]
 
 E1(self) == /\ pc[self] = "E1"
             /\ /\ q_' = [q_ EXCEPT ![self].back = (q_[self].back)+1]
@@ -187,11 +190,6 @@ Deq(self) == D1(self) \/ D2(self) \/ D3(self) \/ D4(self) \/ D5(self)
                 \/ D6(self) \/ D7(self) \/ D8(self) \/ D9(self)
 
 P1(self) == /\ pc[self] = "P1"
-            /\ \/ /\ pc' = [pc EXCEPT ![self] = "P2"]
-               \/ /\ pc' = [pc EXCEPT ![self] = "P3"]
-            /\ UNCHANGED << rep, rVal, stack, q_, x, j, q, i, range >>
-
-P2(self) == /\ pc[self] = "P2"
             /\ \E item \in items:
                  /\ /\ q_' = [q_ EXCEPT ![self] = rep]
                     /\ stack' = [stack EXCEPT ![self] = << [ procedure |->  "Enq",
@@ -205,7 +203,9 @@ P2(self) == /\ pc[self] = "P2"
                  /\ pc' = [pc EXCEPT ![self] = "E1"]
             /\ UNCHANGED << rep, rVal, q, i, range >>
 
-P3(self) == /\ pc[self] = "P3"
+p(self) == P1(self)
+
+C1(self) == /\ pc[self] = "C1"
             /\ /\ q' = [q EXCEPT ![self] = rep]
                /\ stack' = [stack EXCEPT ![self] = << [ procedure |->  "Deq",
                                                         pc        |->  "Done",
@@ -218,10 +218,11 @@ P3(self) == /\ pc[self] = "P3"
             /\ pc' = [pc EXCEPT ![self] = "D1"]
             /\ UNCHANGED << rep, rVal, q_, x, j >>
 
-Proc(self) == P1(self) \/ P2(self) \/ P3(self)
+c(self) == C1(self)
 
 Next == (\E self \in ProcSet: Enq(self) \/ Deq(self))
-           \/ (\E self \in processes: Proc(self))
+           \/ (\E self \in producers: p(self))
+           \/ (\E self \in consumers: c(self))
            \/ (* Disjunct to prevent deadlock on termination *)
               ((\A self \in ProcSet: pc[self] = "Done") /\ UNCHANGED vars)
 
@@ -234,5 +235,5 @@ Termination == <>(\A self \in ProcSet: pc[self] = "Done")
 
 =============================================================================
 \* Modification History
-\* Last modified Wed Oct 24 19:45:55 PDT 2018 by lhochstein
+\* Last modified Sat Oct 27 11:56:00 PDT 2018 by lhochstein
 \* Created Wed Oct 24 18:53:25 PDT 2018 by lhochstein
