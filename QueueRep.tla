@@ -6,13 +6,14 @@ Queue representation type (REP) from Herlihy & Wing 1990
 ------------------------------ MODULE QueueRep ------------------------------
 EXTENDS Naturals, Sequences
 
-CONSTANT items
+CONSTANT Values
+
 CONSTANT null
 CONSTANT producers
 CONSTANT consumers
 
 
-TypeOk(r) == r \in [back:Nat, items:Seq(items \union null)]
+TypeOk(r) == r \in [back:Nat, items:Seq(Values \union null)]
 
 (*
 --algorithm Rep
@@ -72,7 +73,7 @@ end procedure
 
 process p \in producers
 begin
-P1: with item \in items do
+P1: with item \in Values do
     call Enq(rep, item);
 end with;
 end process
@@ -86,7 +87,7 @@ end process
 end algorithm
 *)
 \* BEGIN TRANSLATION
-\* Parameter q of procedure Enq at line 44 col 15 changed to q_
+\* Parameter q of procedure Enq at line 45 col 15 changed to q_
 CONSTANT defaultInitValue
 VARIABLES rep, rVal, pc, stack, q_, x, j, q, i, range
 
@@ -191,7 +192,7 @@ Deq(self) == D1(self) \/ D2(self) \/ D3(self) \/ D4(self) \/ D5(self)
                 \/ D6(self) \/ D7(self) \/ D8(self) \/ D9(self)
 
 P1(self) == /\ pc[self] = "P1"
-            /\ \E item \in items:
+            /\ \E item \in Values:
                  /\ /\ q_' = [q_ EXCEPT ![self] = rep]
                     /\ stack' = [stack EXCEPT ![self] = << [ procedure |->  "Enq",
                                                              pc        |->  "Done",
@@ -236,5 +237,5 @@ Termination == <>(\A self \in ProcSet: pc[self] = "Done")
 
 =============================================================================
 \* Modification History
-\* Last modified Sat Oct 27 11:58:17 PDT 2018 by lhochstein
+\* Last modified Sat Oct 27 12:07:19 PDT 2018 by lhochstein
 \* Created Wed Oct 24 18:53:25 PDT 2018 by lhochstein
