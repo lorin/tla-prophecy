@@ -70,14 +70,14 @@ end while
 end procedure
 
 
-fair process p \in Producers
+process p \in Producers
 begin
 P1: with item \in Values do
     call Enq(item);
 end with;
 end process
 
-fair process c \in Consumers
+process c \in Consumers
 begin
 C1: call Deq();
 end process
@@ -240,9 +240,7 @@ Next == (\E self \in ProcSet: Enq(self) \/ Deq(self))
            \/ (* Disjunct to prevent deadlock on termination *)
               ((\A self \in ProcSet: pc[self] = "Done") /\ UNCHANGED vars)
 
-Spec == /\ Init /\ [][Next]_vars
-        /\ \A self \in Producers : WF_vars(p(self)) /\ WF_vars(Enq(self))
-        /\ \A self \in Consumers : WF_vars(c(self)) /\ WF_vars(Deq(self))
+Spec == Init /\ [][Next]_vars
 
 Termination == <>(\A self \in ProcSet: pc[self] = "Done")
 
@@ -251,5 +249,5 @@ Termination == <>(\A self \in ProcSet: pc[self] = "Done")
 
 =============================================================================
 \* Modification History
-\* Last modified Sat Oct 27 14:15:51 PDT 2018 by lhochstein
+\* Last modified Sat Oct 27 14:19:58 PDT 2018 by lhochstein
 \* Created Wed Oct 24 18:53:25 PDT 2018 by lhochstein
