@@ -7,10 +7,11 @@ Queue representation type (REP) from Herlihy & Wing 1990
 EXTENDS Naturals, Sequences
 
 CONSTANT Values
+CONSTANT Producers
+CONSTANT Consumers
 
-CONSTANT null
-CONSTANT producers
-CONSTANT consumers
+
+null == CHOOSE x : x \notin Values
 
 
 TypeOk(r) == r \in [back:Nat, items:Seq(Values \union null)]
@@ -19,7 +20,7 @@ TypeOk(r) == r \in [back:Nat, items:Seq(Values \union null)]
 --algorithm Rep
 
 variables rep = [back|->1, items|->[n \in Nat|->null]],
-          rVal = [p \in producers \union consumers|->null];
+          rVal = [p \in Producers \union Consumers|->null];
 
 macro INC(x)
 begin
@@ -71,14 +72,14 @@ end while
 end procedure
 
 
-process p \in producers
+process p \in Producers
 begin
 P1: with item \in Values do
     call Enq(rep, item);
 end with;
 end process
 
-process c \in consumers
+process c \in Consumers
 begin
 C1: call Deq(rep);
 end process
@@ -87,17 +88,17 @@ end process
 end algorithm
 *)
 \* BEGIN TRANSLATION
-\* Parameter q of procedure Enq at line 45 col 15 changed to q_
+\* Parameter q of procedure Enq at line 46 col 15 changed to q_
 CONSTANT defaultInitValue
 VARIABLES rep, rVal, pc, stack, q_, x, j, q, i, range
 
 vars == << rep, rVal, pc, stack, q_, x, j, q, i, range >>
 
-ProcSet == (producers) \cup (consumers)
+ProcSet == (Producers) \cup (Consumers)
 
 Init == (* Global variables *)
         /\ rep = [back|->1, items|->[n \in Nat|->null]]
-        /\ rVal = [p \in producers \union consumers|->null]
+        /\ rVal = [p \in Producers \union Consumers|->null]
         (* Procedure Enq *)
         /\ q_ = [ self \in ProcSet |-> defaultInitValue]
         /\ x = [ self \in ProcSet |-> defaultInitValue]
@@ -107,8 +108,8 @@ Init == (* Global variables *)
         /\ i = [ self \in ProcSet |-> defaultInitValue]
         /\ range = [ self \in ProcSet |-> defaultInitValue]
         /\ stack = [self \in ProcSet |-> << >>]
-        /\ pc = [self \in ProcSet |-> CASE self \in producers -> "P1"
-                                        [] self \in consumers -> "C1"]
+        /\ pc = [self \in ProcSet |-> CASE self \in Producers -> "P1"
+                                        [] self \in Consumers -> "C1"]
 
 E1(self) == /\ pc[self] = "E1"
             /\ /\ q_' = [q_ EXCEPT ![self].back = (q_[self].back)+1]
@@ -223,8 +224,8 @@ C1(self) == /\ pc[self] = "C1"
 c(self) == C1(self)
 
 Next == (\E self \in ProcSet: Enq(self) \/ Deq(self))
-           \/ (\E self \in producers: p(self))
-           \/ (\E self \in consumers: c(self))
+           \/ (\E self \in Producers: p(self))
+           \/ (\E self \in Consumers: c(self))
            \/ (* Disjunct to prevent deadlock on termination *)
               ((\A self \in ProcSet: pc[self] = "Done") /\ UNCHANGED vars)
 
@@ -237,5 +238,5 @@ Termination == <>(\A self \in ProcSet: pc[self] = "Done")
 
 =============================================================================
 \* Modification History
-\* Last modified Sat Oct 27 12:07:19 PDT 2018 by lhochstein
+\* Last modified Sat Oct 27 13:13:16 PDT 2018 by lhochstein
 \* Created Wed Oct 24 18:53:25 PDT 2018 by lhochstein
