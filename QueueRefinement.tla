@@ -46,11 +46,14 @@ D4P(self) == D4(self) /\ UNCHANGED <<proph, absQ>>
 D5P(self) == D5(self) /\ UNCHANGED <<proph, absQ>>
 
 D6P(self) == /\ D6(self)
-             /\ IF rep.items[i[self]] = null THEN UNCHANGED <<proph, absQ>>
-                ELSE /\ proph.ord[proph.next] = self
-                     /\ proph.cons[self] = i[self]
-                     /\ proph' = [proph EXCEPT !.next = @+1]
-                     /\ UNCHANGED absQ
+             /\ \/ /\ rep.items[i[self]] = null 
+                   /\ proph.cons[self] = i[self] => \A j \in 1..rep.back : rep.items[j] = null 
+                   /\ UNCHANGED <<proph, absQ>>
+                \/ /\ rep.items[i[self]] /= null 
+                   /\ proph.ord[proph.next] = self
+                   /\ proph.cons[self] = i[self]
+                   /\ proph' = [proph EXCEPT !.next = @+1]
+                   /\ UNCHANGED absQ
 
 D7P(self) == D7(self) /\ UNCHANGED <<proph, absQ>>
 
@@ -89,5 +92,5 @@ Q == INSTANCE Queue WITH items<-absQ
 
 =============================================================================
 \* Modification History
-\* Last modified Sat Oct 27 22:19:53 PDT 2018 by lhochstein
+\* Last modified Sat Oct 27 22:35:56 PDT 2018 by lhochstein
 \* Created Sat Oct 27 12:02:21 PDT 2018 by lhochstein
