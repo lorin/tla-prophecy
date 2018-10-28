@@ -7,11 +7,17 @@ varsP == <<vars, proph, absQ>>
 InitP == /\ Init
          /\ LET numProducers(s) == Cardinality({j \in 1..Len(s) : s[j] \in Producers})
                 numConsumers(s) == Cardinality({j \in 1..Len(s) : s[j] \in Consumers})
-                ord == {s \in Perms(Producers \union Consumers) : \A j \in 1..Len(s) : LET ss == SubSeq(s, 1,j) IN numProducers(ss) \geq numConsumers(ss)}
+                alwaysEnoughProducers(s) == \A j \in 1..Len(s) : LET ss == SubSeq(s, 1,j) IN numProducers(ss) \geq numConsumers(ss)
+                producerMustPrecedeConsumer(s, prod, cons) ==
+                    \A j \in 1..Len(s) :
+                        (s[j] \in Consumers) => \E k \in 1..j-1 :
+                            /\ s[k] \in Producers
+                            /\ cons[s[j]] = prod[s[k]]
+                ord == {s \in Perms(Producers \union Consumers) : alwaysEnoughProducers(s) }
                 OneToOne(f) == \A s,t \in DOMAIN f : f[s] = f[t] => s=t
                 prod == LET N == Cardinality(Producers) IN {f \in [Producers -> 1..N] : OneToOne(f)}
                 cons == LET N == Cardinality(Consumers) IN {f \in [Consumers -> 1..N] : OneToOne(f)}
-            IN proph \in [ord:ord, prod:prod, cons:cons, next:{1}]
+                IN proph \in {r \in [ord:ord, prod:prod, cons:cons, next:{1}] : producerMustPrecedeConsumer(r.ord, r.prod, r.cons)}
          /\ absQ = << >>
          
 E1P(self) == /\ E1(self) 
@@ -83,5 +89,5 @@ Q == INSTANCE Queue WITH items<-absQ
 
 =============================================================================
 \* Modification History
-\* Last modified Sat Oct 27 22:05:45 PDT 2018 by lhochstein
+\* Last modified Sat Oct 27 22:19:53 PDT 2018 by lhochstein
 \* Created Sat Oct 27 12:02:21 PDT 2018 by lhochstein
