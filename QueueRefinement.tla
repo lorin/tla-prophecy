@@ -31,7 +31,22 @@ E3P(self) == /\ E3(self)
              /\ proph' = [proph EXCEPT !.next = @+1]
              /\ UNCHANGED absQ
 
-E4P(self) == E4(self) /\ UNCHANGED <<proph, absQ>>
+E4P(self) == /\ E4(self)
+                 \* Can't prevent consumer from reaching intended destination
+                 \* NOTE: this doesn't generalize to N consumers
+             /\ ~(\E cn \in Consumers : 
+                    /\ proph.cons[cn] /= proph.prod[self]
+                    /\ pc[cn] \notin {"D8", "D9", "Done"} 
+                    /\ LET cur == IF i[cn] = defaultInitValue THEN 1 ELSE i[cn]
+                            dest == proph.cons[cn]
+                            me == proph.prod[self]
+                        IN  \/ /\ me>cur  \* [cur, me, dest]
+                               /\ dest>me
+                            \/ /\ dest>me \* [me, dest,  cur]
+                               /\ cur>dest
+                            \/ /\ cur>dest \* [dest,cur,me]
+                               /\ me>cur)  
+             /\ UNCHANGED <<proph, absQ>>
 
 EnqP(self) == E1P(self) \/ E2P(self) \/ E3P(self) \/ E4P(self)
 
@@ -92,5 +107,5 @@ Q == INSTANCE Queue WITH items<-absQ
 
 =============================================================================
 \* Modification History
-\* Last modified Sat Oct 27 22:35:56 PDT 2018 by lhochstein
+\* Last modified Sat Oct 27 23:22:04 PDT 2018 by lhochstein
 \* Created Sat Oct 27 12:02:21 PDT 2018 by lhochstein
