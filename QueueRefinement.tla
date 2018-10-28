@@ -42,6 +42,7 @@ D5P(self) == D5(self) /\ UNCHANGED <<proph, absQ>>
 D6P(self) == /\ D6(self)
              /\ IF rep.items[i[self]] = null THEN UNCHANGED <<proph, absQ>>
                 ELSE /\ proph.ord[proph.next] = self
+                     /\ proph.cons[self] = i[self]
                      /\ proph' = [proph EXCEPT !.next = @+1]
                      /\ UNCHANGED absQ
 
