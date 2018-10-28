@@ -5,42 +5,20 @@ VARIABLES proph, \* Prophecized orderig of producers
           absQ \* abstraction function for the queue
 varsP == <<vars, proph, absQ>>
 InitP == /\ Init
-         /\ LET perms == Perms(Producers)
-            IN proph \in {f \in [ord:perms, toEnq:perms, toDeq:perms] : f.ord = f.toEnq /\ f.ord = f.toDeq}
+         /\ LET numProducers(s) == Cardinality({j \in 1..Len(s) : s[j] \in Producers})
+                numConsumers(s) == Cardinality({j \in 1..Len(s) : s[j] \in Consumers})
+                ord == {s \in Perms(Producers \union Consumers) : \A j \in 1..Len(s) : LET ss == SubSeq(s, 1,j) IN numProducers(ss) \geq numConsumers(ss)}
+                OneToOne(f) == \A s,t \in DOMAIN f : f[s] = f[t] => s=t
+                fprod == LET N == Cardinality(Producers) IN {f \in [Producers -> 1..N] : OneToOne(f)}
+                fcons == LET N == Cardinality(Consumers) IN {f \in [Consumers -> 1..N] : OneToOne(f)}
+             IN proph \in [ord:ord, prod:fprod, cons:fcons]
          /\ absQ = << >>
          
-
-EnqueueAbs(self, val) == IF Head(proph.ord) = self
-                         THEN /\ proph' = [proph EXCEPT !["toEnq"] = Tail(@)]
-                              /\ absQ' = Append(absQ, val)
-                         ELSE UNCHANGED <<proph, absQ>>
-
-\* set of indexes into the queue for consumer processes that have not
-\* committed to a dequeue yet
-pendingConsumerIndexes == {i[c] : c \in Consumers /\ pc[c] \notin {"D7", "D8", "D9", "Done"}} 
-
-\* set of orderings (ordered pair of producers) relative to a pending consumer process
-\* at index i
-\* 
-
-\* TODO: I am here!
-repOrderingAtConsumerIndex(q, i) ==
-    LET afterIndex == {}
-        beforeIndex == {}
-        acrossIndex == {}
-    IN afterIndex \union beforeIndex \union acrossIndex
-
-
-ConsistentWithProphecy(q) == 
-    LET repOrdering = UNION({repOrderingAtConsumerIndex(q, j) : j \in pendingConsumerIndexes})
-        prophecyOrdering = {t \in Producers \X Producers : \E j,k \in 1..Len(proph.ord) : /\ j<k 
-    IN  repOrdering \subseteq prophecyOrdering
-
-E1P(self) == E1(self) /\ EnqueueAbs(self, x[self])
+E1P(self) == E1(self) /\ UNCHANGED <<proph, absQ>>
 
 E2P(self) == E2(self) /\ UNCHANGED <<proph, absQ>>
 
-E3P(self) == E3(self) /\ EnqueueAbs(self, x[self]) /\ ConsistentWithProphecy(rep')
+E3P(self) == E3(self) /\ UNCHANGED <<proph, absQ>>
 
 E4P(self) == E4(self) /\ UNCHANGED <<proph, absQ>>
 
@@ -93,5 +71,5 @@ Q == INSTANCE Queue WITH items<-absQ
 
 =============================================================================
 \* Modification History
-\* Last modified Sat Oct 27 17:56:25 PDT 2018 by lhochstein
+\* Last modified Sat Oct 27 20:17:36 PDT 2018 by lhochstein
 \* Created Sat Oct 27 12:02:21 PDT 2018 by lhochstein
