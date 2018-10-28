@@ -21,6 +21,7 @@ E1P(self) == /\ E1(self)
 E2P(self) == E2(self) /\ UNCHANGED <<proph, absQ>>
 
 E3P(self) == /\ E3(self) 
+             /\ proph.next \leq Len(proph.ord)
              /\ proph.ord[proph.next] = self
              /\ proph' = [proph EXCEPT !.next = @+1]
              /\ UNCHANGED absQ
@@ -39,7 +40,11 @@ D4P(self) == D4(self) /\ UNCHANGED <<proph, absQ>>
 
 D5P(self) == D5(self) /\ UNCHANGED <<proph, absQ>>
 
-D6P(self) == D6(self) /\ UNCHANGED <<proph, absQ>>
+D6P(self) == /\ D6(self)
+             /\ proph.next \leq Len(proph.ord)
+             /\ proph.ord[proph.next] = self
+             /\ proph' = [proph EXCEPT !.next = @+1]
+             /\ UNCHANGED absQ
 
 D7P(self) == D7(self) /\ UNCHANGED <<proph, absQ>>
 
@@ -78,5 +83,5 @@ Q == INSTANCE Queue WITH items<-absQ
 
 =============================================================================
 \* Modification History
-\* Last modified Sat Oct 27 20:58:38 PDT 2018 by lhochstein
+\* Last modified Sat Oct 27 21:04:39 PDT 2018 by lhochstein
 \* Created Sat Oct 27 12:02:21 PDT 2018 by lhochstein
