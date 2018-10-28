@@ -40,12 +40,20 @@ E4P(self) == /\ E4(self)
                     /\ LET cur == IF i[cn] = defaultInitValue THEN 1 ELSE i[cn]
                             dest == proph.cons[cn]
                             me == proph.prod[self]
-                        IN  \/ /\ me>cur  \* [cur, me, dest]
-                               /\ dest>me
-                            \/ /\ dest>me \* [me, dest,  cur]
-                               /\ cur>dest
-                            \/ /\ cur>dest \* [dest,cur,me]
-                               /\ me>cur)  
+                        IN  \/ /\ pc[cn] = "D7"
+                               /\ \/ /\ me >= cur  \* [cur, me, dest]
+                                     /\ dest>me
+                                  \/ /\ dest>me \* [me, dest,  cur]
+                                     /\ cur>dest
+                                  \/ /\ cur>dest \* [dest,cur,me]
+                                     /\ me>=cur  
+                            \/ /\ pc[cn] /= "D7"
+                               /\ \/ /\ me>=cur  \* [cur, me, dest]
+                                     /\ dest>=me
+                                  \/ /\ dest>=me \* [me, dest,  cur]
+                                     /\ cur>dest
+                                  \/ /\ cur>dest \* [dest,cur,me]
+                                     /\ me>=cur ) 
              /\ UNCHANGED <<proph, absQ>>
 
 EnqP(self) == E1P(self) \/ E2P(self) \/ E3P(self) \/ E4P(self)
@@ -107,5 +115,5 @@ Q == INSTANCE Queue WITH items<-absQ
 
 =============================================================================
 \* Modification History
-\* Last modified Sat Oct 27 23:22:04 PDT 2018 by lhochstein
+\* Last modified Sat Oct 27 23:33:40 PDT 2018 by lhochstein
 \* Created Sat Oct 27 12:02:21 PDT 2018 by lhochstein
