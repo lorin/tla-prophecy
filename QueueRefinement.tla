@@ -15,12 +15,32 @@ EnqueueAbs(self, val) == IF Head(proph.ord) = self
                               /\ absQ' = Append(absQ, val)
                          ELSE UNCHANGED <<proph, absQ>>
 
+\* set of indexes into the queue for consumer processes that have not
+\* committed to a dequeue yet
+pendingConsumerIndexes == {i[c] : c \in Consumers /\ pc[c] \notin {"D7", "D8", "D9", "Done"}} 
+
+\* set of orderings (ordered pair of producers) relative to a pending consumer process
+\* at index i
+\* 
+
+\* TODO: I am here!
+repOrderingAtConsumerIndex(q, i) ==
+    LET afterIndex == {}
+        beforeIndex == {}
+        acrossIndex == {}
+    IN afterIndex \union beforeIndex \union acrossIndex
+
+
+ConsistentWithProphecy(q) == 
+    LET repOrdering = UNION({repOrderingAtConsumerIndex(q, j) : j \in pendingConsumerIndexes})
+        prophecyOrdering = {t \in Producers \X Producers : \E j,k \in 1..Len(proph.ord) : /\ j<k 
+    IN  repOrdering \subseteq prophecyOrdering
 
 E1P(self) == E1(self) /\ EnqueueAbs(self, x[self])
 
 E2P(self) == E2(self) /\ UNCHANGED <<proph, absQ>>
 
-E3P(self) == E3(self) /\ EnqueueAbs(self, x[self])
+E3P(self) == E3(self) /\ EnqueueAbs(self, x[self]) /\ ConsistentWithProphecy(rep')
 
 E4P(self) == E4(self) /\ UNCHANGED <<proph, absQ>>
 
@@ -73,5 +93,5 @@ Q == INSTANCE Queue WITH items<-absQ
 
 =============================================================================
 \* Modification History
-\* Last modified Sat Oct 27 17:35:44 PDT 2018 by lhochstein
+\* Last modified Sat Oct 27 17:56:25 PDT 2018 by lhochstein
 \* Created Sat Oct 27 12:02:21 PDT 2018 by lhochstein
