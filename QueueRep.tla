@@ -60,7 +60,7 @@ D1: while(TRUE) do
     D5: while(i<=range) do
         D6: SWAP(rep.items[i], null);
         D7: x := rVal;
-            if x = null then
+            if x /= null then
                 D8: rVal := x;
                 D9: return;
             end if;
@@ -171,7 +171,7 @@ D6(self) == /\ pc[self] = "D6"
 
 D7(self) == /\ pc[self] = "D7"
             /\ x_' = [x_ EXCEPT ![self] = rVal[self]]
-            /\ IF x_'[self] = null
+            /\ IF x_'[self] /= null
                   THEN /\ pc' = [pc EXCEPT ![self] = "D8"]
                   ELSE /\ pc' = [pc EXCEPT ![self] = "D10"]
             /\ UNCHANGED << rep, stack, x, i_, rInd_, i, range, rInd, rVal >>
@@ -252,5 +252,5 @@ Termination == <>(\A self \in ProcSet: pc[self] = "Done")
 
 =============================================================================
 \* Modification History
-\* Last modified Sat Oct 27 20:50:11 PDT 2018 by lhochstein
+\* Last modified Sat Oct 27 21:34:30 PDT 2018 by lhochstein
 \* Created Wed Oct 24 18:53:25 PDT 2018 by lhochstein

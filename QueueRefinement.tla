@@ -40,11 +40,10 @@ D4P(self) == D4(self) /\ UNCHANGED <<proph, absQ>>
 D5P(self) == D5(self) /\ UNCHANGED <<proph, absQ>>
 
 D6P(self) == /\ D6(self)
-             /\ \/ /\ rep.items[i[self]] = null
-                   /\ UNCHANGED <<proph, absQ>>
-                \/ /\ proph.ord[proph.next] = self
-                   /\ proph' = [proph EXCEPT !.next = @+1]
-                   /\ UNCHANGED absQ
+             /\ IF rep.items[i[self]] = null THEN UNCHANGED <<proph, absQ>>
+                ELSE /\ proph.ord[proph.next] = self
+                     /\ proph' = [proph EXCEPT !.next = @+1]
+                     /\ UNCHANGED absQ
 
 D7P(self) == D7(self) /\ UNCHANGED <<proph, absQ>>
 
@@ -83,5 +82,5 @@ Q == INSTANCE Queue WITH items<-absQ
 
 =============================================================================
 \* Modification History
-\* Last modified Sat Oct 27 21:23:46 PDT 2018 by lhochstein
+\* Last modified Sat Oct 27 22:05:45 PDT 2018 by lhochstein
 \* Created Sat Oct 27 12:02:21 PDT 2018 by lhochstein
