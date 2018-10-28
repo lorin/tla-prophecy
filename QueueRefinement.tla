@@ -9,12 +9,14 @@ InitP == /\ Init
                 numConsumers(s) == Cardinality({j \in 1..Len(s) : s[j] \in Consumers})
                 ord == {s \in Perms(Producers \union Consumers) : \A j \in 1..Len(s) : LET ss == SubSeq(s, 1,j) IN numProducers(ss) \geq numConsumers(ss)}
                 OneToOne(f) == \A s,t \in DOMAIN f : f[s] = f[t] => s=t
-                fprod == LET N == Cardinality(Producers) IN {f \in [Producers -> 1..N] : OneToOne(f)}
-                fcons == LET N == Cardinality(Consumers) IN {f \in [Consumers -> 1..N] : OneToOne(f)}
-             IN proph \in [ord:ord, prod:fprod, cons:fcons]
+                prod == LET N == Cardinality(Producers) IN {f \in [Producers -> 1..N] : OneToOne(f)}
+                cons == LET N == Cardinality(Consumers) IN {f \in [Consumers -> 1..N] : OneToOne(f)}
+            IN proph \in [ord:ord, prod:prod, cons:cons, next:{1}]
          /\ absQ = << >>
          
-E1P(self) == E1(self) /\ UNCHANGED <<proph, absQ>>
+E1P(self) == /\ E1(self) 
+             /\ proph.prod[self] = rep.back
+             /\ UNCHANGED <<proph, absQ>>
 
 E2P(self) == E2(self) /\ UNCHANGED <<proph, absQ>>
 
@@ -64,12 +66,14 @@ NextP == (\E self \in ProcSet: EnqP(self) \/ DeqP(self))
               ((\A self \in ProcSet: pc[self] = "Done") /\ UNCHANGED varsP)
 
 
-SpecP == InitP /\ [][NextP]_varsP
+SpecP == /\ InitP /\ [][NextP]_varsP
+         /\ \A self \in Producers : WF_vars(pP(self)) /\ WF_vars(EnqP(self))
+         /\ \A self \in Consumers : WF_vars(cP(self)) /\ WF_vars(DeqP(self))
 
 
 Q == INSTANCE Queue WITH items<-absQ
 
 =============================================================================
 \* Modification History
-\* Last modified Sat Oct 27 20:17:36 PDT 2018 by lhochstein
+\* Last modified Sat Oct 27 20:48:45 PDT 2018 by lhochstein
 \* Created Sat Oct 27 12:02:21 PDT 2018 by lhochstein
