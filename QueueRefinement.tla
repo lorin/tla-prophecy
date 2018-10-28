@@ -8,12 +8,19 @@ InitP == /\ Init
          /\ LET perms == Perms(Producers)
             IN proph \in {f \in [ord:perms, toEnq:perms, toDeq:perms] : f.ord = f.toEnq /\ f.ord = f.toDeq}
          /\ absQ = << >>
+         
 
-E1P(self) == E1(self) /\ UNCHANGED <<proph, absQ>>
+EnqueueAbs(self, val) == IF Head(proph.ord) = self
+                         THEN /\ proph' = [proph EXCEPT !["toEnq"] = Tail(@)]
+                              /\ absQ' = Append(absQ, val)
+                         ELSE UNCHANGED <<proph, absQ>>
+
+
+E1P(self) == E1(self) /\ EnqueueAbs(self, x[self])
 
 E2P(self) == E2(self) /\ UNCHANGED <<proph, absQ>>
 
-E3P(self) == E3(self) /\ UNCHANGED <<proph, absQ>>
+E3P(self) == E3(self) /\ EnqueueAbs(self, x[self])
 
 E4P(self) == E4(self) /\ UNCHANGED <<proph, absQ>>
 
@@ -62,9 +69,9 @@ NextP == (\E self \in ProcSet: EnqP(self) \/ DeqP(self))
 SpecP == InitP /\ [][NextP]_varsP
 
 
-Q == INSTANCE Queue WITH items<-SelectSeq(rep.items, LAMBDA item: item /= null)
+Q == INSTANCE Queue WITH items<-absQ
 
 =============================================================================
 \* Modification History
-\* Last modified Sat Oct 27 17:26:20 PDT 2018 by lhochstein
+\* Last modified Sat Oct 27 17:35:44 PDT 2018 by lhochstein
 \* Created Sat Oct 27 12:02:21 PDT 2018 by lhochstein
