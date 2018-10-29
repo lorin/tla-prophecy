@@ -3,6 +3,18 @@ EXTENDS QueueRep,Utilities
 
 VARIABLES proph, \* Prophecized orderig of producers
           absQ \* abstraction function for the queue
+          
+\* True if barrier stands between location and goal
+IsBlocking(loc, goal, barrier) == 
+    \/ loc<barrier /\ barrier<goal \* [loc | goal]
+    \/ goal<loc /\ loc<barrier     \* [goal loc |]
+    \/ barrier<goal /\ goal<loc    \* [| goal loc]
+    
+
+\* Check if a consumer process is higher precedence (i.e., will get processed before) a producer process
+IsHigherPrecedence(cons, prod, pr) == LET index(ps) == CHOOSE ind \in 1..Len(pr.ord) : pr.ord[ind] = ps
+                                      IN index(cons) < index(prod)
+          
 varsP == <<vars, proph, absQ>>
 InitP == /\ Init
          /\ LET numProducers(s) == Cardinality({j \in 1..Len(s) : s[j] \in Producers})
@@ -28,32 +40,18 @@ E2P(self) == E2(self) /\ UNCHANGED <<proph, absQ>>
 
 E3P(self) == /\ E3(self) 
              /\ proph.ord[proph.next] = self
+                \* Prevent blocking a consumer from getting to their proper destination
+             /\ \A cons \in Consumers : (/\ proph.cons[cons] /= i_[self]
+                                         /\ IsHigherPrecedence(cons,self,proph)
+                                         /\ pc[cons] \notin {"D8", "D9", "Done"}) =>
+                    LET indCons == CASE pc[cons] \in {"D1", "D2", "D3", "D4"} -> 0
+                                     [] pc[cons] \in {"D5","D6"} -> i[cons]-1
+                                     [] pc[cons] \in {"D7", "D10"} -> i[cons]
+                    IN ~IsBlocking(indCons, proph.cons[cons], i_[self])
              /\ proph' = [proph EXCEPT !.next = @+1]
              /\ UNCHANGED absQ
 
 E4P(self) == /\ E4(self)
-                 \* Can't prevent consumer from reaching intended destination
-                 \* NOTE: this doesn't generalize to N consumers
-             /\ ~(\E cn \in Consumers : 
-                    /\ proph.cons[cn] /= proph.prod[self]
-                    /\ pc[cn] \notin {"D8", "D9", "Done"} 
-                    /\ LET cur == IF i[cn] = defaultInitValue THEN 1 ELSE i[cn]
-                            dest == proph.cons[cn]
-                            me == proph.prod[self]
-                        IN  \/ /\ pc[cn] = "D7"
-                               /\ \/ /\ me >= cur  \* [cur, me, dest]
-                                     /\ dest>me
-                                  \/ /\ dest>me \* [me, dest,  cur]
-                                     /\ cur>dest
-                                  \/ /\ cur>dest \* [dest,cur,me]
-                                     /\ me>=cur  
-                            \/ /\ pc[cn] /= "D7"
-                               /\ \/ /\ me>=cur  \* [cur, me, dest]
-                                     /\ dest>=me
-                                  \/ /\ dest>=me \* [me, dest,  cur]
-                                     /\ cur>dest
-                                  \/ /\ cur>dest \* [dest,cur,me]
-                                     /\ me>=cur ) 
              /\ UNCHANGED <<proph, absQ>>
 
 EnqP(self) == E1P(self) \/ E2P(self) \/ E3P(self) \/ E4P(self)
@@ -115,5 +113,5 @@ Q == INSTANCE Queue WITH items<-absQ
 
 =============================================================================
 \* Modification History
-\* Last modified Sat Oct 27 23:33:40 PDT 2018 by lhochstein
+\* Last modified Sun Oct 28 16:51:52 PDT 2018 by lhochstein
 \* Created Sat Oct 27 12:02:21 PDT 2018 by lhochstein
