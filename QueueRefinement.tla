@@ -4,13 +4,19 @@ EXTENDS QueueRep,Utilities
 VARIABLES proph, \* Prophecized orderig of producers
           absQ \* abstraction function for the queue
           
-\* True if barrier stands between location and goal
-IsBlocking(loc, goal, barrier) == 
-    \/ loc<barrier /\ barrier<goal \* [loc | goal]
-    \/ goal<loc /\ loc<barrier     \* [goal loc |]
-    \/ barrier<goal /\ goal<loc    \* [| goal loc]
-    
+\* True if barrier stands between the consumer (where i=iCons, and pc=pcCons) and its goal location
+IsBlocking(iCons, pcCons, goal, bar) == 
+    CASE goal = bar -> FALSE \* Can't block if we are the goal!
+      [] goal < bar ->  CASE pcCons \in {"C1", "D1", "D2", "D3", "D4"} -> FALSE
+                               [] pcCons \in {"D5", "D6"} -> iCons>goal /\ iCons<=bar
+                               [] pcCons \in {"D7","D10"} -> iCons>=goal /\ iCons<bar
+                               [] pcCons \in {"D8", "D9", "Done"} -> FALSE \* already read
+      [] goal > bar -> CASE pcCons \in {"C1", "D1", "D2", "D3", "D4"} -> TRUE
+                               [] pcCons \in {"D5", "D6"} -> iCons<=bar \/ iCons>goal
+                               [] pcCons \in {"D7","D10"} -> iCons<bar \/ iCons>=goal
+                               [] pcCons \in {"D8", "D9", "Done"} -> FALSE \* already read
 
+      
 \* A consumer cons could read producer prod's write if cons is scheduled to read/write
 \* before the consumer that reads prod's write
 CouldReadMyWrite(cons, prod, pr) == 
@@ -47,11 +53,7 @@ E3P(self) == /\ E3(self)
                 \* Prevent blocking a consumer from getting to their proper destination
              /\ \A cons \in Consumers : (/\ proph.cons[cons] /= i_[self]
                                          /\ CouldReadMyWrite(cons,self,proph)
-                                         /\ pc[cons] \notin {"D8", "D9", "Done"}) =>
-                    LET indCons == CASE pc[cons] \in {"C1", "D1", "D2", "D3", "D4"} -> 0
-                                     [] pc[cons] \in {"D5","D6"} -> i[cons]-1
-                                     [] pc[cons] \in {"D7", "D10"} -> i[cons]
-                    IN ~IsBlocking(indCons, proph.cons[cons], i_[self])
+                                         /\ pc[cons] \notin {"D8", "D9", "Done"}) => ~IsBlocking(i[cons], pc[cons], proph.cons[cons], i_[self])
              /\ proph' = [proph EXCEPT !.next = @+1]
              /\ UNCHANGED absQ
 
@@ -117,5 +119,5 @@ Q == INSTANCE Queue WITH items<-absQ
 
 =============================================================================
 \* Modification History
-\* Last modified Sun Oct 28 17:30:14 PDT 2018 by lhochstein
+\* Last modified Sun Oct 28 18:53:20 PDT 2018 by lhochstein
 \* Created Sat Oct 27 12:02:21 PDT 2018 by lhochstein
