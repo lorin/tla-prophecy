@@ -12,6 +12,13 @@ technique to resolve the problems in refinement mapping revealed by Herlihy and 
 In order to learn how prophecy variables work, I used prophecy variables to
 define a refinement example for the specific example provided by Herlihy and Wing.
 
+I found the [Prophecy.tla](Prophecy.tla) module from
+at [Disalog-ICS-NJU/tlaplus-lamport-projects][prophfile] project. 
+This module is documented in the paper [Auxiliary Variables in TLA+][aux] by Lamport and Mertz.
+
+[prophfile]: https://github.com/Disalg-ICS-NJU/tlaplus-lamport-projects/blob/master/learning-tlaplus/Hengfeng-Wei/learning-tlaplus-papers/AuxiliaryVariables-Lamport/auxiliary/Prophecy.tla
+[aux]:  http://lamport.azurewebsites.net/pubs/pubs.html#auxiliary
+
 ## Queue from Herlihy & Wing paper
 
 From Section 4.2, page 475, here is the algorithm, using the pseudocode syntax
