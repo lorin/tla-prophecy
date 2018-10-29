@@ -11,9 +11,13 @@ IsBlocking(loc, goal, barrier) ==
     \/ barrier<goal /\ goal<loc    \* [| goal loc]
     
 
-\* Check if a consumer process is higher precedence (i.e., will get processed before) a producer process
-IsHigherPrecedence(cons, prod, pr) == LET index(ps) == CHOOSE ind \in 1..Len(pr.ord) : pr.ord[ind] = ps
-                                      IN index(cons) < index(prod)
+\* A consumer cons could read producer prod's write if cons is scheduled to read/write
+\* before the consumer that reads prod's write
+CouldReadMyWrite(cons, prod, pr) == 
+    \/ ~\E co \in Consumers : pr.cons[co] = pr.prod[prod] \* No such consumer
+    \/ LET consAssocWithProd == CHOOSE co \in Consumers : pr.cons[co] = pr.prod[prod]
+        index(ps) == CHOOSE ind \in 1..Len(pr.ord) : pr.ord[ind] = ps
+        IN index(cons) < index(consAssocWithProd)
           
 varsP == <<vars, proph, absQ>>
 InitP == /\ Init
@@ -42,9 +46,9 @@ E3P(self) == /\ E3(self)
              /\ proph.ord[proph.next] = self
                 \* Prevent blocking a consumer from getting to their proper destination
              /\ \A cons \in Consumers : (/\ proph.cons[cons] /= i_[self]
-                                         /\ IsHigherPrecedence(cons,self,proph)
+                                         /\ CouldReadMyWrite(cons,self,proph)
                                          /\ pc[cons] \notin {"D8", "D9", "Done"}) =>
-                    LET indCons == CASE pc[cons] \in {"D1", "D2", "D3", "D4"} -> 0
+                    LET indCons == CASE pc[cons] \in {"C1", "D1", "D2", "D3", "D4"} -> 0
                                      [] pc[cons] \in {"D5","D6"} -> i[cons]-1
                                      [] pc[cons] \in {"D7", "D10"} -> i[cons]
                     IN ~IsBlocking(indCons, proph.cons[cons], i_[self])
@@ -113,5 +117,5 @@ Q == INSTANCE Queue WITH items<-absQ
 
 =============================================================================
 \* Modification History
-\* Last modified Sun Oct 28 16:51:52 PDT 2018 by lhochstein
+\* Last modified Sun Oct 28 17:30:14 PDT 2018 by lhochstein
 \* Created Sat Oct 27 12:02:21 PDT 2018 by lhochstein
