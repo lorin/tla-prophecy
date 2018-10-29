@@ -2,7 +2,7 @@
 EXTENDS QueueRep,Utilities
 
 VARIABLES proph, \* Prophecized orderig of producers
-          absQ \* abstraction function for the queue
+          itemsBar \* abstraction function for the queue
           
 \* True if barrier stands between the consumer (where i=iCons, and pc=pcCons) and its goal location
 IsBlocking(iCons, pcCons, goal, bar) == 
@@ -25,7 +25,7 @@ CouldReadMyWrite(cons, prod, pr) ==
         index(ps) == CHOOSE ind \in 1..Len(pr.ord) : pr.ord[ind] = ps
         IN index(cons) < index(consAssocWithProd)
           
-varsP == <<vars, proph, absQ>>
+varsP == <<vars, proph, itemsBar>>
 InitP == /\ Init
          /\ LET numProducers(s) == Cardinality({j \in 1..Len(s) : s[j] \in Producers})
                 numConsumers(s) == Cardinality({j \in 1..Len(s) : s[j] \in Consumers})
@@ -40,13 +40,13 @@ InitP == /\ Init
                 prod == LET N == Cardinality(Producers) IN {f \in [Producers -> 1..N] : OneToOne(f)}
                 cons == LET N == Cardinality(Consumers) IN {f \in [Consumers -> 1..N] : OneToOne(f)}
                 IN proph \in {r \in [ord:ord, prod:prod, cons:cons, next:{1}] : producerMustPrecedeConsumer(r.ord, r.prod, r.cons)}
-         /\ absQ = << >>
+         /\ itemsBar = << >>
          
 E1P(self) == /\ E1(self) 
              /\ proph.prod[self] = rep.back
-             /\ UNCHANGED <<proph, absQ>>
+             /\ UNCHANGED <<proph, itemsBar>>
 
-E2P(self) == E2(self) /\ UNCHANGED <<proph, absQ>>
+E2P(self) == E2(self) /\ UNCHANGED <<proph, itemsBar>>
 
 E3P(self) == /\ E3(self) 
              /\ proph.ord[proph.next] = self
@@ -55,51 +55,51 @@ E3P(self) == /\ E3(self)
                                          /\ CouldReadMyWrite(cons,self,proph)
                                          /\ pc[cons] \notin {"D8", "D9", "Done"}) => ~IsBlocking(i[cons], pc[cons], proph.cons[cons], i_[self])
              /\ proph' = [proph EXCEPT !.next = @+1]
-             /\ UNCHANGED absQ
+             /\ UNCHANGED itemsBar
 
 E4P(self) == /\ E4(self)
-             /\ UNCHANGED <<proph, absQ>>
+             /\ UNCHANGED <<proph, itemsBar>>
 
 EnqP(self) == E1P(self) \/ E2P(self) \/ E3P(self) \/ E4P(self)
 
-D1P(self) == D1(self) /\ UNCHANGED <<proph, absQ>>
+D1P(self) == D1(self) /\ UNCHANGED <<proph, itemsBar>>
 
-D2P(self) == D2(self) /\ UNCHANGED <<proph, absQ>>
+D2P(self) == D2(self) /\ UNCHANGED <<proph, itemsBar>>
 
-D3P(self) == D3(self) /\ UNCHANGED <<proph, absQ>>
+D3P(self) == D3(self) /\ UNCHANGED <<proph, itemsBar>>
 
-D4P(self) == D4(self) /\ UNCHANGED <<proph, absQ>>
+D4P(self) == D4(self) /\ UNCHANGED <<proph, itemsBar>>
 
-D5P(self) == D5(self) /\ UNCHANGED <<proph, absQ>>
+D5P(self) == D5(self) /\ UNCHANGED <<proph, itemsBar>>
 
 D6P(self) == /\ D6(self)
              /\ \/ /\ rep.items[i[self]] = null 
                    /\ proph.cons[self] = i[self] => \A j \in 1..rep.back : rep.items[j] = null 
-                   /\ UNCHANGED <<proph, absQ>>
+                   /\ UNCHANGED <<proph, itemsBar>>
                 \/ /\ rep.items[i[self]] /= null 
                    /\ proph.ord[proph.next] = self
                    /\ proph.cons[self] = i[self]
                    /\ proph' = [proph EXCEPT !.next = @+1]
-                   /\ UNCHANGED absQ
+                   /\ UNCHANGED itemsBar
 
-D7P(self) == D7(self) /\ UNCHANGED <<proph, absQ>>
+D7P(self) == D7(self) /\ UNCHANGED <<proph, itemsBar>>
 
-D8P(self) == D8(self) /\ UNCHANGED <<proph, absQ>>
+D8P(self) == D8(self) /\ UNCHANGED <<proph, itemsBar>>
 
-D9P(self) == D9(self) /\ UNCHANGED <<proph, absQ>>
+D9P(self) == D9(self) /\ UNCHANGED <<proph, itemsBar>>
 
-D10P(self) == D10(self) /\ UNCHANGED <<proph, absQ>>
+D10P(self) == D10(self) /\ UNCHANGED <<proph, itemsBar>>
 
 
 DeqP(self) == D1P(self) \/ D2P(self) \/ D3P(self) \/ D4P(self) \/ D5P(self)
                 \/ D6P(self) \/ D7P(self) \/ D8P(self) \/ D9P(self)
                 \/ D10P(self)
 
-P1P(self) == P1(self) /\ UNCHANGED <<proph, absQ>>
+P1P(self) == P1(self) /\ UNCHANGED <<proph, itemsBar>>
 
 pP(self) == P1P(self)
 
-C1P(self) == C1(self) /\ UNCHANGED <<proph, absQ>>
+C1P(self) == C1(self) /\ UNCHANGED <<proph, itemsBar>>
 
 cP(self) == C1P(self)
 
@@ -115,9 +115,9 @@ SpecP == /\ InitP /\ [][NextP]_varsP
          /\ \A self \in Consumers : WF_vars(cP(self)) /\ WF_vars(DeqP(self))
 
 
-Q == INSTANCE Queue WITH items<-absQ
+Q == INSTANCE Queue WITH items<-itemsBar
 
 =============================================================================
 \* Modification History
-\* Last modified Sun Oct 28 18:53:20 PDT 2018 by lhochstein
+\* Last modified Sun Oct 28 19:29:38 PDT 2018 by lhochstein
 \* Created Sat Oct 27 12:02:21 PDT 2018 by lhochstein
