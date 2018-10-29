@@ -70,14 +70,14 @@ end while
 end procedure
 
 
-fair process p \in Producers
+fair process producer \in Producers
 begin
 P1: with item \in Values do
     call Enq(item);
 end with;
 end process
 
-fair process c \in Consumers
+fair process consumer \in Consumers
 begin
 C1: call Deq();
 end process
@@ -214,7 +214,7 @@ P1(self) == /\ pc[self] = "P1"
                  /\ pc' = [pc EXCEPT ![self] = "E1"]
             /\ UNCHANGED << rep, i, x_, range, rInd, rVal >>
 
-p(self) == P1(self)
+producer(self) == P1(self)
 
 C1(self) == /\ pc[self] = "C1"
             /\ stack' = [stack EXCEPT ![self] = << [ procedure |->  "Deq",
@@ -233,17 +233,17 @@ C1(self) == /\ pc[self] = "C1"
             /\ pc' = [pc EXCEPT ![self] = "D1"]
             /\ UNCHANGED << rep, x, i_, rInd_ >>
 
-c(self) == C1(self)
+consumer(self) == C1(self)
 
 Next == (\E self \in ProcSet: Enq(self) \/ Deq(self))
-           \/ (\E self \in Producers: p(self))
-           \/ (\E self \in Consumers: c(self))
+           \/ (\E self \in Producers: producer(self))
+           \/ (\E self \in Consumers: consumer(self))
            \/ (* Disjunct to prevent deadlock on termination *)
               ((\A self \in ProcSet: pc[self] = "Done") /\ UNCHANGED vars)
 
 Spec == /\ Init /\ [][Next]_vars
-        /\ \A self \in Producers : WF_vars(p(self)) /\ WF_vars(Enq(self))
-        /\ \A self \in Consumers : WF_vars(c(self)) /\ WF_vars(Deq(self))
+        /\ \A self \in Producers : WF_vars(producer(self)) /\ WF_vars(Enq(self))
+        /\ \A self \in Consumers : WF_vars(consumer(self)) /\ WF_vars(Deq(self))
 
 Termination == <>(\A self \in ProcSet: pc[self] = "Done")
 
@@ -252,5 +252,5 @@ Termination == <>(\A self \in ProcSet: pc[self] = "Done")
 
 =============================================================================
 \* Modification History
-\* Last modified Sat Oct 27 21:34:30 PDT 2018 by lhochstein
+\* Last modified Sun Oct 28 22:05:44 PDT 2018 by lhochstein
 \* Created Wed Oct 24 18:53:25 PDT 2018 by lhochstein
