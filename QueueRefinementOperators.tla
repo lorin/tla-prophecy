@@ -33,7 +33,19 @@ IsBlocking(iCons, pcCons, goal, bar) ==
                                [] pcCons \in {"D7","D10"} -> iCons<bar \/ iCons>=goal
                                [] pcCons \in {"D8", "D9", "Done"} -> FALSE \* already read
 
-
+(***************************************************************************)
+(* Precondition check to see if we need to check the isBlocking condition  *)
+(*                                                                         *)
+(* We only need to do the blocking check if it is possible that a producer *)
+(* writing at prodInd could be written by the consumer cons.               *)
+(*                                                                         *)
+(* It's impossible if the consumer associated with the producer is         *)
+(* scheduled first. In that case, the write will be nulled out.            *)
+(*                                                                         *)
+(* If there is no such consumer, or if the consumer associated with the    *)
+(* producer will be scheduled later than "cons", then there is a risk that *)
+(* the write could be read.                                                *)
+(***************************************************************************)
 CouldReadMyWrite(cons, prodInd, p) ==
     \/ ~\E c \in Consumers : p.ind[c] = prodInd  \* There is no consumer who will read my write
     \/ LET consAssocWithProd == CHOOSE c \in Consumers : p[c].ind = prodInd
@@ -56,5 +68,5 @@ PredE3(p, prod) == \A cons \in Consumers :
 
 =============================================================================
 \* Modification History
-\* Last modified Tue Oct 30 20:04:36 PDT 2018 by lhochstein
+\* Last modified Tue Oct 30 20:07:53 PDT 2018 by lhochstein
 \* Created Tue Oct 30 19:35:10 PDT 2018 by lhochstein
