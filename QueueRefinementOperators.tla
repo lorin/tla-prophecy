@@ -60,13 +60,47 @@ DomInjE2 == IdFcn(Dom)
 PredDomE2 == {}
 PredE2(p) == TRUE
 
+(***************************************************************************)
+(* This is the action for the producer (enqueue) to write to the rep       *)
+(* array.                                                                  *)
+(*                                                                         *)
+(* We need to verify that the write doesn't violate the prophecy.          *)
+(***************************************************************************)
 DomInjE3 == IdFcn(Dom)
 PredDomE3 == {}
 PredE3(p, prod) == \A cons \in Consumers :
     (/\ CouldReadMyWrite(cons, i_[prod], p)
      /\ pc[cons] \notin {"D8", "D9", "Done"}) => ~IsBlocking(i[cons], pc[cons], p[cons].ind, i_[prod])
 
+DomInjE4 == IdFcn(Dom)
+PredDomE4 == {}
+PredE4(p) == TRUE
+
+DomInjD1 == IdFcn(Dom)
+PredDomD1 == {}
+PredD1(p) == TRUE
+
+DomInjD2 == IdFcn(Dom)
+PredDomD2 == {}
+PredD2(p) == TRUE
+
+DomInjD3 == IdFcn(Dom)
+PredDomD3 == {}
+PredD3(p) == TRUE
+
+DomInjD4 == IdFcn(Dom)
+PredDomD4 == {}
+PredD4(p) == TRUE
+
+DomInjD5 == IdFcn(Dom)
+PredDomD5 == {}
+PredD5(p) == TRUE
+
+DomInjD6 == IdFcn(Dom)
+PredDomD6 == {}
+PredD6(p, cons) == TRUE
+
 =============================================================================
 \* Modification History
-\* Last modified Tue Oct 30 20:07:53 PDT 2018 by lhochstein
+\* Last modified Tue Oct 30 20:11:12 PDT 2018 by lhochstein
 \* Created Tue Oct 30 19:35:10 PDT 2018 by lhochstein
