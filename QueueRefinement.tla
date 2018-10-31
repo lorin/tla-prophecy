@@ -20,6 +20,7 @@ DomInjE2 == IdFcn(Dom)
 PredDomE2 == {}
 PredE2(p) == TRUE
 
+\* TODO: Beter constraints here
 DomInjE3 == IdFcn(Dom)
 PredDomE3 == {}
 PredE3(p) == TRUE
@@ -48,9 +49,11 @@ DomInjD5 == IdFcn(Dom)
 PredDomD5 == {}
 PredD5(p) == TRUE
 
-DomInjD6 == IdFcn(Dom)
-PredDomD6 == {}
-PredD6(p) == TRUE
+\* TODO: better constraints here
+DomInjD6 == IF p[1] = ind THEN [i \in 2..Cardinality(Len(p))|->i-1] ELSE IdFcn(Dom)
+PredDomD6 == {1}
+PredD6(p) == LET ind=i[self]
+             IN rep.items[ind] = null \/ p[1] = ind
 
 DomInjD7 == IdFcn(Dom)
 PredDomD7 == {}
@@ -83,6 +86,7 @@ VARIABLES p, \* Prophecy
           itemsBar \* abstraction function for the queue
 
 \* True if barrier stands between the consumer (where i=iCons, and pc=pcCons) and its goal location
+(*
 IsBlocking(iCons, pcCons, goal, bar) ==
     CASE goal = bar -> FALSE \* Can't block if we are the goal!
       [] goal < bar ->  CASE pcCons \in {"C1", "D1", "D2", "D3", "D4"} -> FALSE
@@ -102,7 +106,7 @@ CouldReadMyWrite(cons, prod, pr) ==
     \/ LET consAssocWithProd == CHOOSE co \in Consumers : pr.cons[co] = pr.prod[prod]
         index(ps) == CHOOSE ind \in 1..Len(pr.ord) : pr.ord[ind] = ps
         IN index(cons) < index(consAssocWithProd)
-          
+ *)         
 varsP == <<vars, p, itemsBar>>
 
 OneToOne(f) == \A s,t \in DOMAIN f : f[s] = f[t] => s=t
