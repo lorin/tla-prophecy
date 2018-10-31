@@ -11,7 +11,17 @@ where the dequeues will happen
 
 INSTANCE Prophecy WITH DomPrime<-Dom'
 
-\* True if barrier stands between the consumer (where i=iCons, and pc=pcCons) and its goal location
+
+(***************************************************************************)
+(* True if barrier stands between the consumer and its goal location.      *)
+(*                                                                         *)
+(* iCons is the index of the consumer process in the array.                *)
+(*                                                                         *)
+(* pcCons is the pc of the consumer.                                       *)
+(*                                                                         *)
+(* We use this to check if a producer writing into the array would violate *)
+(* the prophecy.                                                           *)
+(***************************************************************************)
 IsBlocking(iCons, pcCons, goal, bar) == 
     CASE goal = bar -> FALSE \* Can't block if we are the goal!
       [] goal < bar ->  CASE pcCons \in {"C1", "D1", "D2", "D3", "D4"} -> FALSE
@@ -40,11 +50,11 @@ PredE2(p) == TRUE
 
 DomInjE3 == IdFcn(Dom)
 PredDomE3 == {}
-PredE3(p, prod) == \A cons in Consumers :
+PredE3(p, prod) == \A cons \in Consumers :
     (/\ CouldReadMyWrite(cons, i_[prod], p)
      /\ pc[cons] \notin {"D8", "D9", "Done"}) => ~IsBlocking(i[cons], pc[cons], p[cons].ind, i_[prod])
 
 =============================================================================
 \* Modification History
-\* Last modified Tue Oct 30 19:39:49 PDT 2018 by lhochstein
+\* Last modified Tue Oct 30 20:04:36 PDT 2018 by lhochstein
 \* Created Tue Oct 30 19:35:10 PDT 2018 by lhochstein
