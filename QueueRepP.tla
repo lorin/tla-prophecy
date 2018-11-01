@@ -73,7 +73,7 @@ IsBlocking(iCons, pcCons, goal, bar) ==
 CouldReadMyWrite(cons, prodInd, p) ==
     \/ ~\E j \in 1..numPendingConsumers : p[j][2] = prodInd  \* There is no consumer who will read my write
     \/ LET myConsumerRank == CHOOSE j \in 1..numPendingConsumers : p[j][2] = prodInd
-           consumerRank == CHOOSE j \in 1..numPendingConsumrs: p[j][1] = cons
+           consumerRank == CHOOSE j \in 1..numPendingConsumers: p[j][1] = cons
        IN consumerRank < myConsumerRank
 
 DomInjE1 == IdFcn(Dom)
@@ -162,7 +162,27 @@ PredD6(p, cons) ==
                  /\ ourLocationToWrite = ourCurrentLocation
                  /\ ~locationIsPopulated -> ~\E j \in ourRank+1..Cardinality(Consumers): rep.items[p[j][2]] /= null
               [] OTHER -> TRUE
+
+
+DomInjD7 == IdFcn(Dom)
+PredDomD7 == {} 
+PredD7(p) == TRUE
+
+DomInjD8 == IdFcn(Dom)
+PredDomD8 == {} 
+PredD8(p) == TRUE
+
+DomInjD9 == IdFcn(Dom)
+PredDomD9 == {} 
+PredD9(p) == TRUE
+
+DomInjD10 == IdFcn(Dom)
+PredDomD10 == {} 
+PredD10(p) == TRUE
+
+Condition ==
+    /\ \E pr \in Producers: ProphCondition(E1(pr), DomInjE1, PredDomE1, PredE1)
 =============================================================================
 \* Modification History
-\* Last modified Wed Oct 31 22:46:58 PDT 2018 by lhochstein
+\* Last modified Wed Oct 31 23:06:41 PDT 2018 by lhochstein
 \* Created Wed Oct 31 21:07:38 PDT 2018 by lhochstein
