@@ -96,11 +96,22 @@ DomInjD5 == IdFcn(Dom)
 PredDomD5 == {}
 PredD5(p) == TRUE
 
+(***************************************************************************
+This is the action for the consumer (dequeue) to atomically swap an element
+of the rep array with null.
+
+If the element of the rep array is null, and this is where we are supposed
+to read, we need to make sure we can come all of the way back to this
+element (i.e., there are all nulls elsewhere)
+
+If the element of the rep array isn't null, we need to make sure that this
+is where we are supposed to read, and that it's our turn.
+ ***************************************************************************)
 DomInjD6 == IdFcn(Dom)
 PredDomD6 == {}
 PredD6(p, cons) == TRUE
 
 =============================================================================
 \* Modification History
-\* Last modified Tue Oct 30 20:11:12 PDT 2018 by lhochstein
+\* Last modified Tue Oct 30 20:15:32 PDT 2018 by lhochstein
 \* Created Tue Oct 30 19:35:10 PDT 2018 by lhochstein

@@ -12,43 +12,6 @@ Dom == 1..Cardinality(Consumers)
 INSTANCE Prophecy WITH DomPrime<-Dom'
 
 
-DomInjE1 == IdFcn(Dom)
-PredDomE1 == {}
-PredE1(p) == TRUE
-
-DomInjE2 == IdFcn(Dom)
-PredDomE2 == {}
-PredE2(p) == TRUE
-
-\* TODO: Beter constraints here
-DomInjE3 == IdFcn(Dom)
-PredDomE3 == {}
-PredE3(p) == TRUE
-
-DomInjE4 == IdFcn(Dom)
-PredDomE4 == {}
-PredE4(p) == TRUE
-
-DomInjD1 == IdFcn(Dom)
-PredDomD1 == {}
-PredD1(p) == TRUE
-
-DomInjD2 == IdFcn(Dom)
-PredDomD2 == {}
-PredD2(p) == TRUE
-
-DomInjD3 == IdFcn(Dom)
-PredDomD3 == {}
-PredD3(p) == TRUE
-
-DomInjD4 == IdFcn(Dom)
-PredDomD4 == {}
-PredD4(p) == TRUE
-
-DomInjD5 == IdFcn(Dom)
-PredDomD5 == {}
-PredD5(p) == TRUE
-
 \* TODO: better constraints here
 DomInjD6 == IF p[1] = ind THEN [i \in 2..Cardinality(Len(p))|->i-1] ELSE IdFcn(Dom)
 PredDomD6 == {1}
