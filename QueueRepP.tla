@@ -11,7 +11,7 @@ is a tuple: (consumer process id, write index)
 
  ***************************************************************************)
  
-EXTENDS QueueRep, FiniteSets, Utilities
+EXTENDS QueueRep, FiniteSets, Utilities, TLC
 
 
 \* A consumer is committed to a course of action. It has already written
@@ -32,7 +32,7 @@ Pi == LET orderings == Perms(Consumers)
           indexes == UNION({Perms(y) : y \in indexSets})
       IN {Zip(y[1], y[2]): y \in orderings \X indexes}
 
-Dom == 1..numPendingConsumers
+Dom == {1}
 
 INSTANCE Prophecy WITH DomPrime<-Dom'
 
@@ -71,9 +71,9 @@ IsBlocking(iCons, pcCons, goal, bar) ==
 (* the write could be read.                                                *)
 (***************************************************************************)
 CouldReadMyWrite(cons, prodInd, p) ==
-    \/ ~\E j \in 1..numPendingConsumers : p[j][2] = prodInd  \* There is no consumer who will read my write
-    \/ LET myConsumerRank == CHOOSE j \in 1..numPendingConsumers : p[j][2] = prodInd
-           consumerRank == CHOOSE j \in 1..numPendingConsumers: p[j][1] = cons
+    \/ ~\E j \in 1..numPendingConsumers : p[1][j][2] = prodInd  \* There is no consumer who will read my write
+    \/ LET myConsumerRank == CHOOSE j \in 1..numPendingConsumers : p[1][j][2] = prodInd
+           consumerRank == CHOOSE j \in 1..numPendingConsumers: p[1][j][1] = cons
        IN consumerRank < myConsumerRank
 
 DomInjE1 == IdFcn(Dom)
@@ -92,10 +92,11 @@ PredE2(p) == TRUE
 (***************************************************************************)
 DomInjE3 == IdFcn(Dom)
 PredDomE3 == {}
-PredE3(p, prod) == \A cons \in Consumers :
-    (/\ CouldReadMyWrite(cons, i_[prod], p)
-     /\ LET j == CHOOSE j \in 1..Cardinality(Producers) : p[j][1]=cons
-            consInd == p[j][2]
+PredE3(p, prod) == PrintT(p) /\ 
+    \A cons \in Consumers :
+     (/\ CouldReadMyWrite(cons, i_[prod], p)
+      /\ LET j == CHOOSE j \in 1..Cardinality(Producers) : p[1][j][1]=cons
+            consInd == p[1][j][2]
             \* If the consumer hasn't committed to a course of action, it can't
             \* block another consumer that is supposed to commit earlier
          IN ~hasCommitted(cons) => ~IsBlocking(i[cons], pc[cons], consInd, i_[prod]))
@@ -143,8 +144,8 @@ DomInjD6 == IdFcn(Dom)
 PredDomD6 == {} 
 PredD6(p, cons) == 
          \* We're next, and we are in the correct place to write
-         LET ourRank == CHOOSE j \in 1..Cardinality(Consumers) : p[j][1] = cons
-             ourLocationToWrite == p[ourRank][2]
+         LET ourRank == CHOOSE j \in 1..Cardinality(Consumers) : p[1][j][1] = cons
+             ourLocationToWrite == p[1][ourRank][2]
              isOurTurnToWrite == ourRank = next
              ourCurrentLocation == i_[cons]
              locationIsPopulated == rep.items[ourCurrentLocation] /= null
@@ -160,7 +161,7 @@ PredD6(p, cons) ==
                  \* consumer's location has been written, we can't advance
               [] /\ isOurTurnToWrite
                  /\ ourLocationToWrite = ourCurrentLocation
-                 /\ ~locationIsPopulated -> ~\E j \in ourRank+1..Cardinality(Consumers): rep.items[p[j][2]] /= null
+                 /\ ~locationIsPopulated -> ~\E j \in ourRank+1..Cardinality(Consumers): rep.items[p[1][j][2]] /= null
               [] OTHER -> TRUE
 
 
@@ -181,8 +182,10 @@ PredDomD10 == {}
 PredD10(p) == TRUE
 
 Condition ==
-    /\ \E pr \in Producers: ProphCondition(E1(pr), DomInjE1, PredDomE1, PredE1)
+    /\ \A pr \in Producers: ProphCondition(E1(pr), DomInjE1, PredDomE1, PredE1)
+    /\ \A pr \in Producers: ProphCondition(E2(pr), DomInjE2, PredDomE2, PredE2)
+    /\ \A pr \in Producers: ProphCondition(E3(pr), DomInjE3, PredDomE3, LAMBDA p: PredE3(p, pr))
 =============================================================================
 \* Modification History
-\* Last modified Wed Oct 31 23:06:41 PDT 2018 by lhochstein
+\* Last modified Wed Oct 31 23:27:51 PDT 2018 by lhochstein
 \* Created Wed Oct 31 21:07:38 PDT 2018 by lhochstein
