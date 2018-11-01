@@ -60,5 +60,5 @@ Zip(x,y) == IF Len(x) = 0 THEN << >> ELSE << <<Head(x), Head(y)>> >> \o Zip(Tail
 
 =============================================================================
 \* Modification History
-\* Last modified Wed Oct 31 21:58:05 PDT 2018 by lhochstein
+\* Last modified Wed Oct 31 23:15:40 PDT 2018 by lhochstein
 \* Created Mon Oct 22 19:21:10 PDT 2018 by lhochstein
