@@ -48,14 +48,14 @@ INSTANCE Prophecy WITH DomPrime<-Dom'
 (***************************************************************************)
 IsBlocking(iCons, pcCons, goal, bar) == 
     CASE goal = bar -> FALSE \* Can't block if we are the goal!
-      [] goal < bar ->  CASE pcCons \in {"C1", "D1", "D2", "D3", "D4"} -> FALSE
+      [] goal < bar -> (CASE pcCons \in {"C1", "D1", "D2", "D3", "D4"} -> FALSE
                                [] pcCons \in {"D5", "D6"} -> iCons>goal /\ iCons<=bar
                                [] pcCons \in {"D7","D10"} -> iCons>=goal /\ iCons<bar
-                               [] pcCons \in {"D8", "D9", "Done"} -> FALSE \* already read
-      [] goal > bar -> CASE pcCons \in {"C1", "D1", "D2", "D3", "D4"} -> TRUE
+                               [] pcCons \in {"D8", "D9", "Done"} -> FALSE) \* already read
+      [] goal > bar -> (CASE pcCons \in {"C1", "D1", "D2", "D3", "D4"} -> TRUE
                                [] pcCons \in {"D5", "D6"} -> iCons<=bar \/ iCons>goal
                                [] pcCons \in {"D7","D10"} -> iCons<bar \/ iCons>=goal
-                               [] pcCons \in {"D8", "D9", "Done"} -> FALSE \* already read
+                               [] pcCons \in {"D8", "D9", "Done"} -> FALSE) \* already read
 
 (***************************************************************************)
 (* Precondition check to see if we need to check the isBlocking condition  *)
@@ -92,7 +92,7 @@ PredE2(p) == TRUE
 (***************************************************************************)
 DomInjE3 == IdFcn(Dom)
 PredDomE3 == {}
-PredE3(p, prod) == PrintT(p) /\ 
+PredE3(p, prod) == 
     \A cons \in Consumers :
      (/\ CouldReadMyWrite(cons, i_[prod], p)
       /\ LET j == CHOOSE j \in 1..Cardinality(Producers) : p[1][j][1]=cons
@@ -187,5 +187,5 @@ Condition ==
     /\ \A pr \in Producers: ProphCondition(E3(pr), DomInjE3, PredDomE3, LAMBDA p: PredE3(p, pr))
 =============================================================================
 \* Modification History
-\* Last modified Wed Oct 31 23:27:51 PDT 2018 by lhochstein
+\* Last modified Wed Oct 31 23:35:18 PDT 2018 by lhochstein
 \* Created Wed Oct 31 21:07:38 PDT 2018 by lhochstein
