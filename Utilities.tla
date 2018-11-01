@@ -53,7 +53,12 @@ Perms(S) == LET fs == Orderings(Cardinality(S))
             IN {s**f: f \in fs}
 
 
+\* Given two sequences, generate a sequence of ordered pairs
+RECURSIVE Zip(_, _)
+Zip(x,y) == IF Len(x) = 0 THEN << >> ELSE << <<Head(x), Head(y)>> >> \o Zip(Tail(x), Tail(y))
+
+
 =============================================================================
 \* Modification History
-\* Last modified Tue Oct 23 18:40:06 PDT 2018 by lhochstein
+\* Last modified Wed Oct 31 21:58:05 PDT 2018 by lhochstein
 \* Created Mon Oct 22 19:21:10 PDT 2018 by lhochstein
