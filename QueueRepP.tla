@@ -8,7 +8,8 @@ Specifically, we predict:
 
  ***************************************************************************)
  
-EXTENDS QueueRep
+EXTENDS QueueRep, FiniteSets
+
 
 
 (***************************************************************************
@@ -20,8 +21,9 @@ pendingConsumers == {c \in Consumers : /\ pc[c] \notin {"D8","D9","DONE"}
                                        /\ pc[c]="D7" => rVal[c] = null}
  
 
+Dom == 1..Cardinality(pendingConsumers)
 
 =============================================================================
 \* Modification History
-\* Last modified Wed Oct 31 21:13:43 PDT 2018 by lhochstein
+\* Last modified Wed Oct 31 21:15:34 PDT 2018 by lhochstein
 \* Created Wed Oct 31 21:07:38 PDT 2018 by lhochstein
