@@ -94,12 +94,12 @@ DomInjE3 == IdFcn(Dom)
 PredDomE3 == {}
 PredE3(p, prod) == 
     \A cons \in Consumers :
-     (/\ CouldReadMyWrite(cons, i_[prod], p)
-      /\ LET j == CHOOSE j \in 1..Cardinality(Producers) : p[1][j][1]=cons
+     CouldReadMyWrite(cons, i_[prod], p) => 
+        LET j == CHOOSE j \in 1..Cardinality(Producers) : p[1][j][1]=cons
             consInd == p[1][j][2]
             \* If the consumer hasn't committed to a course of action, it can't
             \* block another consumer that is supposed to commit earlier
-         IN ~hasCommitted(cons) => ~IsBlocking(i[cons], pc[cons], consInd, i_[prod]))
+         IN ~hasCommitted(cons) => ~IsBlocking(i[cons], pc[cons], consInd, i_[prod])
              
 DomInjE4 == IdFcn(Dom)
 PredDomE4 == {}
@@ -187,5 +187,5 @@ Condition ==
     /\ \A pr \in Producers: ProphCondition(E3(pr), DomInjE3, PredDomE3, LAMBDA p: PredE3(p, pr))
 =============================================================================
 \* Modification History
-\* Last modified Wed Oct 31 23:35:18 PDT 2018 by lhochstein
+\* Last modified Thu Nov 01 22:21:45 PDT 2018 by lhochstein
 \* Created Wed Oct 31 21:07:38 PDT 2018 by lhochstein
