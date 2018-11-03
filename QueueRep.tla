@@ -1,8 +1,8 @@
-(****************************************************************************
-
-Queue representation type (REP) from Herlihy & Wing 1990
-
-****************************************************************************)
+(***************************************************************************)
+(*                                                                         *)
+(* Queue representation type (REP) from Herlihy & Wing 1990                *)
+(*                                                                         *)
+(***************************************************************************)
 ------------------------------ MODULE QueueRep ------------------------------
 EXTENDS Naturals, Sequences, TLC
 
@@ -252,5 +252,5 @@ Termination == <>(\A self \in ProcSet: pc[self] = "Done")
 
 =============================================================================
 \* Modification History
-\* Last modified Sun Oct 28 22:05:44 PDT 2018 by lhochstein
+\* Last modified Fri Nov 02 21:52:43 PDT 2018 by lhochstein
 \* Created Wed Oct 24 18:53:25 PDT 2018 by lhochstein
