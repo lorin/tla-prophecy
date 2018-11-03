@@ -91,7 +91,7 @@ PredE2(p) == TRUE
 (* We need to verify that the write doesn't violate the prophecy.          *)
 (***************************************************************************)
 DomInjE3 == IdFcn(Dom)
-PredDomE3 == {}
+PredDomE3 == {1}
 PredE3(p, prod) == 
     \A cons \in Consumers :
      CouldReadMyWrite(cons, i_[prod], p) => 
@@ -187,5 +187,5 @@ Condition ==
     /\ \A pr \in Producers: ProphCondition(E3(pr), DomInjE3, PredDomE3, LAMBDA p: PredE3(p, pr))
 =============================================================================
 \* Modification History
-\* Last modified Thu Nov 01 22:21:45 PDT 2018 by lhochstein
+\* Last modified Fri Nov 02 17:12:04 PDT 2018 by lhochstein
 \* Created Wed Oct 31 21:07:38 PDT 2018 by lhochstein
