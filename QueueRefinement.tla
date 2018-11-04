@@ -23,7 +23,8 @@ Dom == {1}
 INSTANCE Prophecy WITH DomPrime<-Dom'
 
 
-PredEnq(abs) == \E absp \in Pi' : (abs = absp \/ \E v \in Values: Append(abs,v) = absp)
+PredEnq(abs) == \E absp \in Pi' : \/ abs = absp
+                                  \/ \E v \in Values: Append(abs,v) = absp
 PredDeq(abs) == \E absp \in Pi' : \/ abs = absp 
                                   \/ \E v \in Values: abs = <<v>> \o absp
 
@@ -47,15 +48,23 @@ DomInjD1 == IdFcn(Dom)
 PredDomD1 == {1}
 PredD1(p) == PredDeq(p[1]) 
 
+DomInjD2 == IdFcn(Dom)
+PredDomD2 == {1}
+PredD2(p) == PredDeq(p[1]) 
 
+DomInjD3 == IdFcn(Dom)
+PredDomD3 == {1}
+PredD3(p) == PredDeq(p[1]) 
 
 Condition ==
-    /\ \A pr \in Producers: ProphCondition(E1(pr), DomInjE1, PredDomE1, PredE1)
-    /\ \A pr \in Producers: ProphCondition(E2(pr), DomInjE2, PredDomE2, PredE2)
-    /\ \A pr \in Producers: ProphCondition(E3(pr), DomInjE3, PredDomE3, PredE3)
-    /\ \A pr \in Producers: ProphCondition(E4(pr), DomInjE4, PredDomE4, PredE4)
-    /\ \A co \in Consumers: ProphCondition(D1(co), DomInjD1, PredDomD1, PredD1)
+\*    /\ \A pr \in Producers: ProphCondition(E1(pr), DomInjE1, PredDomE1, PredE1)
+\*    /\ \A pr \in Producers: ProphCondition(E2(pr), DomInjE2, PredDomE2, PredE2)
+\*    /\ \A pr \in Producers: ProphCondition(E3(pr), DomInjE3, PredDomE3, PredE3)
+\*    /\ \A pr \in Producers: ProphCondition(E4(pr), DomInjE4, PredDomE4, PredE4)
+\*    /\ \A co \in Consumers: ProphCondition(D1(co), DomInjD1, PredDomD1, PredD1)
+    /\ \A co \in Consumers: ProphCondition(D2(co), DomInjD2, PredDomD2, PredD2)
+    /\ \A co \in Consumers: ProphCondition(D3(co), DomInjD2, PredDomD3, PredD3)
 =============================================================================
 \* Modification History
-\* Last modified Sat Nov 03 21:34:23 PDT 2018 by lhochstein
+\* Last modified Sat Nov 03 21:36:41 PDT 2018 by lhochstein
 \* Created Sat Oct 27 12:02:21 PDT 2018 by lhochstein
