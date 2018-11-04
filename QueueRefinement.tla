@@ -33,12 +33,21 @@ DomInjE2 == IdFcn(Dom)
 PredDomE2 == {1}
 PredE2(p) == PredEnq(p[1]) 
 
+DomInjE3 == IdFcn(Dom)
+PredDomE3 == {1}
+PredE3(p) == PredEnq(p[1]) 
+
+DomInjE4 == IdFcn(Dom)
+PredDomE4 == {1}
+PredE4(p) == PredEnq(p[1]) 
 
 Condition ==
     /\ \A pr \in Producers: ProphCondition(E1(pr), DomInjE1, PredDomE1, PredE1)
     /\ \A pr \in Producers: ProphCondition(E2(pr), DomInjE2, PredDomE2, PredE2)
+    /\ \A pr \in Producers: ProphCondition(E3(pr), DomInjE3, PredDomE3, PredE3)
+    /\ \A pr \in Producers: ProphCondition(E4(pr), DomInjE4, PredDomE4, PredE4)
 
 =============================================================================
 \* Modification History
-\* Last modified Sat Nov 03 21:26:02 PDT 2018 by lhochstein
+\* Last modified Sat Nov 03 21:27:58 PDT 2018 by lhochstein
 \* Created Sat Oct 27 12:02:21 PDT 2018 by lhochstein
