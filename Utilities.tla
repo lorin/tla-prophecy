@@ -57,8 +57,16 @@ Perms(S) == LET fs == Orderings(Cardinality(S))
 RECURSIVE Zip(_, _)
 Zip(x,y) == IF Len(x) = 0 THEN << >> ELSE << <<Head(x), Head(y)>> >> \o Zip(Tail(x), Tail(y))
 
+\* Given a set of ordered pairs, return a function
+fromPairs(pairs) == 
+    LET RECURSIVE build(_, _, _)
+        build(f, prs) == IF PrintT(n) /\ prs = {} THEN f
+                         ELSE LET pr == CHOOSE pr \in prs : TRUE
+                              IN build(f @@ pr[1] :> pr[2], prs \ {pr})
+    IN build(<<>>, pairs, 1)
+
 
 =============================================================================
 \* Modification History
-\* Last modified Wed Oct 31 23:15:40 PDT 2018 by lhochstein
+\* Last modified Sat Nov 03 20:08:37 PDT 2018 by lhochstein
 \* Created Mon Oct 22 19:21:10 PDT 2018 by lhochstein
