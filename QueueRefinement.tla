@@ -10,10 +10,12 @@ pendingWrites ==
     IN  fromPairs({<<rInd_[pr], x[pr] >> : pr \in pendingProducers})
 
 consumerIndexes ==
-    LET pendingConsumersPreIncrement == {cons \in Consumers : pc[cons] \in {"D5","D6"}}
+    LET max == rep.back-1
+        pendingConsumersPreIncrement == {cons \in Consumers : pc[cons] \in {"D5","D6"}}
         pendingConsumersPostIncrement == {cons \in Consumers : \/ pc[cons] = "D10"
                                                                \/ pc[cons] = "D7" /\ rVal[cons] = null}
-    IN {i[cons] : cons \in pendingConsumersPreIncrement} \union {nextIndex(i[cons],rep.back-1) : cons \in pendingConsumersPostIncrement}
+        currentIndex(iCons, mx) == IF iCons <= mx THEN iCons ELSE 1
+    IN {currentIndex(i[cons], max): cons \in pendingConsumersPreIncrement} \union {nextIndex(i[cons],max) : cons \in pendingConsumersPostIncrement}
 
 Pi == Abs(rep, pendingWrites, consumerIndexes)
 Dom == {1}
@@ -32,5 +34,5 @@ Condition ==
 
 =============================================================================
 \* Modification History
-\* Last modified Sat Nov 03 21:14:57 PDT 2018 by lhochstein
+\* Last modified Sat Nov 03 21:23:57 PDT 2018 by lhochstein
 \* Created Sat Oct 27 12:02:21 PDT 2018 by lhochstein

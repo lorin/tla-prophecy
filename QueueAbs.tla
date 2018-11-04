@@ -12,7 +12,7 @@ CONSTANT null
 \* Remove an element from the domain of a function
 f -- xp == [x \in DOMAIN f \ {xp} |-> f[x]]
 
-nextIndex(i, max) == IF i=max THEN 1 ELSE i+1 
+nextIndex(i, max) == IF i>=max THEN 1 ELSE i+1 
 
 RECURSIVE lin(_, _, _, _, _) 
 
@@ -66,12 +66,9 @@ Abs(queue,pending,reads) ==
     LET max == queue.back-1
         domain == {ind \in 1..max : queue.items[ind] /= null}
         writes == [d \in domain |-> queue.items[d]]
-    IN IF /\ PrintT(<<"Queue", queue, "Abs",writes, pending, reads, max>>)
-          /\ Assert(\A r \in reads: r<=max, "Abs: read exceeds max")
-       THEN lin(writes,pending,reads,max, 1)
-       ELSE "N/A"
+    IN lin(writes,pending,reads,max, 1)
 
 =============================================================================
 \* Modification History
-\* Last modified Sat Nov 03 21:14:09 PDT 2018 by lhochstein
+\* Last modified Sat Nov 03 21:24:34 PDT 2018 by lhochstein
 \* Created Fri Nov 02 21:52:24 PDT 2018 by lhochstein
