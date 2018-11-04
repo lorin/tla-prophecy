@@ -58,15 +58,10 @@ RECURSIVE Zip(_, _)
 Zip(x,y) == IF Len(x) = 0 THEN << >> ELSE << <<Head(x), Head(y)>> >> \o Zip(Tail(x), Tail(y))
 
 \* Given a set of ordered pairs, return a function
-fromPairs(pairs) == 
-    LET RECURSIVE build(_, _, _)
-        build(f, prs) == IF PrintT(n) /\ prs = {} THEN f
-                         ELSE LET pr == CHOOSE pr \in prs : TRUE
-                              IN build(f @@ pr[1] :> pr[2], prs \ {pr})
-    IN build(<<>>, pairs, 1)
-
+fromPairs(pairs) == [x \in {p[1] : p \in pairs} |-> LET p == CHOOSE p \in pairs : p[1]=x
+                                                     IN p[2]]
 
 =============================================================================
 \* Modification History
-\* Last modified Sat Nov 03 20:08:37 PDT 2018 by lhochstein
+\* Last modified Sat Nov 03 20:11:53 PDT 2018 by lhochstein
 \* Created Mon Oct 22 19:21:10 PDT 2018 by lhochstein
