@@ -7,7 +7,7 @@ EXTENDS Naturals, Sequences, TLC
 
 CONSTANT Values
 
-null == CHOOSE x : x \notin Values
+CONSTANT null
 
 \* Remove an element from the domain of a function
 f -- xp == [x \in DOMAIN f \ {xp} |-> f[x]]
@@ -25,8 +25,8 @@ RECURSIVE lin(_, _, _, _)
 (***************************************************************************)
 RECURSIVE linr(_, _, _, _, _)
 linr(i, writes, pending, reads, max) ==
-         \* base case
     LET iNext == IF i=max THEN 1 ELSE i+1 IN
+         \* base case
          \* No data written or pending then queue is empty
     CASE (DOMAIN writes \union DOMAIN pending) = {} -> {<< >>} 
          \* only pendings are left. To ensure the recursion terminates, need
@@ -68,5 +68,5 @@ Abs(queue,pending,reads) ==
 
 =============================================================================
 \* Modification History
-\* Last modified Sat Nov 03 16:11:11 PDT 2018 by lhochstein
+\* Last modified Sat Nov 03 19:37:04 PDT 2018 by lhochstein
 \* Created Fri Nov 02 21:52:24 PDT 2018 by lhochstein
