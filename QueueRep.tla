@@ -9,6 +9,7 @@ EXTENDS Naturals, Sequences, TLC
 CONSTANT Values
 CONSTANT Producers
 CONSTANT Consumers
+CONSTANT Nmax
 
 
 null == CHOOSE x : x \notin Values
@@ -19,7 +20,7 @@ TypeOk(r) == r \in [back:Nat, items:Seq(Values \union null)]
 (*
 --algorithm Rep
 
-variables rep = [back|->1, items|->[n \in Nat|->null]];
+variables rep = [back|->1, items|->[n \in Nmax|->null]];
 
 macro INC(x)
 begin
@@ -252,5 +253,5 @@ Termination == <>(\A self \in ProcSet: pc[self] = "Done")
 
 =============================================================================
 \* Modification History
-\* Last modified Fri Nov 02 21:52:43 PDT 2018 by lhochstein
+\* Last modified Sun Nov 04 17:07:28 PST 2018 by lhochstein
 \* Created Wed Oct 24 18:53:25 PDT 2018 by lhochstein
