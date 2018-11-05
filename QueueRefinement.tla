@@ -33,16 +33,20 @@ PredDomE1 == {1}
 PredE1(p) == PredEnq(p[1]) 
 
 DomInjE2 == IdFcn(Dom)
-PredDomE2 == {1}
-PredE2(p) == PredEnq(p[1]) 
+PredDomE2 == {}
+PredE2(p) == TRUE
 
 DomInjE3 == IdFcn(Dom)
 PredDomE3 == {1}
 PredE3(p) == PredEnq(p[1]) 
 
 DomInjE4 == IdFcn(Dom)
-PredDomE4 == {1}
-PredE4(p) == PredEnq(p[1]) 
+PredDomE4 == {}
+PredE4(p) == TRUE
+
+DomInjC1 == IdFcn(Dom)
+PredDomC1 == {}
+PredC1(p) == TRUE
 
 DomInjD1 == IdFcn(Dom)
 PredDomD1 == {1}
