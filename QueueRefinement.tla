@@ -72,6 +72,11 @@ DomInjD10 == [j \in Nat \ {0,1} |-> j-1]
 PredDomD10 == {1}
 PredD10(p, process) == p[1] = process
 
+DomInjP1 == [j \in Nat \ {0,1} |-> j-1]
+PredDomP1 == {1}
+PredP1(p, process) == p[1] = process
+
+
 Condition ==
     /\ \A pr \in Producers: ProphCondition(E1(pr), DomInjE1, PredDomE1, LAMBDA p: PredE1(p, pr))
     /\ \A pr \in Producers: ProphCondition(E2(pr), DomInjE2, PredDomE2, LAMBDA p: PredE2(p, pr))
@@ -89,5 +94,5 @@ Condition ==
     /\ \A co \in Consumers: ProphCondition(D10(co), DomInjD10, PredDomD10, LAMBDA p: PredD10(p, co))
 =============================================================================
 \* Modification History
-\* Last modified Sun Nov 04 17:04:18 PST 2018 by lhochstein
+\* Last modified Sun Nov 04 17:12:32 PST 2018 by lhochstein
 \* Created Sat Oct 27 12:02:21 PDT 2018 by lhochstein
