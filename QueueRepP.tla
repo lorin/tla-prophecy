@@ -1,11 +1,13 @@
 ----------------------------- MODULE QueueRepP -----------------------------
 EXTENDS QueueRefinement
 
-VARIABLE p
+VARIABLE p, itemsBar
 
-varsP == <<vars,p>>
 
-InitP == Init /\ (p \in [Dom->Pi])
+varsP == <<vars,p, itemsBar>>
+
+InitP == Init /\ (p \in [Dom->Pi]) /\ itemsBar = << >>
+
 
 E1P(self) == ProphAction(E1(self), p, p', DomInjE1, PredDomE1, LAMBDA j: PredE1(j, self))
 E2P(self) == ProphAction(E2(self), p, p', DomInjE2, PredDomE2, LAMBDA j: PredE2(j, self))
@@ -36,18 +38,51 @@ producerP(self) == P1P(self)
 
 C1P(self) == ProphAction(C1(self), p, p', DomInjC1, PredDomC1, LAMBDA j: PredC1(j, self))
 
+\* Need to add a no-op "done" to consume the done prophecies
+Done(self) == /\ pc[self] = "Done"
+              /\ UNCHANGED vars
+
+DoneP(self) == ProphAction(Done(self), p, p', DomInjDone, PredDomDone, LAMBDA j: PredDone(j, self))
+
 consumerP(self) == C1P(self)
+
+RefinementD6(self) == IF rep.items[i[self]] /= null
+                      THEN itemsBar' = Tail(itemsBar)
+                      ELSE UNCHANGED itemsBar
+
+Refinement  == /\ (\E self \in Producers : E1P(self) => UNCHANGED itemsBar)
+               /\ (\E self \in Producers : E2P(self) => UNCHANGED itemsBar)
+               /\ (\E self \in Producers : E3P(self) => UNCHANGED itemsBar)
+               /\ (\E self \in Producers : E4P(self) => UNCHANGED itemsBar)
+               /\ (\E self \in Producers : P1P(self) => UNCHANGED itemsBar)
+               /\ (\E self \in Consumers : D1P(self) => UNCHANGED itemsBar)
+               /\ (\E self \in Consumers : D2P(self) => UNCHANGED itemsBar)
+               /\ (\E self \in Consumers : D3P(self) => UNCHANGED itemsBar)
+               /\ (\E self \in Consumers : D4P(self) => UNCHANGED itemsBar)
+               /\ (\E self \in Consumers : D5P(self) => UNCHANGED itemsBar)
+               /\ (\E self \in Consumers : D6P(self) => RefinementD6(self))
+               /\ (\E self \in Consumers : D7P(self) => UNCHANGED itemsBar)
+               /\ (\E self \in Consumers : D8P(self) => UNCHANGED itemsBar)
+               /\ (\E self \in Consumers : D9P(self) => UNCHANGED itemsBar)
+               /\ (\E self \in Consumers : D10P(self) => UNCHANGED itemsBar)
+               /\ (\E self \in Consumers : C1P(self) => UNCHANGED itemsBar)
+               /\ (\E self \in ProcSet : DoneP(self) => UNCHANGED itemsBar)
+
 
 NextP == (\E self \in ProcSet: EnqP(self) \/ DeqP(self))
            \/ (\E self \in Producers: producerP(self))
            \/ (\E self \in Consumers: consumerP(self))
+           \/ (\E self \in ProcSet: DoneP(self)) \* consume prophecy var when executing a "done" process
            \/ (* Disjunct to prevent deadlock on termination *)
               ((\A self \in ProcSet: pc[self] = "Done") /\ UNCHANGED varsP)
 
-SpecP == /\ InitP /\ [][NextP]_vars
+SpecP == /\ InitP /\ [][NextP /\ Refinement]_varsP 
+
+
+Q == INSTANCE Queue WITH items<-itemsBar
 
 TerminationP == <>(\A self \in ProcSet: pc[self] = "Done")
 =============================================================================
 \* Modification History
-\* Last modified Sun Nov 04 17:18:49 PST 2018 by lhochstein
+\* Last modified Sun Nov 04 19:02:49 PST 2018 by lhochstein
 \* Created Wed Oct 31 21:07:38 PDT 2018 by lhochstein

@@ -1,10 +1,10 @@
 -------------------------- MODULE QueueRefinement --------------------------
 EXTENDS QueueRep, Utilities, Naturals
 
-(***************************************************************************
-The propechy variable predicts how the scheduler will interleave statements
-among the processes.
- ***************************************************************************)
+(***************************************************************************)
+(* The prophecy variable predicts how the scheduler will interleave        *)
+(* statements among the processes.                                         *)
+(***************************************************************************)
 
 Dom == Nat \ {0}
 Pi == Producers \union Consumers
@@ -76,6 +76,10 @@ DomInjP1 == [j \in Nat \ {0,1} |-> j-1]
 PredDomP1 == {1}
 PredP1(p, process) == p[1] = process
 
+DomInjDone == [j \in Nat \ {0,1} |-> j-1]
+PredDomDone == {1}
+PredDone(p, process) == p[1] = process
+
 
 Condition ==
     /\ \A pr \in Producers: ProphCondition(E1(pr), DomInjE1, PredDomE1, LAMBDA p: PredE1(p, pr))
@@ -94,5 +98,5 @@ Condition ==
     /\ \A co \in Consumers: ProphCondition(D10(co), DomInjD10, PredDomD10, LAMBDA p: PredD10(p, co))
 =============================================================================
 \* Modification History
-\* Last modified Sun Nov 04 17:12:32 PST 2018 by lhochstein
+\* Last modified Sun Nov 04 17:36:17 PST 2018 by lhochstein
 \* Created Sat Oct 27 12:02:21 PDT 2018 by lhochstein

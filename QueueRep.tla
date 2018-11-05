@@ -11,16 +11,18 @@ CONSTANT Producers
 CONSTANT Consumers
 CONSTANT Nmax
 
+Naturals == 1..Nmax
+
 
 null == CHOOSE x : x \notin Values
 
 
-TypeOk(r) == r \in [back:Nat, items:Seq(Values \union null)]
+TypeOk(r) == r \in [back:Naturals, items:Seq(Values \union null)]
 
 (*
 --algorithm Rep
 
-variables rep = [back|->1, items|->[n \in Nmax|->null]];
+variables rep = [back|->1, items|->[n \in Naturals|->null]];
 
 macro INC(x)
 begin
@@ -253,5 +255,5 @@ Termination == <>(\A self \in ProcSet: pc[self] = "Done")
 
 =============================================================================
 \* Modification History
-\* Last modified Sun Nov 04 17:07:28 PST 2018 by lhochstein
+\* Last modified Sun Nov 04 17:32:33 PST 2018 by lhochstein
 \* Created Wed Oct 24 18:53:25 PDT 2018 by lhochstein
