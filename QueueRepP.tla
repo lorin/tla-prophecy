@@ -1,9 +1,9 @@
 ----------------------------- MODULE QueueRepP -----------------------------
 EXTENDS QueueRefinement
 
-VARIABLE p, ord
+VARIABLE p, ord, itemsBar
 
-varsP == <<vars,p, ord>>
+varsP == <<vars,p, ord, itemsBar>>
 
 
 (*
@@ -16,16 +16,14 @@ itemsBar is the refinement mapping
 
 *)
 
-InitP == /\ \Init
+InitP == /\ Init
          /\ (p \in [Dom->Pi])
          /\ ord = << >>
          /\ itemsBar = << >>
 
 TypeOK == /\ p \in [Dom->Pi]
-          /\ ord \in UNION([1..N:Producers] : N \in 1..Cardinality(Producers))
-          /\ itemsBar \in UNION([1..N:Producers] : Values)
-
-itemsBar == [j in DOMAIN ord |-> LET producer==ord[j] IN x[producer]]
+          /\ ord \in UNION({[1..N -> Producers] : N \in 1..Cardinality(Producers)})
+          /\ itemsBar \in UNION({[1..N -> Values] : N \in 1..Cardinality(Producers)})
 
 E1P(self) == ProphAction(E1(self), p, p', DomInjE1, PredDomE1, LAMBDA j: PredE1(j, self))
 E2P(self) == ProphAction(E2(self), p, p', DomInjE2, PredDomE2, LAMBDA j: PredE2(j, self))
@@ -68,50 +66,58 @@ consumerP(self) == C1P(self)
 IsPrefixOf(sp,s) == sp = SubSeq(s, 1, Len(sp))
 
 \* Sequence that represents the order in which the producer process's values
-\* will be dequeued, TODO: this isn't complete
-Ordering(po, ordo, repo, pco, stacko, xo, i_o, rInd_o, io, x_o, rangeo, rIndo, rValo) == << >>
+\* will be dequeued, assuming an initial state of ordo
+RECURSIVE Ordering(_, _, _, _, _, _, _, _, _, _, _, _, _)
+Ordering(po, ordo, repo, pco, stacko, xo, i_o, rInd_o, io, x_o, rangeo, rIndo, rValo) == 
+    LET consumersRemaining == {co \in Consumers : \/ pco[co] \in {"C1", "D1", "D2", "D3", "D4", "D5", "D6", "D10"}
+                                                  \/ pco[co]="D7" => rValo[co] = null }
+        self == po[1]
+    IN IF consumersRemaining = {} \/ po = << >> THEN ordo
+    ELSE CASE pco[self] = "E1" -> Ordering(Tail(po), ordo, [repo EXCEPT !.back = (repo.back)+1], [pco EXCEPT ![self] = "E2"],
+                                           stacko, xo, i_o, [rInd_o EXCEPT ![self] = repo.back], io, x_o, rangeo, rIndo, rValo)
+[] pco[self] = "E2" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = "E3"], stacko, xo, [i_o EXCEPT ![self] = rInd_o[self]], rInd_o, io, x_o, rangeo, rIndo, rValo)
     
-
 (*
 True if the producer's enqueue should take effect now
 *)
-takesEffect(producer) == LET alreadyTakenEffect == \E i \in DOMAIN ord : ord[i] = producer
+takesEffect(prod) == LET alreadyTakenEffect == \E j \in DOMAIN ord : ord[j] = prod
                              ordP == Ordering(p, << >>, rep, pc, stack, x, i_, rInd_, i, x_, range, rInd, rVal)
-                             nextToTakeEffect == ordP[1] = producer
+                             nextToTakeEffect == ordP[1] = prod
                              anyProducerMayTakeEffect == ordP = << >>
                          IN /\ ~alreadyTakenEffect
                             /\ \/ nextToTakeEffect
                                \/ anyProducerMayTakeEffect
 
 
-RefinementEnq(self) == IF takesEffect(self) THEN ord'= Append(ord, self)  ELSE UNCHANGED ord
+RefinementEnq(self) == IF takesEffect(self)
+                       THEN ord'= Append(ord, self) /\ itemsBar' = Append(itemsBar, self)
+                       ELSE UNCHANGED <<itemsBar, ord>>
 
 RefinementE1(self) == RefinementEnq(self)
 
 RefinementE3(self) == RefinementEnq(self)
 
 \* Dequeue takes effect
-RefinementD6(self) == IF rep.items[i[self]] /= null
-                      THEN ord' = Tail(ord) 
-                      ELSE UNCHANGED ord
+RefinementD6(self) == /\ IF rep.items[i[self]] /= null THEN itemsBar' = Tail(itemsBar) ELSE UNCHANGED itemsBar
+                      /\ UNCHANGED ord
 
 Refinement  == /\ (\E self \in Producers : E1P(self) => RefinementE1(self))
                /\ (\E self \in Producers : E2P(self) => UNCHANGED itemsBar)
                /\ (\E self \in Producers : E3P(self) => RefinementE3(self))
-               /\ (\E self \in Producers : E4P(self) => UNCHANGED <<itemsBar,producersTakenEffect>>)
-               /\ (\E self \in Producers : P1P(self) => UNCHANGED <<itemsBar,producersTakenEffect>>)
-               /\ (\E self \in Consumers : D1P(self) => UNCHANGED <<itemsBar,producersTakenEffect>>)
-               /\ (\E self \in Consumers : D2P(self) => UNCHANGED <<itemsBar,producersTakenEffect>>)
-               /\ (\E self \in Consumers : D3P(self) => UNCHANGED <<itemsBar,producersTakenEffect>>)
-               /\ (\E self \in Consumers : D4P(self) => UNCHANGED <<itemsBar,producersTakenEffect>>)
-               /\ (\E self \in Consumers : D5P(self) => UNCHANGED <<itemsBar,producersTakenEffect>>)
+               /\ (\E self \in Producers : E4P(self) => UNCHANGED <<itemsBar,ord>>)
+               /\ (\E self \in Producers : P1P(self) => UNCHANGED <<itemsBar,ord>>)
+               /\ (\E self \in Consumers : D1P(self) => UNCHANGED <<itemsBar,ord>>)
+               /\ (\E self \in Consumers : D2P(self) => UNCHANGED <<itemsBar,ord>>)
+               /\ (\E self \in Consumers : D3P(self) => UNCHANGED <<itemsBar,ord>>)
+               /\ (\E self \in Consumers : D4P(self) => UNCHANGED <<itemsBar,ord>>)
+               /\ (\E self \in Consumers : D5P(self) => UNCHANGED <<itemsBar,ord>>)
                /\ (\E self \in Consumers : D6P(self) => RefinementD6(self))
-               /\ (\E self \in Consumers : D7P(self) => UNCHANGED <<itemsBar,producersTakenEffect>>)
-               /\ (\E self \in Consumers : D8P(self) => UNCHANGED <<itemsBar,producersTakenEffect>>)
-               /\ (\E self \in Consumers : D9P(self) => UNCHANGED <<itemsBar,producersTakenEffect>>)
-               /\ (\E self \in Consumers : D10P(self) => UNCHANGED <<itemsBar,producersTakenEffect>>)
-               /\ (\E self \in Consumers : C1P(self) => UNCHANGED <<itemsBar,producersTakenEffect>>)
-               /\ (\E self \in ProcSet : DoneP(self) => UNCHANGED <<itemsBar,producersTakenEffect>>)
+               /\ (\E self \in Consumers : D7P(self) => UNCHANGED <<itemsBar,ord>>)
+               /\ (\E self \in Consumers : D8P(self) => UNCHANGED <<itemsBar,ord>>)
+               /\ (\E self \in Consumers : D9P(self) => UNCHANGED <<itemsBar,ord>>)
+               /\ (\E self \in Consumers : D10P(self) => UNCHANGED <<itemsBar,ord>>)
+               /\ (\E self \in Consumers : C1P(self) => UNCHANGED <<itemsBar,ord>>)
+               /\ (\E self \in ProcSet : DoneP(self) => UNCHANGED <<itemsBar,ord>>)
 
 
 NextP == (\E self \in ProcSet: EnqP(self) \/ DeqP(self))
@@ -131,5 +137,5 @@ Q == INSTANCE Queue WITH items<-itemsBar
 THEOREM SpecP => Q!Spec
 =============================================================================
 \* Modification History
-\* Last modified Sun Nov 04 19:48:20 PST 2018 by lhochstein
+\* Last modified Tue Nov 06 22:11:15 PST 2018 by lhochstein
 \* Created Wed Oct 31 21:07:38 PDT 2018 by lhochstein

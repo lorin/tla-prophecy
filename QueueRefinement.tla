@@ -7,7 +7,7 @@ EXTENDS QueueRep, Utilities, Naturals
 (***************************************************************************)
 
 Dom == Nat \ {0}
-Pi == Producers \union Consumers
+Pi == ProcSet
 
 INSTANCE Prophecy WITH DomPrime<-Dom'
 
@@ -96,6 +96,8 @@ Condition ==
     /\ \A co \in Consumers: ProphCondition(D8(co), DomInjD8, PredDomD8, LAMBDA p: PredD8(p, co))
     /\ \A co \in Consumers: ProphCondition(D9(co), DomInjD9, PredDomD9, LAMBDA p: PredD9(p, co))
     /\ \A co \in Consumers: ProphCondition(D10(co), DomInjD10, PredDomD10, LAMBDA p: PredD10(p, co))
+
+
 =============================================================================
 \* Modification History
 \* Last modified Sun Nov 04 17:36:17 PST 2018 by lhochstein

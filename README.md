@@ -61,9 +61,33 @@ The algorithm assumes the presence of the following atomic operations
 
 `SWAP(x,y)` sets `x` to `y` and returns the value of `x` before being set.
 
-## Prophecizing
+## Prophecy variable
 
 We need to prophecize the execution ordering of the producer and consumer
 processes.
 
-We can predict the sequence 
+We can do this by predicting the sequence in which the processes execute
+their steps.
+
+This is an infinite sequence, where each element is a process identifier.
+Using the approach outlined in the Lamport and Mertz paper, we can define
+`Dom` and `Pi` as follows:
+
+```
+Dom == Nat \ {0}
+Pi == ProcSet
+```
+
+In some cases, we may end up predicitng a process that has already completed.
+To handle this, we'll need to add a new sub-action to our model:
+
+
+```
+Done(self) == /\ pc[self] = "Done"
+              /\ UNCHANGED vars
+```
+
+## Refinement mapping
+
+We'll use a variable called `ord` which is a sequence that contains the ids of the producer
+processes
