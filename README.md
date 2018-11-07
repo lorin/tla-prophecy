@@ -66,5 +66,4 @@ The algorithm assumes the presence of the following atomic operations
 We need to prophecize the execution ordering of the producer and consumer
 processes.
 
-
-
+We can predict the sequence 
