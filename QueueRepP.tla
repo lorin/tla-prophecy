@@ -1,12 +1,15 @@
 ----------------------------- MODULE QueueRepP -----------------------------
 EXTENDS QueueRefinement
 
-VARIABLE p, itemsBar
+VARIABLE p, itemsBar, producersTakenEffect
 
 
-varsP == <<vars,p, itemsBar>>
+varsP == <<vars,p, itemsBar, producersTakenEffect>>
 
-InitP == Init /\ (p \in [Dom->Pi]) /\ itemsBar = << >>
+InitP == /\ \Init
+         /\ (p \in [Dom->Pi])
+         /\ itemsBar = << >>
+         /\ producersTakenEffect = {}
 
 
 E1P(self) == ProphAction(E1(self), p, p', DomInjE1, PredDomE1, LAMBDA j: PredE1(j, self))
@@ -46,27 +49,37 @@ DoneP(self) == ProphAction(Done(self), p, p', DomInjDone, PredDomDone, LAMBDA j:
 
 consumerP(self) == C1P(self)
 
-RefinementD6(self) == IF rep.items[i[self]] /= null
-                      THEN itemsBar' = Tail(itemsBar)
-                      ELSE UNCHANGED itemsBar
+\* Predicate that is true if the enqueue associated with producer pr should now take effect
+takesEffect(pr) == /\ pr \notin producersTakenEffect 
+                   /\ ???
 
-Refinement  == /\ (\E self \in Producers : E1P(self) => UNCHANGED itemsBar)
+RefinementEnq(self) == IF takesEffect(self) THEN itemsBar'= Append(itemsBar, x[self]) /\ producersTakenEffect' = producersTakenEffect \union {self} ELSE UNCHANGED <<itemsBar,producersTakenEffect>>
+
+RefinementE1(self) == RefinementEnq(self)
+
+RefinementE3(self) == RefinementEnq(self)
+
+RefinementD6(self) == IF rep.items[i[self]] /= null
+                      THEN itemsBar' = Tail(itemsBar) /\ UNCHANGED producersTakenEffect
+                      ELSE UNCHANGED <<itemsBar,producersTakenEffect>>
+
+Refinement  == /\ (\E self \in Producers : E1P(self) => RefinementE1(self))
                /\ (\E self \in Producers : E2P(self) => UNCHANGED itemsBar)
-               /\ (\E self \in Producers : E3P(self) => UNCHANGED itemsBar)
-               /\ (\E self \in Producers : E4P(self) => UNCHANGED itemsBar)
-               /\ (\E self \in Producers : P1P(self) => UNCHANGED itemsBar)
-               /\ (\E self \in Consumers : D1P(self) => UNCHANGED itemsBar)
-               /\ (\E self \in Consumers : D2P(self) => UNCHANGED itemsBar)
-               /\ (\E self \in Consumers : D3P(self) => UNCHANGED itemsBar)
-               /\ (\E self \in Consumers : D4P(self) => UNCHANGED itemsBar)
-               /\ (\E self \in Consumers : D5P(self) => UNCHANGED itemsBar)
+               /\ (\E self \in Producers : E3P(self) => RefinementE3(self))
+               /\ (\E self \in Producers : E4P(self) => UNCHANGED <<itemsBar,producersTakenEffect>>)
+               /\ (\E self \in Producers : P1P(self) => UNCHANGED <<itemsBar,producersTakenEffect>>)
+               /\ (\E self \in Consumers : D1P(self) => UNCHANGED <<itemsBar,producersTakenEffect>>)
+               /\ (\E self \in Consumers : D2P(self) => UNCHANGED <<itemsBar,producersTakenEffect>>)
+               /\ (\E self \in Consumers : D3P(self) => UNCHANGED <<itemsBar,producersTakenEffect>>)
+               /\ (\E self \in Consumers : D4P(self) => UNCHANGED <<itemsBar,producersTakenEffect>>)
+               /\ (\E self \in Consumers : D5P(self) => UNCHANGED <<itemsBar,producersTakenEffect>>)
                /\ (\E self \in Consumers : D6P(self) => RefinementD6(self))
-               /\ (\E self \in Consumers : D7P(self) => UNCHANGED itemsBar)
-               /\ (\E self \in Consumers : D8P(self) => UNCHANGED itemsBar)
-               /\ (\E self \in Consumers : D9P(self) => UNCHANGED itemsBar)
-               /\ (\E self \in Consumers : D10P(self) => UNCHANGED itemsBar)
-               /\ (\E self \in Consumers : C1P(self) => UNCHANGED itemsBar)
-               /\ (\E self \in ProcSet : DoneP(self) => UNCHANGED itemsBar)
+               /\ (\E self \in Consumers : D7P(self) => UNCHANGED <<itemsBar,producersTakenEffect>>)
+               /\ (\E self \in Consumers : D8P(self) => UNCHANGED <<itemsBar,producersTakenEffect>>)
+               /\ (\E self \in Consumers : D9P(self) => UNCHANGED <<itemsBar,producersTakenEffect>>)
+               /\ (\E self \in Consumers : D10P(self) => UNCHANGED <<itemsBar,producersTakenEffect>>)
+               /\ (\E self \in Consumers : C1P(self) => UNCHANGED <<itemsBar,producersTakenEffect>>)
+               /\ (\E self \in ProcSet : DoneP(self) => UNCHANGED <<itemsBar,producersTakenEffect>>)
 
 
 NextP == (\E self \in ProcSet: EnqP(self) \/ DeqP(self))
@@ -84,5 +97,5 @@ Q == INSTANCE Queue WITH items<-itemsBar
 TerminationP == <>(\A self \in ProcSet: pc[self] = "Done")
 =============================================================================
 \* Modification History
-\* Last modified Sun Nov 04 19:02:49 PST 2018 by lhochstein
+\* Last modified Sun Nov 04 19:48:20 PST 2018 by lhochstein
 \* Created Wed Oct 31 21:07:38 PDT 2018 by lhochstein
