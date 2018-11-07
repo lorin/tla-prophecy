@@ -66,16 +66,24 @@ consumerP(self) == C1P(self)
 IsPrefixOf(sp,s) == sp = SubSeq(s, 1, Len(sp))
 
 \* Sequence that represents the order in which the producer process's values
-\* will be dequeued, assuming an initial state of ordo
 RECURSIVE Ordering(_, _, _, _, _, _, _, _, _, _, _, _, _)
 Ordering(po, ordo, repo, pco, stacko, xo, i_o, rInd_o, io, x_o, rangeo, rIndo, rValo) == 
     LET consumersRemaining == {co \in Consumers : \/ pco[co] \in {"C1", "D1", "D2", "D3", "D4", "D5", "D6", "D10"}
                                                   \/ pco[co]="D7" => rValo[co] = null }
         self == po[1]
     IN IF consumersRemaining = {} \/ po = << >> THEN ordo
-    ELSE CASE pco[self] = "E1" -> Ordering(Tail(po), ordo, [repo EXCEPT !.back = (repo.back)+1], [pco EXCEPT ![self] = "E2"],
-                                           stacko, xo, i_o, [rInd_o EXCEPT ![self] = repo.back], io, x_o, rangeo, rIndo, rValo)
+    ELSE
+CASE pco[self] = "E1" -> Ordering(Tail(po), ordo, [repo EXCEPT !.back = (repo.back)+1], [pco EXCEPT ![self] = "E2"],
+                                  stacko, xo, i_o, [rInd_o EXCEPT ![self] = repo.back], io, x_o, rangeo, rIndo, rValo)
 [] pco[self] = "E2" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = "E3"], stacko, xo, [i_o EXCEPT ![self] = rInd_o[self]], rInd_o, io, x_o, rangeo, rIndo, rValo)
+[] pco[self] = "E3" -> Ordering(Tail(po), ordo, [repo EXCEPT !.items[i_o[self]] = xo[self]], [pco EXCEPT ![self] = "E4"], stacko, xo, i_o, rInd_o, io, x_o, rangeo, rIndo, rValo)
+[] pco[self] = "E4" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = Head(stacko[self]).pco], [stacko EXCEPT ![self] = Tail(stacko[self])],
+                                xo, [i_o EXCEPT ![self] = Head(stacko[self]).i_o],
+                                [rInd_o EXCEPT ![self] = Head(stacko[self]).rInd_o], io, [xo EXCEPT ![self] = Head(stacko[self]).x_o], rangeo, rIndo, rValo)
+[] pco[self] = "D1" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = "D2"], stacko, xo, i_o, rInd_o, io, x_o, rangeo, rIndo, rValo)
+[] pco[self] = "D2" -> Ordering(Tail(po), ordo, repo, [pc EXCEPT ![self] = "D3"], stacko, xo, i_o, rInd_o, io, x_o, rangeo, [rIndo EXCEPT ![self] = repo.back], rValo)
+
+(* TODO: D3-D10, P1, C1, Done *)
     
 (*
 True if the producer's enqueue should take effect now
@@ -137,5 +145,5 @@ Q == INSTANCE Queue WITH items<-itemsBar
 THEOREM SpecP => Q!Spec
 =============================================================================
 \* Modification History
-\* Last modified Tue Nov 06 22:11:15 PST 2018 by lhochstein
+\* Last modified Tue Nov 06 22:29:33 PST 2018 by lhochstein
 \* Created Wed Oct 31 21:07:38 PDT 2018 by lhochstein

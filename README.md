@@ -1,20 +1,24 @@
-# Prophecy variables in TLA+
-
-**Note: work in progress**
+# Herlihy & Wing: Prophecy variables in TLA+
 
 Refinement mappings are a technique developed by Leslie Lamport to prove that a
 lower-level specification faithfully implements a higher level specification.
 
-Herlihy and Wing demonstrated that refinement mapping doesn't work in general.
-Lamport and Abadi later proposed the concept of prophecy variables as a
+Herlihy and Wing demonstrated that refinement mapping doesn't work in general
+by providing an example implementation of a linearizable queue where no refinement
+mapping exists.  Lamport and Abadi later proposed the concept of prophecy variables as a
 technique to resolve the problems in refinement mapping revealed by Herlihy and Wing.
 
-In order to learn how prophecy variables work, I used prophecy variables to
-define a refinement example for the specific example provided by Herlihy and Wing.
+In the paper [Auxiliary Variables in TLA+][aux], Lamport and Mertz note that:
 
-I found the [Prophecy.tla](Prophecy.tla) module from
-at [Disalog-ICS-NJU/tlaplus-lamport-projects][prophfile] project. 
-This module is documented in the paper [Auxiliary Variables in TLA+][aux] by Lamport and Mertz.
+> This same idea of modifying the high-level specification to avoid adding a
+> prophecy variable to the algorithm can be applied to the queue
+> example of Herlihy and Wing
+
+However, as an exercise in learning how prophecy variables work, I used prophecy variables to
+define a refinement example for the queue example provided by Herlihy and Wing.
+
+I use the [Prophecy.tla](Prophecy.tla) module presented in Lamport and Mertz,
+taken from the [Disalog-ICS-NJU/tlaplus-lamport-projects][prophfile] project. 
 
 [prophfile]: https://github.com/Disalg-ICS-NJU/tlaplus-lamport-projects/blob/master/learning-tlaplus/Hengfeng-Wei/learning-tlaplus-papers/AuxiliaryVariables-Lamport/auxiliary/Prophecy.tla
 [aux]:  http://lamport.azurewebsites.net/pubs/pubs.html#auxiliary
@@ -61,6 +65,113 @@ The algorithm assumes the presence of the following atomic operations
 
 `SWAP(x,y)` sets `x` to `y` and returns the value of `x` before being set.
 
+## Implementing the queue in PlusCal
+
+A PlusCal implementation of this queue is straightforward. There are some minor
+modifications required because PlusCal doesn't implement pass-by-reference and
+procedures don't have a notion of return values.
+
+We can't pass the queue as an argument to the Enq and Deq procedures because
+those procedures mutate the queue, and PlusCal is effectively pass-by-value,
+which means that the procedure can't mutate the queue. We use a global variable
+instead.
+
+We create an `rInd` variable when a procedure or macro returns an integer
+(really, Natural) value, and an `rVal` variable when a procedure or macro
+returns a value from the set of `Values.
+
+
+Here's the implementation, using C-syntax for previty:
+
+```
+--algorithm Rep {
+
+variables rep = [back|->1, items|->[n \in Nat|->null]];
+
+macro INC(x) { x := x+1 || rInd := x }
+macro STORE(loc, val) { loc := val }
+macro READ(ind) { rInd := ind }
+macro SWAP(loc, val) { loc := val || rVal := loc }
+
+procedure Enq(x) 
+variables i, rInd {
+E1:  INC(rep.back);
+E2:  i := rInd;
+E3:  STORE(rep.items[i], x);
+E4:  return
+}
+
+procedure Deq()
+variables i, x, range, rInd, rVal {
+D1: while(TRUE) {
+D2:   READ(rep.back);
+D3:   range := rInd-1;
+D4:   i := 1;
+D5:   while(i<=range) {
+D6:     SWAP(rep.items[i], null);
+D7:     x := rVal;
+        if(x /= null) {
+D8:       rVal := x;
+D9:       return
+        };
+D10:    i:= i+1
+      }
+    }
+}
+
+process (p \in Producers) {
+P1: with (item \in Values) {
+    call Enq(item)
+    }
+}
+
+process (c \in Consumers) {
+C1: call Deq()
+}
+
+}
+```
+
+## Queue specification
+
+Here's aimple specification for a FIFO: it supports enqueue and dequeueing
+values:
+
+```
+EXTENDS Sequences
+
+CONSTANT Values
+
+VARIABLE items
+
+Enq(val, q, qp) == qp = Append(q, val)
+
+Deq(val, q, qp) == /\ q /= << >>
+                   /\ val = Head(q)
+                   /\ qp = Tail(q)
+                   
+                   
+Init == /\ items = << >>
+
+Next == \/ \E v \in Values : /\ Enq(v, items, items')
+        \/ \E v \in Values : /\ Deq(v, items, items')
+        
+Spec == Init /\ [] [Next]_<<items>>
+```
+
+The challenge is to show a refinement mapping from our queue implementation to
+this specification. Something that will ultimately look like this:
+
+```
+SpecP == \* The specification of the concurrent queue, with the prophecy variable
+itemsBar == ... \* The refinement mapping
+
+Q == INSTANCE Queue WITH items<-itemsBar
+
+THEOREM SpecP => Q!Spec
+```
+
+
 ## Prophecy variable
 
 We need to prophecize the execution ordering of the producer and consumer
@@ -89,5 +200,3 @@ Done(self) == /\ pc[self] = "Done"
 
 ## Refinement mapping
 
-We'll use a variable called `ord` which is a sequence that contains the ids of the producer
-processes

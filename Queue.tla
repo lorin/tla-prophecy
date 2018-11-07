@@ -1,7 +1,7 @@
 ------------------------------- MODULE Queue -------------------------------
 (*** A specification for an abstract, sequential queue ***)
 
-EXTENDS Naturals, Sequences
+EXTENDS Sequences
 
 CONSTANT Values
 

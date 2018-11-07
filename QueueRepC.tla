@@ -58,7 +58,6 @@ P1: with (item \in Values) {
 fair process (c \in Consumers) {
 C1: call Deq()
 }
-
 }
 *)
 \* BEGIN TRANSLATION
