@@ -20,78 +20,56 @@ null == CHOOSE x : x \notin Values
 TypeOk(r) == r \in [back:Naturals, items:Seq(Values \union null)]
 
 (*
---algorithm Rep
+--algorithm Rep {
 
 variables rep = [back|->1, items|->[n \in Naturals|->null]];
 
-macro INC(x)
-begin
-    x := x+1 || rInd := x;
-end macro
-
-macro STORE(loc, val)
-begin
-    loc := val
-end macro
-
-macro READ(ind)
-begin
-    rInd := ind;
-end macro
-
-macro SWAP(loc, val)
-begin
-    loc := val || rVal := loc
-end macro
+macro INC(x) { x := x+1 || rInd := x }
+macro STORE(loc, val) { loc := val }
+macro READ(ind) { rInd := ind }
+macro SWAP(loc, val) { loc := val || rVal := loc }
 
 procedure Enq(x)
-variables i, rInd;
-begin
-E1: INC(rep.back);
-E2: i := rInd;
-E3: STORE(rep.items[i], x);
-E4: return;
-end procedure
+variables i, rInd {
+E1:  INC(rep.back);
+E2:  i := rInd;
+E3:  STORE(rep.items[i], x);
+E4:  return
+}
 
 procedure Deq()
-variables i, x, range, rInd, rVal;
-begin
-D1: while(TRUE) do
-    D2: READ(rep.back);
-    D3: range := rInd-1;
-    D4: i := 1;
-    D5: while(i<=range) do
-        D6: SWAP(rep.items[i], null);
-        D7: x := rVal;
-            if x /= null then
-                D8: rVal := x;
-                D9: return;
-            end if;
-        D10: i:= i+1;
-    end while
-end while
-end procedure
+variables i, x, range, rInd, rVal {
+D1: while(TRUE) {
+D2:   READ(rep.back);
+D3:   range := rInd-1;
+D4:   i := 1;
+D5:   while(i<=range) {
+D6:     SWAP(rep.items[i], null);
+D7:     x := rVal;
+        if(x /= null) {
+D8:       rVal := x;
+D9:       return
+        };
+D10:    i:= i+1
+      }
+    }
+}
 
+fair process (producer \in Producers) {
+P1: with (item \in Values) {
+    call Enq(item)
+    }
+}
 
-fair process producer \in Producers
-begin
-P1: with item \in Values do
-    call Enq(item);
-end with;
-end process
-
-fair process consumer \in Consumers
-begin
-C1: call Deq();
-end process
-
-
-end algorithm
+fair process (consumer \in Consumers) {
+C1: call Deq()
+}
+}
 *)
 \* BEGIN TRANSLATION
-\* Procedure variable i of procedure Enq at line 48 col 11 changed to i_
-\* Procedure variable rInd of procedure Enq at line 48 col 14 changed to rInd_
-\* Procedure variable x of procedure Deq at line 57 col 14 changed to x_
+\* Procedure variable i of procedure Enq at line 33 col 11 changed to i_
+\* Procedure variable rInd of procedure Enq at line 33 col 14 changed to rInd_
+\* Procedure variable x of procedure Deq at line 41 col 14 changed to x_
 CONSTANT defaultInitValue
 VARIABLES rep, pc, stack, x, i_, rInd_, i, x_, range, rInd, rVal
 
@@ -161,7 +139,7 @@ D4(self) == /\ pc[self] = "D4"
             /\ UNCHANGED << rep, stack, x, i_, rInd_, x_, range, rInd, rVal >>
 
 D5(self) == /\ pc[self] = "D5"
-            /\ IF (i[self]<=range[self])
+            /\ IF i[self]<=range[self]
                   THEN /\ pc' = [pc EXCEPT ![self] = "D6"]
                   ELSE /\ pc' = [pc EXCEPT ![self] = "D1"]
             /\ UNCHANGED << rep, stack, x, i_, rInd_, i, x_, range, rInd, rVal >>
@@ -255,5 +233,5 @@ Termination == <>(\A self \in ProcSet: pc[self] = "Done")
 
 =============================================================================
 \* Modification History
-\* Last modified Wed Nov 07 22:09:09 PST 2018 by lhochstein
+\* Last modified Wed Nov 07 22:12:24 PST 2018 by lhochstein
 \* Created Wed Oct 24 18:53:25 PDT 2018 by lhochstein
