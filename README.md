@@ -295,7 +295,7 @@ We do this by specifying `Spec` as the temporal formula and `[][Condition]_vars`
 ## Using prophecy to do refinement mapping
 
 
-The [QueueRepP.tla](QueueRep.tla) file contains the specification which creates
+The [QueueRepP.tla](QueueRepP.tla) file contains the specification which creates
 a new spec, SpecP, that uses the prophecy variable to do the refinement
 mapping.
 
