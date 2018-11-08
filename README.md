@@ -153,9 +153,9 @@ C1: call Deq()
 }
 ```
 
-## Queue specification
+## High-level queue specification
 
-Here's aimple specification for a FIFO: it supports enqueue and dequeueing
+Here's simple specification for a FIFO: it supports enqueue and dequeueing
 values:
 
 ```
