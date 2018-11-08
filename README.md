@@ -33,8 +33,8 @@ However, as an exercise in learning how prophecy variables work, I used prophecy
 define a refinement example for the queue example provided by Herlihy and Wing.
 
 I use the [Prophecy.tla](Prophecy.tla) module from the
-[Disalog-ICS-NJU/tlaplus-lamport-projects][prophfile] project. THis module was
-originally docuemnted in the Lamport and Abadi paper.
+[Disalog-ICS-NJU/tlaplus-lamport-projects][prophfile] project. This module was
+originally documented in the Lamport and Abadi paper.
 
 [prophfile]: https://github.com/Disalg-ICS-NJU/tlaplus-lamport-projects/blob/master/learning-tlaplus/Hengfeng-Wei/learning-tlaplus-papers/AuxiliaryVariables-Lamport/auxiliary/Prophecy.tla
 [aux]:  http://lamport.azurewebsites.net/pubs/pubs.html#auxiliary
