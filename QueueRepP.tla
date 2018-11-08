@@ -97,7 +97,15 @@ CASE pco[self] = "E1" -> Ordering(Tail(po), ordo, [repo EXCEPT !.back = (repo.ba
                        IN Ordering(Tail(po), ordo, repo, IF x_p[self] /= null THEN [pco EXCEPT ![self] = "D8"] ELSE  [pco EXCEPT ![self] = "D10"],
                                    stacko, xo, i_o, rInd_o, io, x_p, rangeo, rIndo, rValo)
 [] pco[self] = "D8" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = "D9"], stacko, xo, i_o, rInd_o, io, x_o, rangeo, rIndo, [rValo EXCEPT ![self] = x_o[self]])
-[] pco[self] = "D9" -> Ordering(Tail(po), ordo, repo, pco, stacko, xo, i_o, rInd_o, io, x_o, rangeo, rIndo, rValo)
+[] pco[self] = "D9" -> Ordering(Tail(po), ordo, repo,
+                                [pco EXCEPT ![self] = Head(stacko[self]).pc],
+                                [stacko EXCEPT ![self] = Tail(stacko[self])],
+                                xo, i_o, rInd_o,
+                                [io EXCEPT ![self] = Head(stacko[self]).i],
+                                [x_o EXCEPT ![self] = Head(stacko[self]).x_o],
+                                [rangeo EXCEPT ![self] = Head(stacko[self]).range],
+                                [rIndo EXCEPT ![self] = Head(stacko[self]).rInd],
+                                [rValo EXCEPT ![self] = Head(stacko[self]).rVal])
 [] pco[self] = "D10" -> Ordering(Tail(po), ordo, repo, pco, stacko, xo, i_o, rInd_o, io, x_o, rangeo, rIndo, rValo)
 [] pco[self] = "C1" -> Ordering(Tail(po), ordo, repo, pco, stacko, xo, i_o, rInd_o, io, x_o, rangeo, rIndo, rValo)
 [] pco[self] = "P1" -> Ordering(Tail(po), ordo, repo, pco, stacko, xo, i_o, rInd_o, io, x_o, rangeo, rIndo, rValo)
