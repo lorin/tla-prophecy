@@ -1,3 +1,11 @@
+(***************************************************************************)
+(* Refinement mapping of the QueueRep specification to the Queue           *)
+(* specification, using prophecy variables.                                *)
+(*                                                                         *)
+(* We augment the QueueRep specification to create a new specification     *)
+(* named SpecP                                                             *)
+(***************************************************************************)
+
 ----------------------------- MODULE QueueRepP -----------------------------
 EXTENDS QueueRepPP
 
@@ -188,5 +196,5 @@ Q == INSTANCE Queue WITH items<-itemsBar
 THEOREM SpecP => Q!Spec
 =============================================================================
 \* Modification History
-\* Last modified Wed Nov 07 23:00:39 PST 2018 by lhochstein
+\* Last modified Wed Nov 07 23:09:15 PST 2018 by lhochstein
 \* Created Wed Oct 31 21:07:38 PDT 2018 by lhochstein
