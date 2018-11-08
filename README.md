@@ -237,8 +237,8 @@ Done(self) == /\ pc[self] = "Done"
               /\ UNCHANGED vars
 ```
 
-Following Lamport and Mertz, for each sub-action in our low-levle specification we need to define three
-operators:
+Following Lamport and Mertz, for each sub-action in our low-level specification
+we need to define three operators:
 
 * *Pred* operator that uses the prophecy variable to make a prediction
 * *PredDom* set that indicates which prophecy variables get discarded after a
@@ -261,4 +261,49 @@ PredDom == {1}
 Pred(p, process) == p[1] = process
 ```
 
+Lamport and Mertz recommend checking that the prophecy does not restrict any
+behaviors that would normally be permitted by the specification.
 
+We can check this by specifying this condition:
+
+```
+Condition ==
+    /\ \A pr \in Producers: ProphCondition(E1(pr), DomInj, PredDom, LAMBDA p: Pred(p, pr))
+    /\ \A pr \in Producers: ProphCondition(E2(pr), DomInj, PredDom, LAMBDA p: Pred(p, pr))
+    /\ \A pr \in Producers: ProphCondition(E3(pr), DomInj, PredDom, LAMBDA p: Pred(p, pr))
+    /\ \A pr \in Producers: ProphCondition(E4(pr), DomInj, PredDom, LAMBDA p: Pred(p, pr))
+    /\ \A co \in Consumers: ProphCondition(D1(co), DomInj, PredDom, LAMBDA p: Pred(p, co))
+    /\ \A co \in Consumers: ProphCondition(D2(co), DomInj, PredDom, LAMBDA p: Pred(p, co))
+    /\ \A co \in Consumers: ProphCondition(D3(co), DomInj, PredDom, LAMBDA p: Pred(p, co))
+    /\ \A co \in Consumers: ProphCondition(D4(co), DomInj, PredDom, LAMBDA p: Pred(p, co))
+    /\ \A co \in Consumers: ProphCondition(D5(co), DomInj, PredDom, LAMBDA p: Pred(p, co))
+    /\ \A co \in Consumers: ProphCondition(D6(co), DomInj, PredDom, LAMBDA p: Pred(p, co))
+    /\ \A co \in Consumers: ProphCondition(D7(co), DomInj, PredDom, LAMBDA p: Pred(p, co))
+    /\ \A co \in Consumers: ProphCondition(D8(co), DomInj, PredDom, LAMBDA p: Pred(p, co))
+    /\ \A co \in Consumers: ProphCondition(D9(co), DomInj, PredDom, LAMBDA p: Pred(p, co))
+    /\ \A co \in Consumers: ProphCondition(D10(co), DomInj, PredDom, LAMBDA p: Pred(p, co))
+```
+
+And then using TLC to check this:
+
+```
+THEOREM Spec => [][Condition]_vars
+```
+
+We do this by specifying `Spec` as the temporal formula and `[][Condition]_vars` as a property to check.
+
+## Using prophecy to do refinement mapping
+
+
+The [QueueRepP.tla](QueueRep.tla) file contains the specification which creates
+a new spec, SpecP, that uses the prophecy variable to do the refinement
+mapping.
+
+
+The most complicated part is the `Orderings` operator. This is an operator
+which takes the prophecy variable, and determines the order in which the
+producer process's values will be dequeued by effectively executing
+(simulating) the specification using the prophecized schedule.
+
+This ordering is stored in the `ordP` variable, which is then used to determine
+whether enqueues should take effect at E1 or E3.

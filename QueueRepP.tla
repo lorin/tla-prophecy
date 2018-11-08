@@ -1,24 +1,27 @@
 ----------------------------- MODULE QueueRepP -----------------------------
 EXTENDS QueueRepPP
 
+(***************************************************************************)
+(* p is the prophecy variable                                              *)
+(*                                                                         *)
+(* ordP is a prediction of the ordering of when the producer enqueues      *)
+(* take effect. It is derived from p.                                      *)
+(*                                                                         *)
+(* ord is the ordering of when producer enqueues take effect.              *)
+(*                                                                         *)
+(* itemsBar is the refinement mapping                                      *)
+(*                                                                         *)
+(***************************************************************************)
 VARIABLE p, ord, ordP, itemsBar
 
 varsP == <<vars, p, ordP, ord, itemsBar>>
 
+(****************************************************************************
+Ordering returns a sequence that represents the order in which the producer
+process's values be dequeued by the consumers, based on the prophecy of
+the scheduling of processes.
+****************************************************************************)
 
-(*
-p is the prophecy variable
-
-ordP is a prediction of the ordering of when the producer enqueues
-take effect. It is derived from p. 
-
-ord is the ordering of when producer enqueues take effect.
-
-itemsBar is the refinement mapping
-
-*)
-
-\* Sequence that represents the order in which the producer process's values
 RECURSIVE Ordering(_, _, _, _, _, _, _, _, _, _, _, _, _)
 Ordering(po, ordo, repo, pco, stacko, xo, i_o, rInd_o, io, x_o, rangeo, rIndo, rValo) == 
     LET consumersRemaining == {co \in Consumers : \/ pco[co] \in {"C1", "D1", "D2", "D3", "D4", "D5", "D6", "D10"}
@@ -185,5 +188,5 @@ Q == INSTANCE Queue WITH items<-itemsBar
 THEOREM SpecP => Q!Spec
 =============================================================================
 \* Modification History
-\* Last modified Wed Nov 07 22:41:38 PST 2018 by lhochstein
+\* Last modified Wed Nov 07 23:00:39 PST 2018 by lhochstein
 \* Created Wed Oct 31 21:07:38 PDT 2018 by lhochstein
