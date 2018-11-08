@@ -143,7 +143,8 @@ DoneP(self) == ProphAction(Done(self), p, p', DomInjDone, PredDomDone, LAMBDA j:
 consumerP(self) == C1P(self)
 
 \* True if sp is a prefix of s
-IsPrefixOf(sp,s) == sp = SubSeq(s, 1, Len(sp))
+IsPrefixOf(sp,s) == /\ Len(sp) <= Len(s)
+                    /\ sp = SubSeq(s, 1, Len(sp))
 
 \* We take effect at E1 if we are next in line to take effect
 RefinementE1(self) == LET ordAndSelf == Append(ord,self)
@@ -200,5 +201,5 @@ Q == INSTANCE Queue WITH items<-itemsBar
 THEOREM SpecP => Q!Spec
 =============================================================================
 \* Modification History
-\* Last modified Wed Nov 07 20:22:20 PST 2018 by lhochstein
+\* Last modified Wed Nov 07 20:58:42 PST 2018 by lhochstein
 \* Created Wed Oct 31 21:07:38 PDT 2018 by lhochstein
