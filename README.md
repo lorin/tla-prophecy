@@ -39,10 +39,13 @@ originally docuemnted in the Lamport and Abadi paper.
 [prophfile]: https://github.com/Disalg-ICS-NJU/tlaplus-lamport-projects/blob/master/learning-tlaplus/Hengfeng-Wei/learning-tlaplus-papers/AuxiliaryVariables-Lamport/auxiliary/Prophecy.tla
 [aux]:  http://lamport.azurewebsites.net/pubs/pubs.html#auxiliary
 
-## Queue from Herlihy & Wing paper
+## Concurrent queue from Herlihy & Wing paper
 
-From Section 4.2, page 475, here is the algorithm, using the pseudocode syntax
-from the original paper
+The Herlihy & Wing paper provides an example implementation of a concurrent
+queue that is linearizable.
+
+Here is the algorithm, from Section 4.2, page 475, using the pseudocode syntax
+from the original paper:
 
 ```
 Enq = proc (q: queue, x: item)
@@ -80,6 +83,8 @@ The algorithm assumes the presence of the following atomic operations
 `READ(x)` simply returns the value of `x`
 
 `SWAP(x,y)` sets `x` to `y` and returns the value of `x` before being set.
+
+
 
 ## Implementing the queue in PlusCal
 
@@ -175,6 +180,8 @@ Next == \/ \E v \in Values : /\ Enq(v, items, items')
 Spec == Init /\ [] [Next]_<<items>>
 ```
 
+## Refinement mapping
+
 The challenge is to show a refinement mapping from our queue implementation to
 this specification. Something that will ultimately look like this:
 
@@ -187,23 +194,37 @@ Q == INSTANCE Queue WITH items<-itemsBar
 THEOREM SpecP => Q!Spec
 ```
 
+The interesting part of the queue implementation is that enqueuing requires two operations:
+
+* allocating a slot for writing (E1)
+* writing the data (E3)
+
+We need to decide at which point the enqueueing should take effect. But we
+can't know this, because it will vary depending on how the other processes get
+scheduled. The paper provides a good example on how it's not possible to choose
+a single refinement mapping because whatever you pick, there is a potential
+execution trace that will render the refinement mapping invalid.
+
+Herlihy and Wing propose using a set of potential mappings rather than a single
+mapping.
 
 ## Prophecy variable
 
-We need to prophecize the execution ordering of the producer and consumer
-processes.
+One way to get around the problem that Herlihy and Wing point out is to predict
+in advance the order in which the processes will get scheduled. Once you know
+that, then you can decide whether enqueues should take effect at label E1 or
+E3.
 
-We can do this by predicting the sequence in which the processes execute
-their steps.
-
-This is an infinite sequence, where each element is a process identifier.
-Using the approach outlined in the Lamport and Mertz paper, we can define
-`Dom` and `Pi` as follows:
+We can do this by choosing as our prophecy variable a sequence of process
+identifiers. Using the approach outlined in the Lamport and Mertz paper, we can define
+`Dom` and `Pi` as follows.
 
 ```
 Dom == Nat \ {0}
 Pi == ProcSet
 ```
+
+`[Dom->Pi]` defines the set of all possible schedulings.
 
 In some cases, we may end up predicitng a process that has already completed.
 To handle this, we'll need to add a new sub-action to our model:
@@ -214,5 +235,4 @@ Done(self) == /\ pc[self] = "Done"
               /\ UNCHANGED vars
 ```
 
-## Refinement mapping
-
+We follow the advice of Lamport and Mertz and define the 
