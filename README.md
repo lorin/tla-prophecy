@@ -1,14 +1,29 @@
-# Herlihy & Wing: Prophecy variables in TLA+
+# Reading the Herlihy & Wing Linearizability paper with TLA+, part 2: Prophecy variables
 
-Refinement mappings are a technique developed by Leslie Lamport to prove that a
-lower-level specification faithfully implements a higher level specification.
+See also [Reading the Herlihy & Wing Linearizability paper with TLA+: Part 1][part-1].
 
-Herlihy and Wing demonstrated that refinement mapping doesn't work in general
-by providing an example implementation of a linearizable queue where no refinement
-mapping exists.  Lamport and Abadi later proposed the concept of prophecy variables as a
+[part-1]: https://github.com/lorin/tla-linearizability
+
+Martin Abadi and Leslie Lamport proposed [refinement mappings] in 1988 as a technique
+for proving that a lower-level specification implements a higher-level
+specification.
+
+[refinement mappings]: https://www.microsoft.com/en-us/research/publication/the-existence-of-refinement-mappings/
+
+Two years later, in their [landmark paper on linearizability][herlihy], Herlihy and Wing
+provided an example of a particular concurrent queue implementation that
+demonstrated that it is not always possible to define a refinement mapping. 
+
+[herlihy]: https://cs.brown.edu/~mph/HerlihyW90/p463-herlihy.pdf
+
+
+Lamport and Abadi later proposed the concept of prophecy variables (a form of
+which is described in the paper [Auxiliary Variables in TLA+][aux]) as a
 technique to resolve the problems in refinement mapping revealed by Herlihy and Wing.
 
-In the paper [Auxiliary Variables in TLA+][aux], Lamport and Mertz note that:
+As it happens, Lamport and Mertz note that prophecy variables aren't actually
+necessary for defining a refinement mapping for the example provided by Herlihy
+and Wing, as long as you make some changes to the high-level specification:
 
 > This same idea of modifying the high-level specification to avoid adding a
 > prophecy variable to the algorithm can be applied to the queue
@@ -17,8 +32,9 @@ In the paper [Auxiliary Variables in TLA+][aux], Lamport and Mertz note that:
 However, as an exercise in learning how prophecy variables work, I used prophecy variables to
 define a refinement example for the queue example provided by Herlihy and Wing.
 
-I use the [Prophecy.tla](Prophecy.tla) module presented in Lamport and Mertz,
-taken from the [Disalog-ICS-NJU/tlaplus-lamport-projects][prophfile] project. 
+I use the [Prophecy.tla](Prophecy.tla) module from the
+[Disalog-ICS-NJU/tlaplus-lamport-projects][prophfile] project. THis module was
+originally docuemnted in the Lamport and Abadi paper.
 
 [prophfile]: https://github.com/Disalg-ICS-NJU/tlaplus-lamport-projects/blob/master/learning-tlaplus/Hengfeng-Wei/learning-tlaplus-papers/AuxiliaryVariables-Lamport/auxiliary/Prophecy.tla
 [aux]:  http://lamport.azurewebsites.net/pubs/pubs.html#auxiliary
