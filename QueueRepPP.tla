@@ -1,9 +1,12 @@
+(***************************************************************************)
+(* Operators required for prophecy variables.                              *)
+(***************************************************************************)
 ----------------------------- MODULE QueueRepPP -----------------------------
 EXTENDS QueueRep, Utilities, Naturals
 
 (***************************************************************************)
-(* The prophecy variable predicts how the scheduler will interleave        *)
-(* statements among the processes.                                         *)
+(* The prophecy variable is a sequence that predicts the order in which    *)
+(* the scheduler the processes.                                            *)
 (***************************************************************************)
 
 Dom == Nat \ {0}
@@ -100,5 +103,5 @@ Condition ==
 
 =============================================================================
 \* Modification History
-\* Last modified Sun Nov 04 17:36:17 PST 2018 by lhochstein
+\* Last modified Wed Nov 07 22:15:09 PST 2018 by lhochstein
 \* Created Sat Oct 27 12:02:21 PDT 2018 by lhochstein
