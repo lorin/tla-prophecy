@@ -43,7 +43,7 @@ CASE pco[self] = "E1" -> Ordering(Tail(po), ordo, [repo EXCEPT !.back = (repo.ba
 [] pco[self] = "D6" -> Ordering(Tail(po),
                                 IF repo.items[io[self]] = null THEN ordo
                                 ELSE LET prod == CHOOSE prod \in Producers : i_o[prod] = io[self]
-                                IN Append(ord, prod),
+                                IN Append(ordo, prod),
                                 [repo EXCEPT !.items[io[self]] = null],
                                 [pco EXCEPT ![self] = "D7"],
                                 stacko, xo, i_o, rInd_o, io, x_o, rangeo, rIndo,
@@ -65,7 +65,7 @@ CASE pco[self] = "E1" -> Ordering(Tail(po), ordo, [repo EXCEPT !.back = (repo.ba
 
 
 [] pco[self] = "P1" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = "E1"],
-                        [stack EXCEPT ![self] = << [ procedure |->  "Enq",
+                        [stacko EXCEPT ![self] = << [ procedure |->  "Enq",
                                                      pc        |->  "Done",
                                                      i_        |->  i_o[self],
                                                      rInd_     |->  rInd_o[self],
@@ -77,7 +77,7 @@ CASE pco[self] = "E1" -> Ordering(Tail(po), ordo, [repo EXCEPT !.back = (repo.ba
 
 
 [] pco[self] = "C1" -> Ordering(Tail(po), ordo, repo, pco,
-                        [stack EXCEPT ![self] = << [ procedure |->  "Deq",
+                        [stacko EXCEPT ![self] = << [ procedure |->  "Deq",
                                                      pc        |->  "Done",
                                                      i         |->  io[self],
                                                      x_        |->  x_o[self],
@@ -185,5 +185,5 @@ Q == INSTANCE Queue WITH items<-itemsBar
 THEOREM SpecP => Q!Spec
 =============================================================================
 \* Modification History
-\* Last modified Wed Nov 07 21:44:55 PST 2018 by lhochstein
+\* Last modified Wed Nov 07 21:47:35 PST 2018 by lhochstein
 \* Created Wed Oct 31 21:07:38 PDT 2018 by lhochstein
