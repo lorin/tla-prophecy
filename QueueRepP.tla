@@ -121,10 +121,23 @@ CASE pco[self] = "E1" -> Ordering(Tail(po), ordo, [repo EXCEPT !.back = (repo.ba
                         [rInd_o EXCEPT ![self] = defaultInitValue], io, x_o, rangeo, rIndo, rValo)
 
 
-[] pco[self] = "C1" -> Ordering(Tail(po), ordo, repo, pco, stacko, xo, i_o, rInd_o, io, x_o, rangeo, rIndo, rValo)
+[] pco[self] = "C1" -> Ordering(Tail(po), ordo, repo, pco,
+                        [stack EXCEPT ![self] = << [ procedure |->  "Deq",
+                                                     pc        |->  "Done",
+                                                     i         |->  io[self],
+                                                     x_        |->  x_o[self],
+                                                     range     |->  rangeo[self],
+                                                     rInd      |->  rIndo[self],
+                                                     rVal      |->  rValo[self] ] >> \o stacko[self]],
+                             xo, i_o, rInd_o,
+                             [io EXCEPT ![self] = defaultInitValue],
+                             [x_o EXCEPT ![self] = defaultInitValue],
+                             [rangeo EXCEPT ![self] = defaultInitValue],
+                             [rIndo EXCEPT ![self] = defaultInitValue],
+                             [rValo EXCEPT ![self] = defaultInitValue])
+
 [] pco[self] = "Done" -> Ordering(Tail(po), ordo, repo, pco, stacko, xo, i_o, rInd_o, io, x_o, rangeo, rIndo, rValo)
 
-(* TODO: D3-D10, P1, C1, Done *)
     
 (*
 True if the producer's enqueue should take effect now
