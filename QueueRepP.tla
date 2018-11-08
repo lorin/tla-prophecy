@@ -88,7 +88,11 @@ CASE pco[self] = "E1" -> Ordering(Tail(po), ordo, [repo EXCEPT !.back = (repo.ba
 [] pco[self] = "D2" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = "D3"], stacko, xo, i_o, rInd_o, io, x_o, rangeo, [rIndo EXCEPT ![self] = repo.back], rValo)
 [] pco[self] = "D3" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = "D4"], stacko, xo, i_o, rInd_o, io, x_o, [rangeo EXCEPT ![self] = rIndo[self]-1], rIndo, rValo)
 [] pco[self] = "D4" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = "D5"], stacko, xo, i_o, rInd_o, [io EXCEPT ![self] = 1], x_o, rangeo, rIndo, rValo)
-
+[] pco[self] = "D5" -> Ordering(Tail(po), ordo, repo, IF (io[self]<=rangeo[self])
+                                                      THEN [pco EXCEPT ![self] = "D6"]
+                                                      ELSE [pco EXCEPT ![self] = "D1"], stacko, xo, i_o, rInd_o, io, x_o, rangeo, rIndo, rValo)
+[] pco[self] = "D6" -> Ordering(Tail(po), ordo, [repo EXCEPT !.items[io[self]] = null],
+                                [pco EXCEPT ![self] = "D7"], stacko, xo, i_o, rInd_o, io, x_o, rangeo, rIndo, [rValo EXCEPT ![self] = repo.items[io[self]]])
 (* TODO: D3-D10, P1, C1, Done *)
     
 (*
