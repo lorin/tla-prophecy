@@ -107,8 +107,21 @@ CASE pco[self] = "E1" -> Ordering(Tail(po), ordo, [repo EXCEPT !.back = (repo.ba
                                 [rIndo EXCEPT ![self] = Head(stacko[self]).rInd],
                                 [rValo EXCEPT ![self] = Head(stacko[self]).rVal])
 [] pco[self] = "D10" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = "D5"], stacko, xo, i_o, rInd_o, [io EXCEPT ![self] = io[self]+1], x_o, rangeo, rIndo, rValo)
+
+
+[] pco[self] = "P1" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = "E1"],
+                        [stack EXCEPT ![self] = << [ procedure |->  "Enq",
+                                                     pc        |->  "Done",
+                                                     i_        |->  i_o[self],
+                                                     rInd_     |->  rInd_o[self],
+                                                     x         |->  xo[self] ] >>
+                                                 \o stacko[self]],
+                        LET item == CHOOSE item \in Values : TRUE IN [xo EXCEPT ![self] = item],
+                        [i_o EXCEPT ![self] = defaultInitValue],
+                        [rInd_o EXCEPT ![self] = defaultInitValue], io, x_o, rangeo, rIndo, rValo)
+
+
 [] pco[self] = "C1" -> Ordering(Tail(po), ordo, repo, pco, stacko, xo, i_o, rInd_o, io, x_o, rangeo, rIndo, rValo)
-[] pco[self] = "P1" -> Ordering(Tail(po), ordo, repo, pco, stacko, xo, i_o, rInd_o, io, x_o, rangeo, rIndo, rValo)
 [] pco[self] = "Done" -> Ordering(Tail(po), ordo, repo, pco, stacko, xo, i_o, rInd_o, io, x_o, rangeo, rIndo, rValo)
 
 (* TODO: D3-D10, P1, C1, Done *)
