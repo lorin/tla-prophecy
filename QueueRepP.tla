@@ -117,28 +117,36 @@ TypeOK == /\ p \in [Dom->Pi]
           /\ itemsBar \in UNION({[1..N -> Values] : N \in 1..Cardinality(Producers)})
           
           
-\* True if sp is a prefix of s
+(***************************************************************************)
+(* True if sp is a prefix of s                                             *)
+(***************************************************************************)
 IsPrefixOf(sp,s) == /\ Len(sp) <= Len(s)
                     /\ sp = SubSeq(s, 1, Len(sp))
 
-\* We take effect at E1 if we are next in line to take effect
+(***************************************************************************)
+(* We take effect at E1 if we are next in line to take effect              *)
+(***************************************************************************)
 RefinementE1(self) == LET ordAndSelf == Append(ord,self)
                       IN IF IsPrefixOf(ordAndSelf, ordP)
                          THEN /\ ord' = ordAndSelf
                               /\ itemsBar' = Append(itemsBar, x[self])
                          ELSE UNCHANGED <<ord, itemsBar>>
 
-\* We take effect at E3 if we have not yet taken effect
+(***************************************************************************)
+(* We take effect at E3 if we have not yet taken effect                    *)
+(***************************************************************************)
 RefinementE3(self) == LET alreadyTakenEffect == \E j \in DOMAIN ord : ord[j] = self
                       IN IF alreadyTakenEffect
                          THEN UNCHANGED <<ord, itemsBar>>
                          ELSE /\ ord' = Append(ord,self)
                               /\ itemsBar' = Append(itemsBar, x[self])
 
-\* Dequeue takes effect
+(***************************************************************************)
+(*  Dequeue takes effect at D6 if the slot is populated with data          *)
+(***************************************************************************)
 RefinementD6(self) == /\ IF rep.items[i[self]] /= null THEN itemsBar' = Tail(itemsBar) ELSE UNCHANGED itemsBar
                       /\ UNCHANGED ord
-               /\ UNCHANGED ordP \* Predicted sequence never changes
+                      /\ UNCHANGED ordP \* Predicted sequence never changes
 
 E1P(self) == ProphAction(E1(self), p, p', DomInj, PredDom, LAMBDA j: Pred(j, self)) /\ RefinementE1(self)
 E2P(self) == ProphAction(E2(self), p, p', DomInj, PredDom, LAMBDA j: Pred(j, self)) /\ UNCHANGED <<itemsBar, ord>>
@@ -196,5 +204,5 @@ Q == INSTANCE Queue WITH items<-itemsBar
 THEOREM SpecP => Q!Spec
 =============================================================================
 \* Modification History
-\* Last modified Wed Nov 07 23:09:15 PST 2018 by lhochstein
+\* Last modified Wed Nov 07 23:13:30 PST 2018 by lhochstein
 \* Created Wed Oct 31 21:07:38 PDT 2018 by lhochstein
