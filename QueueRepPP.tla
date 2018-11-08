@@ -14,7 +14,6 @@ Pi == ProcSet
 
 INSTANCE Prophecy WITH DomPrime<-Dom'
 
-
 DomInj == [j \in Nat \ {0,1} |-> j-1]
 PredDom == {1}
 Pred(p, process) == p[1] = process
@@ -36,7 +35,9 @@ Condition ==
     /\ \A co \in Consumers: ProphCondition(D10(co), DomInj, PredDom, LAMBDA p: Pred(p, co))
 
 
+THEOREM Spec => [][Condition]_vars
+
 =============================================================================
 \* Modification History
-\* Last modified Wed Nov 07 22:15:09 PST 2018 by lhochstein
+\* Last modified Wed Nov 07 22:52:29 PST 2018 by lhochstein
 \* Created Sat Oct 27 12:02:21 PDT 2018 by lhochstein
