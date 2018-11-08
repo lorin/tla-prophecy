@@ -97,7 +97,7 @@ We create an `rInd` variable when a procedure or macro returns an integer
 returns a value from the set of `Values.
 
 
-Here's the implementation, using C-syntax for previty:
+Here's the implementation, using C-syntax for brevity:
 
 ```
 --algorithm Rep {
@@ -135,13 +135,13 @@ D10:    i:= i+1
     }
 }
 
-process (p \in Producers) {
+process (producer \in Producers) {
 P1: with (item \in Values) {
     call Enq(item)
     }
 }
 
-process (c \in Consumers) {
+process (consumer \in Consumers) {
 C1: call Deq()
 }
 
