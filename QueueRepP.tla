@@ -106,7 +106,7 @@ CASE pco[self] = "E1" -> Ordering(Tail(po), ordo, [repo EXCEPT !.back = (repo.ba
                                 [rangeo EXCEPT ![self] = Head(stacko[self]).range],
                                 [rIndo EXCEPT ![self] = Head(stacko[self]).rInd],
                                 [rValo EXCEPT ![self] = Head(stacko[self]).rVal])
-[] pco[self] = "D10" -> Ordering(Tail(po), ordo, repo, pco, stacko, xo, i_o, rInd_o, io, x_o, rangeo, rIndo, rValo)
+[] pco[self] = "D10" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = "D5"], stacko, xo, i_o, rInd_o, [io EXCEPT ![self] = io[self]+1], x_o, rangeo, rIndo, rValo)
 [] pco[self] = "C1" -> Ordering(Tail(po), ordo, repo, pco, stacko, xo, i_o, rInd_o, io, x_o, rangeo, rIndo, rValo)
 [] pco[self] = "P1" -> Ordering(Tail(po), ordo, repo, pco, stacko, xo, i_o, rInd_o, io, x_o, rangeo, rIndo, rValo)
 [] pco[self] = "Done" -> Ordering(Tail(po), ordo, repo, pco, stacko, xo, i_o, rInd_o, io, x_o, rangeo, rIndo, rValo)
