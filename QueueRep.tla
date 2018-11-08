@@ -61,9 +61,9 @@ C1: call Deq()
 }
 *)
 \* BEGIN TRANSLATION
-\* Procedure variable i of procedure Enq at line 33 col 11 changed to i_
-\* Procedure variable rInd of procedure Enq at line 33 col 14 changed to rInd_
-\* Procedure variable x of procedure Deq at line 41 col 14 changed to x_
+\* Procedure variable i of procedure Enq at line 27 col 11 changed to i_
+\* Procedure variable rInd of procedure Enq at line 27 col 14 changed to rInd_
+\* Procedure variable x of procedure Deq at line 35 col 14 changed to x_
 CONSTANT defaultInitValue
 VARIABLES rep, pc, stack, x, i_, rInd_, i, x_, range, rInd, rVal
 
@@ -72,7 +72,7 @@ vars == << rep, pc, stack, x, i_, rInd_, i, x_, range, rInd, rVal >>
 ProcSet == (Producers) \cup (Consumers)
 
 Init == (* Global variables *)
-        /\ rep = [back|->1, items|->[n \in Naturals|->null]]
+        /\ rep = [back|->1, items|->[n \in 1..Nmax|->null]]
         (* Procedure Enq *)
         /\ x = [ self \in ProcSet |-> defaultInitValue]
         /\ i_ = [ self \in ProcSet |-> defaultInitValue]
@@ -227,5 +227,5 @@ Termination == <>(\A self \in ProcSet: pc[self] = "Done")
 
 =============================================================================
 \* Modification History
-\* Last modified Wed Nov 07 22:12:24 PST 2018 by lhochstein
+\* Last modified Wed Nov 07 22:41:12 PST 2018 by lhochstein
 \* Created Wed Oct 24 18:53:25 PDT 2018 by lhochstein
