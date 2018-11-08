@@ -91,8 +91,14 @@ CASE pco[self] = "E1" -> Ordering(Tail(po), ordo, [repo EXCEPT !.back = (repo.ba
 [] pco[self] = "D5" -> Ordering(Tail(po), ordo, repo, IF (io[self]<=rangeo[self])
                                                       THEN [pco EXCEPT ![self] = "D6"]
                                                       ELSE [pco EXCEPT ![self] = "D1"], stacko, xo, i_o, rInd_o, io, x_o, rangeo, rIndo, rValo)
-[] pco[self] = "D6" -> Ordering(Tail(po), ordo, [repo EXCEPT !.items[io[self]] = null],
-                                [pco EXCEPT ![self] = "D7"], stacko, xo, i_o, rInd_o, io, x_o, rangeo, rIndo, [rValo EXCEPT ![self] = repo.items[io[self]]])
+[] pco[self] = "D6" -> Ordering(Tail(po),
+                                IF repo.items[io[self]] = null] THEN ordo
+                                ELSE LET producer == CHOOSE producer \in Producers : i_o[producer] = io[self]
+                                IN Append(ord, producer),
+                                [repo EXCEPT !.items[io[self]] = null],
+                                [pco EXCEPT ![self] = "D7"],
+                                stacko, xo, i_o, rInd_o, io, x_o, rangeo, rIndo,
+                                [rValo EXCEPT ![self] = repo.items[io[self]]])
 [] pco[self] = "D7" -> LET x_p = [x_o EXCEPT ![self] = rValo[self]] 
                        IN Ordering(Tail(po), ordo, repo, IF x_p[self] /= null THEN [pco EXCEPT ![self] = "D8"] ELSE  [pco EXCEPT ![self] = "D10"],
                                    stacko, xo, i_o, rInd_o, io, x_p, rangeo, rIndo, rValo)
