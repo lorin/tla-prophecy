@@ -30,9 +30,9 @@ CASE pco[self] = "E1" -> Ordering(Tail(po), ordo, [repo EXCEPT !.back = (repo.ba
                                   stacko, xo, i_o, [rInd_o EXCEPT ![self] = repo.back], io, x_o, rangeo, rIndo, rValo)
 [] pco[self] = "E2" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = "E3"], stacko, xo, [i_o EXCEPT ![self] = rInd_o[self]], rInd_o, io, x_o, rangeo, rIndo, rValo)
 [] pco[self] = "E3" -> Ordering(Tail(po), ordo, [repo EXCEPT !.items[i_o[self]] = xo[self]], [pco EXCEPT ![self] = "E4"], stacko, xo, i_o, rInd_o, io, x_o, rangeo, rIndo, rValo)
-[] pco[self] = "E4" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = Head(stacko[self]).pco], [stacko EXCEPT ![self] = Tail(stacko[self])],
+[] pco[self] = "E4" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = Head(stacko[self]).pc], [stacko EXCEPT ![self] = Tail(stacko[self])],
                                 xo, [i_o EXCEPT ![self] = Head(stacko[self]).i_o],
-                                [rInd_o EXCEPT ![self] = Head(stacko[self]).rInd_o], io, [xo EXCEPT ![self] = Head(stacko[self]).x_o], rangeo, rIndo, rValo)
+                                [rInd_o EXCEPT ![self] = Head(stacko[self]).rInd_o], io, [xo EXCEPT ![self] = Head(stacko[self]).x], rangeo, rIndo, rValo)
 [] pco[self] = "D1" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = "D2"], stacko, xo, i_o, rInd_o, io, x_o, rangeo, rIndo, rValo)
 [] pco[self] = "D2" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = "D3"], stacko, xo, i_o, rInd_o, io, x_o, rangeo, [rIndo EXCEPT ![self] = repo.back], rValo)
 [] pco[self] = "D3" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = "D4"], stacko, xo, i_o, rInd_o, io, x_o, [rangeo EXCEPT ![self] = rIndo[self]-1], rIndo, rValo)
@@ -136,7 +136,7 @@ C1P(self) == ProphAction(C1(self), p, p', DomInjC1, PredDomC1, LAMBDA j: PredC1(
 
 \* Need to add a no-op "done" to consume the done prophecies
 Done(self) == /\ pc[self] = "Done"
-              /\ UNCHANGED vars
+              /\ UNCHANGED <<vars, itemsBar, ord>>
 
 DoneP(self) == ProphAction(Done(self), p, p', DomInjDone, PredDomDone, LAMBDA j: PredDone(j, self))
 
@@ -201,5 +201,5 @@ Q == INSTANCE Queue WITH items<-itemsBar
 THEOREM SpecP => Q!Spec
 =============================================================================
 \* Modification History
-\* Last modified Wed Nov 07 20:59:57 PST 2018 by lhochstein
+\* Last modified Wed Nov 07 21:03:10 PST 2018 by lhochstein
 \* Created Wed Oct 31 21:07:38 PDT 2018 by lhochstein
