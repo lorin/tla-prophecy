@@ -165,7 +165,7 @@ RefinementD6(self) == /\ IF rep.items[i[self]] /= null THEN itemsBar' = Tail(ite
                       /\ UNCHANGED ord
 
 Refinement  == /\ (\E self \in Producers : E1P(self) => RefinementE1(self))
-               /\ (\E self \in Producers : E2P(self) => UNCHANGED itemsBar)
+               /\ (\E self \in Producers : E2P(self) => UNCHANGED <<itemsBar, ord>>)
                /\ (\E self \in Producers : E3P(self) => RefinementE3(self))
                /\ (\E self \in Producers : E4P(self) => UNCHANGED <<itemsBar,ord>>)
                /\ (\E self \in Producers : P1P(self) => UNCHANGED <<itemsBar,ord>>)
@@ -201,5 +201,5 @@ Q == INSTANCE Queue WITH items<-itemsBar
 THEOREM SpecP => Q!Spec
 =============================================================================
 \* Modification History
-\* Last modified Wed Nov 07 20:58:42 PST 2018 by lhochstein
+\* Last modified Wed Nov 07 20:59:57 PST 2018 by lhochstein
 \* Created Wed Oct 31 21:07:38 PDT 2018 by lhochstein
