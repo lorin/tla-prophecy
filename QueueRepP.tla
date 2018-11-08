@@ -145,23 +145,6 @@ consumerP(self) == C1P(self)
 \* True if sp is a prefix of s
 IsPrefixOf(sp,s) == sp = SubSeq(s, 1, Len(sp))
 
-    
-(*
-True if the producer's enqueue should take effect now
-*)
-takesEffect(prod) == LET alreadyTakenEffect == \E j \in DOMAIN ord : ord[j] = prod
-                             ordP == Ordering(p, << >>, rep, pc, stack, x, i_, rInd_, i, x_, range, rInd, rVal)
-                             nextToTakeEffect == ordP[1] = prod
-                             anyProducerMayTakeEffect == ordP = << >>
-                         IN /\ ~alreadyTakenEffect
-                            /\ \/ nextToTakeEffect
-                               \/ anyProducerMayTakeEffect
-
-
-RefinementEnq(self) == IF takesEffect(self)
-                       THEN ord'= Append(ord, self) /\ itemsBar' = Append(itemsBar, self)
-                       ELSE UNCHANGED <<itemsBar, ord>>
-
 \* We take effect at E1 if we are next in line to take effect
 RefinementE1(self) == LET ordAndSelf == Append(ord,self)
                       IN IF IsprefixOf(ordAndSelf, ordP)
@@ -197,6 +180,7 @@ Refinement  == /\ (\E self \in Producers : E1P(self) => RefinementE1(self))
                /\ (\E self \in Consumers : D10P(self) => UNCHANGED <<itemsBar,ord>>)
                /\ (\E self \in Consumers : C1P(self) => UNCHANGED <<itemsBar,ord>>)
                /\ (\E self \in ProcSet : DoneP(self) => UNCHANGED <<itemsBar,ord>>)
+               /\ UNCHANGED ordP \* Predicted sequence never changes
 
 
 NextP == (\E self \in ProcSet: EnqP(self) \/ DeqP(self))
