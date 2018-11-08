@@ -11,18 +11,12 @@ CONSTANT Producers
 CONSTANT Consumers
 CONSTANT Nmax
 
-Naturals == 1..Nmax
-
-
 null == CHOOSE x : x \notin Values
-
-
-TypeOk(r) == r \in [back:Naturals, items:Seq(Values \union null)]
 
 (*
 --algorithm Rep {
 
-variables rep = [back|->1, items|->[n \in Naturals|->null]];
+variables rep = [back|->1, items|->[n \in 1..Nmax|->null]];
 
 macro INC(x) { x := x+1 || rInd := x }
 macro STORE(loc, val) { loc := val }

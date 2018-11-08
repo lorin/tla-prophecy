@@ -97,19 +97,20 @@ We create an `rInd` variable when a procedure or macro returns an integer
 returns a value from the set of `Values.
 
 
-Here's the implementation, using C-syntax for brevity:
+Here's a PlusCal implementation, which can be found in
+[QueueRep.tla](QueueRep.tla).
 
 ```
 --algorithm Rep {
 
-variables rep = [back|->1, items|->[n \in Nat|->null]];
+variables rep = [back|->1, items|->[n \in 1..Nmax|->null]];
 
 macro INC(x) { x := x+1 || rInd := x }
 macro STORE(loc, val) { loc := val }
 macro READ(ind) { rInd := ind }
 macro SWAP(loc, val) { loc := val || rVal := loc }
 
-procedure Enq(x) 
+procedure Enq(x)
 variables i, rInd {
 E1:  INC(rep.back);
 E2:  i := rInd;
@@ -135,16 +136,15 @@ D10:    i:= i+1
     }
 }
 
-process (producer \in Producers) {
+fair process (producer \in Producers) {
 P1: with (item \in Values) {
     call Enq(item)
     }
 }
 
-process (consumer \in Consumers) {
+fair process (consumer \in Consumers) {
 C1: call Deq()
 }
-
 }
 ```
 
