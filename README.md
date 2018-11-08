@@ -206,7 +206,9 @@ a single refinement mapping because whatever you pick, there is a potential
 execution trace that will render the refinement mapping invalid.
 
 Herlihy and Wing propose using a set of potential mappings rather than a single
-mapping.
+mapping. We implement their abstraction function in
+[QueueAbs.tla](QueueAbs.tla) but we don't actually use this function since we
+use prophecy variables instead.
 
 ## Prophecy variable
 
@@ -235,4 +237,28 @@ Done(self) == /\ pc[self] = "Done"
               /\ UNCHANGED vars
 ```
 
-We follow the advice of Lamport and Mertz and define the 
+Following Lamport and Mertz, for each sub-action in our low-levle specification we need to define three
+operators:
+
+* *Pred* operator that uses the prophecy variable to make a prediction
+* *PredDom* set that indicates which prophecy variables get discarded after a
+  step executes
+* *DomInj* operator for ensuring that the prophecy values don't change in
+  successive states.
+
+In general, these operators can be different for each subaction in a
+specification. In our case, they are the same for every subaction. They are
+defined in [QueueRepPP.tla](QueueRepPP.tla):
+
+```
+Dom == Nat \ {0}
+Pi == ProcSet
+
+INSTANCE Prophecy WITH DomPrime<-Dom'
+
+DomInj == [j \in Nat \ {0,1} |-> j-1]
+PredDom == {1}
+Pred(p, process) == p[1] = process
+```
+
+
