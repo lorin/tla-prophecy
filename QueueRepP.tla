@@ -1,7 +1,7 @@
 ----------------------------- MODULE QueueRepP -----------------------------
 EXTENDS QueueRefinement
 
-VARIABLE p, ord, itemsBar
+VARIABLE p, ord, ordP, itemsBar
 
 varsP == <<vars, p, ordP, ord, itemsBar>>
 
@@ -41,14 +41,14 @@ CASE pco[self] = "E1" -> Ordering(Tail(po), ordo, [repo EXCEPT !.back = (repo.ba
                                                       THEN [pco EXCEPT ![self] = "D6"]
                                                       ELSE [pco EXCEPT ![self] = "D1"], stacko, xo, i_o, rInd_o, io, x_o, rangeo, rIndo, rValo)
 [] pco[self] = "D6" -> Ordering(Tail(po),
-                                IF repo.items[io[self]] = null] THEN ordo
-                                ELSE LET producer == CHOOSE producer \in Producers : i_o[producer] = io[self]
-                                IN Append(ord, producer),
+                                IF repo.items[io[self]] = null THEN ordo
+                                ELSE LET prod == CHOOSE prod \in Producers : i_o[prod] = io[self]
+                                IN Append(ord, prod),
                                 [repo EXCEPT !.items[io[self]] = null],
                                 [pco EXCEPT ![self] = "D7"],
                                 stacko, xo, i_o, rInd_o, io, x_o, rangeo, rIndo,
                                 [rValo EXCEPT ![self] = repo.items[io[self]]])
-[] pco[self] = "D7" -> LET x_p = [x_o EXCEPT ![self] = rValo[self]] 
+[] pco[self] = "D7" -> LET x_p == [x_o EXCEPT ![self] = rValo[self]] 
                        IN Ordering(Tail(po), ordo, repo, IF x_p[self] /= null THEN [pco EXCEPT ![self] = "D8"] ELSE  [pco EXCEPT ![self] = "D10"],
                                    stacko, xo, i_o, rInd_o, io, x_p, rangeo, rIndo, rValo)
 [] pco[self] = "D8" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = "D9"], stacko, xo, i_o, rInd_o, io, x_o, rangeo, rIndo, [rValo EXCEPT ![self] = x_o[self]])
@@ -147,7 +147,7 @@ IsPrefixOf(sp,s) == sp = SubSeq(s, 1, Len(sp))
 
 \* We take effect at E1 if we are next in line to take effect
 RefinementE1(self) == LET ordAndSelf == Append(ord,self)
-                      IN IF IsprefixOf(ordAndSelf, ordP)
+                      IN IF IsPrefixOf(ordAndSelf, ordP)
                          THEN /\ ord' = ordAndSelf
                               /\ itemsBar' = Append(itemsBar, x[self])
                          ELSE UNCHANGED <<ord, itemsBar>>
@@ -156,7 +156,7 @@ RefinementE1(self) == LET ordAndSelf == Append(ord,self)
 RefinementE3(self) == LET alreadyTakenEffect == \E j \in DOMAIN ord : ord[j] = self
                       IN IF alreadyTakenEffect
                          THEN UNCHANGED <<ord, itemsBar>>
-                         ELSE /\ ord' = ordAndSelf
+                         ELSE /\ ord' = Append(ord,self)
                               /\ itemsBar' = Append(itemsBar, x[self])
 
 \* Dequeue takes effect
@@ -200,5 +200,5 @@ Q == INSTANCE Queue WITH items<-itemsBar
 THEOREM SpecP => Q!Spec
 =============================================================================
 \* Modification History
-\* Last modified Tue Nov 06 22:29:33 PST 2018 by lhochstein
+\* Last modified Wed Nov 07 20:22:20 PST 2018 by lhochstein
 \* Created Wed Oct 31 21:07:38 PDT 2018 by lhochstein
