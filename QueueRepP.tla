@@ -3,14 +3,16 @@ EXTENDS QueueRefinement
 
 VARIABLE p, ord, itemsBar
 
-varsP == <<vars,p, ord, itemsBar>>
+varsP == <<vars, p, ordP, ord, itemsBar>>
 
 
 (*
 p is the prophecy variable
 
-ord is a sequence of producer process identifiers associated with the
-values that make up the content of the queue in the refinement mapping.
+ordP is a prediction of the ordering of when the producer enqueues
+take effect. It is derived from p. 
+
+ord is the ordering of when producer enqueues take effect.
 
 itemsBar is the refinement mapping
 
@@ -19,9 +21,11 @@ itemsBar is the refinement mapping
 InitP == /\ Init
          /\ (p \in [Dom->Pi])
          /\ ord = << >>
+         /\ ordP = Ordering(p, ord, rep, pc, stack, x, i_, rInd, i, x_, range, rInd, rVal)
          /\ itemsBar = << >>
 
 TypeOK == /\ p \in [Dom->Pi]
+          /\ ordP \in UNION({[1..N -> Producers] : N \in 1..Cardinality(Producers)})
           /\ ord \in UNION({[1..N -> Producers] : N \in 1..Cardinality(Producers)})
           /\ itemsBar \in UNION({[1..N -> Values] : N \in 1..Cardinality(Producers)})
 
@@ -81,7 +85,8 @@ CASE pco[self] = "E1" -> Ordering(Tail(po), ordo, [repo EXCEPT !.back = (repo.ba
                                 xo, [i_o EXCEPT ![self] = Head(stacko[self]).i_o],
                                 [rInd_o EXCEPT ![self] = Head(stacko[self]).rInd_o], io, [xo EXCEPT ![self] = Head(stacko[self]).x_o], rangeo, rIndo, rValo)
 [] pco[self] = "D1" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = "D2"], stacko, xo, i_o, rInd_o, io, x_o, rangeo, rIndo, rValo)
-[] pco[self] = "D2" -> Ordering(Tail(po), ordo, repo, [pc EXCEPT ![self] = "D3"], stacko, xo, i_o, rInd_o, io, x_o, rangeo, [rIndo EXCEPT ![self] = repo.back], rValo)
+[] pco[self] = "D2" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = "D3"], stacko, xo, i_o, rInd_o, io, x_o, rangeo, [rIndo EXCEPT ![self] = repo.back], rValo)
+[] pco[self] = "D3" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = "D4"], stacko, xo, i_o, rInd_o, io, x_o, [rangeo EXCEPT ![self] = rIndo[self]-1], rIndo, rValo)
 
 (* TODO: D3-D10, P1, C1, Done *)
     
