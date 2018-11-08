@@ -1,5 +1,5 @@
 ----------------------------- MODULE QueueRepP -----------------------------
-EXTENDS QueueRefinement
+EXTENDS QueueRepPP
 
 VARIABLE p, ord, ordP, itemsBar
 
