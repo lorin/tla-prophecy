@@ -31,67 +31,67 @@ the scheduling of processes.
 ****************************************************************************)
 
 RECURSIVE Ordering(_, _, _, _, _, _, _, _, _, _, _, _, _)
-Ordering(po, ordo, repo, pco, stacko, xo, i_o, rInd_o, io, x_o, rangeo, rIndo, rValo) == 
+Ordering(po, ordo, repo, pco, stacko, xo, i_o, preINCo, io, x_o, rangeo, rIndo, rValo) == 
     LET consumersRemaining == {co \in Consumers : \/ pco[co] \in {"C1", "D1", "D2", "D3", "D4", "D5", "D6", "D10"}
                                                   \/ pco[co]="D7" => rValo[co] = null }
         self == po[1]
     IN IF consumersRemaining = {} \/ po = << >> THEN ordo
     ELSE
-CASE pco[self] = "E1" -> LET rInd_p == [rInd_o EXCEPT ![self] = repo.back]
+CASE pco[self] = "E1" -> LET preINCp == [preINCo EXCEPT ![self] = repo.back]
                          IN Ordering(Tail(po), ordo,
                              [repo EXCEPT !.back = (repo.back)+1], [pco EXCEPT ![self] = "E2"],
                              stacko, xo,
-                             [i_o EXCEPT ![self] = rInd_p[self]],
-                             [rInd_o EXCEPT ![self] = repo.back],
+                             [i_o EXCEPT ![self] = preINCp[self]],
+                             [preINCo EXCEPT ![self] = repo.back],
                              io, x_o, rangeo, rIndo, rValo)
 [] pco[self] = "E2" -> Ordering(Tail(po), ordo,
                         [repo EXCEPT !.items[i_o[self]] = xo[self]],
                         [pco EXCEPT ![self] = "E3"],
-                        stacko, xo, i_o, rInd_o, io, x_o, rangeo, rIndo, rValo)
+                        stacko, xo, i_o, preINCo, io, x_o, rangeo, rIndo, rValo)
 [] pco[self] = "E3" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = Head(stacko[self]).pc], [stacko EXCEPT ![self] = Tail(stacko[self])],
                                 xo, [i_o EXCEPT ![self] = Head(stacko[self]).i_o],
-                                [rInd_o EXCEPT ![self] = Head(stacko[self]).rInd_o], io, [xo EXCEPT ![self] = Head(stacko[self]).x], rangeo, rIndo, rValo)
-[] pco[self] = "D1" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = "D2"], stacko, xo, i_o, rInd_o, io, x_o, rangeo, rIndo, rValo)
-[] pco[self] = "D2" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = "D3"], stacko, xo, i_o, rInd_o, io, x_o, rangeo, [rIndo EXCEPT ![self] = repo.back], rValo)
-[] pco[self] = "D3" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = "D4"], stacko, xo, i_o, rInd_o, io, x_o, [rangeo EXCEPT ![self] = rIndo[self]-1], rIndo, rValo)
-[] pco[self] = "D4" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = "D5"], stacko, xo, i_o, rInd_o, [io EXCEPT ![self] = 1], x_o, rangeo, rIndo, rValo)
+                                [preINCo EXCEPT ![self] = Head(stacko[self]).preINCo], io, [xo EXCEPT ![self] = Head(stacko[self]).x], rangeo, rIndo, rValo)
+[] pco[self] = "D1" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = "D2"], stacko, xo, i_o, preINCo, io, x_o, rangeo, rIndo, rValo)
+[] pco[self] = "D2" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = "D3"], stacko, xo, i_o, preINCo, io, x_o, rangeo, [rIndo EXCEPT ![self] = repo.back], rValo)
+[] pco[self] = "D3" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = "D4"], stacko, xo, i_o, preINCo, io, x_o, [rangeo EXCEPT ![self] = rIndo[self]-1], rIndo, rValo)
+[] pco[self] = "D4" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = "D5"], stacko, xo, i_o, preINCo, [io EXCEPT ![self] = 1], x_o, rangeo, rIndo, rValo)
 [] pco[self] = "D5" -> Ordering(Tail(po), ordo, repo, IF (io[self]<=rangeo[self])
                                                       THEN [pco EXCEPT ![self] = "D6"]
-                                                      ELSE [pco EXCEPT ![self] = "D1"], stacko, xo, i_o, rInd_o, io, x_o, rangeo, rIndo, rValo)
+                                                      ELSE [pco EXCEPT ![self] = "D1"], stacko, xo, i_o, preINCo, io, x_o, rangeo, rIndo, rValo)
 [] pco[self] = "D6" -> Ordering(Tail(po),
                                 IF repo.items[io[self]] = null THEN ordo
                                 ELSE LET prod == CHOOSE prod \in Producers : i_o[prod] = io[self]
                                 IN Append(ordo, prod),
                                 [repo EXCEPT !.items[io[self]] = null],
                                 [pco EXCEPT ![self] = "D7"],
-                                stacko, xo, i_o, rInd_o, io, x_o, rangeo, rIndo,
+                                stacko, xo, i_o, preINCo, io, x_o, rangeo, rIndo,
                                 [rValo EXCEPT ![self] = repo.items[io[self]]])
 [] pco[self] = "D7" -> LET x_p == [x_o EXCEPT ![self] = rValo[self]] 
                        IN Ordering(Tail(po), ordo, repo, IF x_p[self] /= null THEN [pco EXCEPT ![self] = "D8"] ELSE  [pco EXCEPT ![self] = "D10"],
-                                   stacko, xo, i_o, rInd_o, io, x_p, rangeo, rIndo, rValo)
-[] pco[self] = "D8" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = "D9"], stacko, xo, i_o, rInd_o, io, x_o, rangeo, rIndo, [rValo EXCEPT ![self] = x_o[self]])
+                                   stacko, xo, i_o, preINCo, io, x_p, rangeo, rIndo, rValo)
+[] pco[self] = "D8" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = "D9"], stacko, xo, i_o, preINCo, io, x_o, rangeo, rIndo, [rValo EXCEPT ![self] = x_o[self]])
 [] pco[self] = "D9" -> Ordering(Tail(po), ordo, repo,
                                 [pco EXCEPT ![self] = Head(stacko[self]).pc],
                                 [stacko EXCEPT ![self] = Tail(stacko[self])],
-                                xo, i_o, rInd_o,
+                                xo, i_o, preINCo,
                                 [io EXCEPT ![self] = Head(stacko[self]).i],
                                 [x_o EXCEPT ![self] = Head(stacko[self]).x_o],
                                 [rangeo EXCEPT ![self] = Head(stacko[self]).range],
                                 [rIndo EXCEPT ![self] = Head(stacko[self]).rInd],
                                 [rValo EXCEPT ![self] = Head(stacko[self]).rVal])
-[] pco[self] = "D10" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = "D5"], stacko, xo, i_o, rInd_o, [io EXCEPT ![self] = io[self]+1], x_o, rangeo, rIndo, rValo)
+[] pco[self] = "D10" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = "D5"], stacko, xo, i_o, preINCo, [io EXCEPT ![self] = io[self]+1], x_o, rangeo, rIndo, rValo)
 
 
 [] pco[self] = "P1" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = "E1"],
                         [stacko EXCEPT ![self] = << [ procedure |->  "Enq",
                                                      pc        |->  "Done",
                                                      i_        |->  i_o[self],
-                                                     rInd_     |->  rInd_o[self],
+                                                     preINC     |->  preINCo[self],
                                                      x         |->  xo[self] ] >>
                                                  \o stacko[self]],
                         LET item == CHOOSE item \in Values : TRUE IN [xo EXCEPT ![self] = item],
                         [i_o EXCEPT ![self] = defaultInitValue],
-                        [rInd_o EXCEPT ![self] = defaultInitValue], io, x_o, rangeo, rIndo, rValo)
+                        [preINCo EXCEPT ![self] = defaultInitValue], io, x_o, rangeo, rIndo, rValo)
 
 
 [] pco[self] = "C1" -> Ordering(Tail(po), ordo, repo, pco,
@@ -102,14 +102,14 @@ CASE pco[self] = "E1" -> LET rInd_p == [rInd_o EXCEPT ![self] = repo.back]
                                                      range     |->  rangeo[self],
                                                      rInd      |->  rIndo[self],
                                                      rVal      |->  rValo[self] ] >> \o stacko[self]],
-                             xo, i_o, rInd_o,
+                             xo, i_o, preINCo,
                              [io EXCEPT ![self] = defaultInitValue],
                              [x_o EXCEPT ![self] = defaultInitValue],
                              [rangeo EXCEPT ![self] = defaultInitValue],
                              [rIndo EXCEPT ![self] = defaultInitValue],
                              [rValo EXCEPT ![self] = defaultInitValue])
 
-[] pco[self] = "Done" -> Ordering(Tail(po), ordo, repo, pco, stacko, xo, i_o, rInd_o, io, x_o, rangeo, rIndo, rValo)
+[] pco[self] = "Done" -> Ordering(Tail(po), ordo, repo, pco, stacko, xo, i_o, preINCo, io, x_o, rangeo, rIndo, rValo)
 
 
 InitP == /\ Init
