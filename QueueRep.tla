@@ -49,13 +49,13 @@ D10:    i:= i+1
     }
 }
 
-fair process (producer \in Producers) {
+process (producer \in Producers) {
 P1: with (item \in Values) {
     call Enq(item)
     }
 }
 
-fair process (consumer \in Consumers) {
+process (consumer \in Consumers) {
 C1: call Deq()
 }
 }
@@ -213,9 +213,7 @@ Next == (\E self \in ProcSet: Enq(self) \/ Deq(self))
            \/ (* Disjunct to prevent deadlock on termination *)
               ((\A self \in ProcSet: pc[self] = "Done") /\ UNCHANGED vars)
 
-Spec == /\ Init /\ [][Next]_vars
-        /\ \A self \in Producers : WF_vars(producer(self)) /\ WF_vars(Enq(self))
-        /\ \A self \in Consumers : WF_vars(consumer(self)) /\ WF_vars(Deq(self))
+Spec == Init /\ [][Next]_vars
 
 Termination == <>(\A self \in ProcSet: pc[self] = "Done")
 
@@ -224,5 +222,5 @@ Termination == <>(\A self \in ProcSet: pc[self] = "Done")
 
 =============================================================================
 \* Modification History
-\* Last modified Thu Nov 08 17:16:33 PST 2018 by lhochstein
+\* Last modified Thu Nov 08 17:28:50 PST 2018 by lhochstein
 \* Created Wed Oct 24 18:53:25 PDT 2018 by lhochstein

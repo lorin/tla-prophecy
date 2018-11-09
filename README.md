@@ -97,9 +97,12 @@ those procedures mutate the queue, and PlusCal is effectively pass-by-value,
 which means that the procedure can't mutate the queue. We use a global variable
 instead.
 
-We create an `rInd` variable when a procedure or macro returns an integer
-(really, Natural) value, and an `rVal` variable when a procedure or macro
-returns a value from the set of `Values.
+PlusCal does not allow macros or procedures to return values, so we use
+variables for storing returend values. For the `Enq` procedure, we use the
+variable `preINC` to store the value of `INC(x)` before it is incremented.
+For the `Deq` proedure, we use the the `rInd` variable when a procedure or macro returns
+a natural number (here "Ind" stands for index) value, and an `rVal` variable
+when a procedure or macro returns a value from the set of `Values`.
 
 
 Here's a PlusCal implementation, which can be found in
@@ -110,15 +113,15 @@ Here's a PlusCal implementation, which can be found in
 
 variables rep = [back|->1, items|->[n \in 1..Nmax|->null]];
 
-macro INC(x) { x := x+1 || rInd := x }
+macro INC(x) { x := x+1 || preINC := x }
 macro STORE(loc, val) { loc := val }
 macro READ(ind) { rInd := ind }
 macro SWAP(loc, val) { loc := val || rVal := loc }
 
 procedure Enq(x)
-variables i, rInd {
+variables i, preINC {
 E1:  INC(rep.back);
-     i := rInd;
+     i := preINC;
 E2:  STORE(rep.items[i], x);
 E3:  return
 }
@@ -141,17 +144,18 @@ D10:    i:= i+1
     }
 }
 
-fair process (producer \in Producers) {
+process (producer \in Producers) {
 P1: with (item \in Values) {
     call Enq(item)
     }
 }
 
-fair process (consumer \in Consumers) {
+process (consumer \in Consumers) {
 C1: call Deq()
 }
 }
 ```
+
 
 ## High-level queue specification
 
