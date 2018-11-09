@@ -118,9 +118,9 @@ macro SWAP(loc, val) { loc := val || rVal := loc }
 procedure Enq(x)
 variables i, rInd {
 E1:  INC(rep.back);
-E2:  i := rInd;
-E3:  STORE(rep.items[i], x);
-E4:  return
+     i := rInd;
+E2:  STORE(rep.items[i], x);
+E3:  return
 }
 
 procedure Deq()
@@ -271,7 +271,6 @@ Condition ==
     /\ \A pr \in Producers: ProphCondition(E1(pr), DomInj, PredDom, LAMBDA p: Pred(p, pr))
     /\ \A pr \in Producers: ProphCondition(E2(pr), DomInj, PredDom, LAMBDA p: Pred(p, pr))
     /\ \A pr \in Producers: ProphCondition(E3(pr), DomInj, PredDom, LAMBDA p: Pred(p, pr))
-    /\ \A pr \in Producers: ProphCondition(E4(pr), DomInj, PredDom, LAMBDA p: Pred(p, pr))
     /\ \A co \in Consumers: ProphCondition(D1(co), DomInj, PredDom, LAMBDA p: Pred(p, co))
     /\ \A co \in Consumers: ProphCondition(D2(co), DomInj, PredDom, LAMBDA p: Pred(p, co))
     /\ \A co \in Consumers: ProphCondition(D3(co), DomInj, PredDom, LAMBDA p: Pred(p, co))
@@ -306,4 +305,4 @@ producer process's values will be dequeued by effectively executing
 (simulating) the specification using the prophecized schedule.
 
 This ordering is stored in the `ordP` variable, which is then used to determine
-whether enqueues should take effect at E1 or E3.
+whether enqueues should take effect at E1 or E2.
