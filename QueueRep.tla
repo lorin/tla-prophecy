@@ -91,15 +91,15 @@ E1(self) == /\ pc[self] = "E1"
             /\ /\ rInd_' = [rInd_ EXCEPT ![self] = rep.back]
                /\ rep' = [rep EXCEPT !.back = (rep.back)+1]
             /\ i_' = [i_ EXCEPT ![self] = rInd_'[self]]
-            /\ pc' = [pc EXCEPT ![self] = "E3"]
+            /\ pc' = [pc EXCEPT ![self] = "E2"]
             /\ UNCHANGED << stack, x, i, x_, range, rInd, rVal >>
 
-E3(self) == /\ pc[self] = "E3"
+E2(self) == /\ pc[self] = "E2"
             /\ rep' = [rep EXCEPT !.items[i_[self]] = x[self]]
-            /\ pc' = [pc EXCEPT ![self] = "E4"]
+            /\ pc' = [pc EXCEPT ![self] = "E3"]
             /\ UNCHANGED << stack, x, i_, rInd_, i, x_, range, rInd, rVal >>
 
-E4(self) == /\ pc[self] = "E4"
+E3(self) == /\ pc[self] = "E3"
             /\ pc' = [pc EXCEPT ![self] = Head(stack[self]).pc]
             /\ i_' = [i_ EXCEPT ![self] = Head(stack[self]).i_]
             /\ rInd_' = [rInd_ EXCEPT ![self] = Head(stack[self]).rInd_]
@@ -107,7 +107,7 @@ E4(self) == /\ pc[self] = "E4"
             /\ stack' = [stack EXCEPT ![self] = Tail(stack[self])]
             /\ UNCHANGED << rep, i, x_, range, rInd, rVal >>
 
-Enq(self) == E1(self) \/ E3(self) \/ E4(self)
+Enq(self) == E1(self) \/ E2(self) \/ E3(self)
 
 D1(self) == /\ pc[self] = "D1"
             /\ pc' = [pc EXCEPT ![self] = "D2"]
@@ -223,5 +223,5 @@ Termination == <>(\A self \in ProcSet: pc[self] = "Done")
 
 =============================================================================
 \* Modification History
-\* Last modified Thu Nov 08 17:04:49 PST 2018 by lhochstein
+\* Last modified Thu Nov 08 17:05:10 PST 2018 by lhochstein
 \* Created Wed Oct 24 18:53:25 PDT 2018 by lhochstein

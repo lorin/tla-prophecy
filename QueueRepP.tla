@@ -37,11 +37,18 @@ Ordering(po, ordo, repo, pco, stacko, xo, i_o, rInd_o, io, x_o, rangeo, rIndo, r
         self == po[1]
     IN IF consumersRemaining = {} \/ po = << >> THEN ordo
     ELSE
-CASE pco[self] = "E1" -> Ordering(Tail(po), ordo, [repo EXCEPT !.back = (repo.back)+1], [pco EXCEPT ![self] = "E2"],
-                                  stacko, xo, i_o, [rInd_o EXCEPT ![self] = repo.back], io, x_o, rangeo, rIndo, rValo)
-[] pco[self] = "E2" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = "E3"], stacko, xo, [i_o EXCEPT ![self] = rInd_o[self]], rInd_o, io, x_o, rangeo, rIndo, rValo)
-[] pco[self] = "E3" -> Ordering(Tail(po), ordo, [repo EXCEPT !.items[i_o[self]] = xo[self]], [pco EXCEPT ![self] = "E4"], stacko, xo, i_o, rInd_o, io, x_o, rangeo, rIndo, rValo)
-[] pco[self] = "E4" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = Head(stacko[self]).pc], [stacko EXCEPT ![self] = Tail(stacko[self])],
+CASE pco[self] = "E1" -> LET rInd_p == [rInd_o EXCEPT ![self] = repo.back]
+                         IN Ordering(Tail(po), ordo,
+                             [repo EXCEPT !.back = (repo.back)+1], [pco EXCEPT ![self] = "E2"],
+                             stacko, xo,
+                             [i_o EXCEPT ![self] = rInd_p[self]],
+                             [rInd_o EXCEPT ![self] = repo.back],
+                             io, x_o, rangeo, rIndo, rValo)
+[] pco[self] = "E2" -> Ordering(Tail(po), ordo,
+                        [repo EXCEPT !.items[i_o[self]] = xo[self]],
+                        [pco EXCEPT ![self] = "E3"],
+                        stacko, xo, i_o, rInd_o, io, x_o, rangeo, rIndo, rValo)
+[] pco[self] = "E3" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = Head(stacko[self]).pc], [stacko EXCEPT ![self] = Tail(stacko[self])],
                                 xo, [i_o EXCEPT ![self] = Head(stacko[self]).i_o],
                                 [rInd_o EXCEPT ![self] = Head(stacko[self]).rInd_o], io, [xo EXCEPT ![self] = Head(stacko[self]).x], rangeo, rIndo, rValo)
 [] pco[self] = "D1" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = "D2"], stacko, xo, i_o, rInd_o, io, x_o, rangeo, rIndo, rValo)
@@ -133,9 +140,9 @@ RefinementE1(self) == LET ordAndSelf == Append(ord,self)
                          ELSE UNCHANGED <<ord, itemsBar>>
 
 (***************************************************************************)
-(* We take effect at E3 if we have not yet taken effect                    *)
+(* We take effect at E2 if we have not yet taken effect                    *)
 (***************************************************************************)
-RefinementE3(self) == LET alreadyTakenEffect == \E j \in DOMAIN ord : ord[j] = self
+RefinementE2(self) == LET alreadyTakenEffect == \E j \in DOMAIN ord : ord[j] = self
                       IN IF alreadyTakenEffect
                          THEN UNCHANGED <<ord, itemsBar>>
                          ELSE /\ ord' = Append(ord,self)
@@ -149,11 +156,10 @@ RefinementD6(self) == /\ IF rep.items[i[self]] /= null THEN itemsBar' = Tail(ite
                       /\ UNCHANGED ordP \* Predicted sequence never changes
 
 E1P(self) == ProphAction(E1(self), p, p', DomInj, PredDom, LAMBDA j: Pred(j, self)) /\ RefinementE1(self)
-E2P(self) == ProphAction(E2(self), p, p', DomInj, PredDom, LAMBDA j: Pred(j, self)) /\ UNCHANGED <<itemsBar, ord>>
-E3P(self) == ProphAction(E3(self), p, p', DomInj, PredDom, LAMBDA j: Pred(j, self)) /\ RefinementE3(self)
-E4P(self) == ProphAction(E4(self), p, p', DomInj, PredDom, LAMBDA j: Pred(j, self)) /\ UNCHANGED <<itemsBar, ord>>
+E2P(self) == ProphAction(E2(self), p, p', DomInj, PredDom, LAMBDA j: Pred(j, self)) /\ RefinementE2(self)
+E3P(self) == ProphAction(E3(self), p, p', DomInj, PredDom, LAMBDA j: Pred(j, self)) /\ UNCHANGED <<itemsBar, ord>>
 
-EnqP(self) == E1P(self) \/ E2P(self) \/ E3P(self) \/ E4P(self)
+EnqP(self) == E1P(self) \/ E2P(self) \/ E3P(self) 
 
 D1P(self) == ProphAction(D1(self), p, p', DomInj, PredDom, LAMBDA j: Pred(j, self)) /\ UNCHANGED <<itemsBar, ord>>
 D2P(self) == ProphAction(D2(self), p, p', DomInj, PredDom, LAMBDA j: Pred(j, self)) /\ UNCHANGED <<itemsBar, ord>>
@@ -204,5 +210,5 @@ Q == INSTANCE Queue WITH items<-itemsBar
 THEOREM SpecP => Q!Spec
 =============================================================================
 \* Modification History
-\* Last modified Wed Nov 07 23:13:30 PST 2018 by lhochstein
+\* Last modified Thu Nov 08 17:06:44 PST 2018 by lhochstein
 \* Created Wed Oct 31 21:07:38 PDT 2018 by lhochstein
