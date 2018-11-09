@@ -11,19 +11,21 @@ specification.
 [refinement mappings]: https://www.microsoft.com/en-us/research/publication/the-existence-of-refinement-mappings/
 
 Two years later, in their paper that introduced the concept of [linearizability][herlihy], Herlihy and Wing
-provided an example of a particular concurrent queue implementation that
-demonstrated that it is not always possible to define a refinement mapping. 
+provided an example of a linearizable, concurrent queue implementation where
+refinement mapping didn't work: it wasn't possible to define a refinement
+mapping that proved that the concurrent queue implemented the higher-level
+specification of a sequential queue.
 
 [herlihy]: https://cs.brown.edu/~mph/HerlihyW90/p463-herlihy.pdf
 
-
-Lamport and Abadi later proposed the concept of prophecy variables (a form of
-which is described in the paper [Auxiliary Variables in TLA+][aux]) as a
+Lamport and Abadi later proposed the idea of *prophecy variables*  as a
 technique to resolve the problems in refinement mapping revealed by Herlihy and Wing.
+Prophecy variables are described in detail in the paper [Auxiliary Variables in TLA+][aux]
+by Lamport and Mertz.
 
 As it happens, Lamport and Mertz note that prophecy variables aren't actually
 necessary for defining a refinement mapping for the example provided by Herlihy
-and Wing, as long as you make some changes to the high-level specification:
+and Wing, provided changes are made to the high-level specification:
 
 > This same idea of modifying the high-level specification to avoid adding a
 > prophecy variable to the algorithm can be applied to the queue
