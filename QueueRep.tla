@@ -26,9 +26,9 @@ macro SWAP(loc, val) { loc := val || rVal := loc }
 procedure Enq(x)
 variables i, rInd {
 E1:  INC(rep.back);
-E2:  i := rInd;
-E3:  STORE(rep.items[i], x);
-E4:  return
+     i := rInd;
+E2:  STORE(rep.items[i], x);
+E3:  return
 }
 
 procedure Deq()
@@ -90,13 +90,9 @@ Init == (* Global variables *)
 E1(self) == /\ pc[self] = "E1"
             /\ /\ rInd_' = [rInd_ EXCEPT ![self] = rep.back]
                /\ rep' = [rep EXCEPT !.back = (rep.back)+1]
-            /\ pc' = [pc EXCEPT ![self] = "E2"]
-            /\ UNCHANGED << stack, x, i_, i, x_, range, rInd, rVal >>
-
-E2(self) == /\ pc[self] = "E2"
-            /\ i_' = [i_ EXCEPT ![self] = rInd_[self]]
+            /\ i_' = [i_ EXCEPT ![self] = rInd_'[self]]
             /\ pc' = [pc EXCEPT ![self] = "E3"]
-            /\ UNCHANGED << rep, stack, x, rInd_, i, x_, range, rInd, rVal >>
+            /\ UNCHANGED << stack, x, i, x_, range, rInd, rVal >>
 
 E3(self) == /\ pc[self] = "E3"
             /\ rep' = [rep EXCEPT !.items[i_[self]] = x[self]]
@@ -111,7 +107,7 @@ E4(self) == /\ pc[self] = "E4"
             /\ stack' = [stack EXCEPT ![self] = Tail(stack[self])]
             /\ UNCHANGED << rep, i, x_, range, rInd, rVal >>
 
-Enq(self) == E1(self) \/ E2(self) \/ E3(self) \/ E4(self)
+Enq(self) == E1(self) \/ E3(self) \/ E4(self)
 
 D1(self) == /\ pc[self] = "D1"
             /\ pc' = [pc EXCEPT ![self] = "D2"]
@@ -227,5 +223,5 @@ Termination == <>(\A self \in ProcSet: pc[self] = "Done")
 
 =============================================================================
 \* Modification History
-\* Last modified Wed Nov 07 22:41:12 PST 2018 by lhochstein
+\* Last modified Thu Nov 08 17:04:49 PST 2018 by lhochstein
 \* Created Wed Oct 24 18:53:25 PDT 2018 by lhochstein
