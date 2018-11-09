@@ -1,5 +1,7 @@
 ------------------------------- MODULE Queue -------------------------------
-(*** A specification for an abstract, sequential queue ***)
+(***************************************************************************)
+(* A high-level specification for a sequential queue                       *)
+(***************************************************************************)
 
 EXTENDS Sequences
 
@@ -25,5 +27,5 @@ Spec == Init /\ [] [Next]_<<items>>
 
 =============================================================================
 \* Modification History
-\* Last modified Sat Oct 27 12:03:44 PDT 2018 by lhochstein
+\* Last modified Thu Nov 08 19:07:01 PST 2018 by lhochstein
 \* Created Fri Apr 20 23:43:41 PDT 2018 by lhochstein
