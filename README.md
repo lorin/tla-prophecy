@@ -32,11 +32,10 @@ and Wing, as long as you make some changes to the high-level specification:
 However, as an exercise in learning how prophecy variables work, I used prophecy variables to
 define a refinement example for the queue example provided by Herlihy and Wing.
 
-I use the [Prophecy.tla](Prophecy.tla) module from the
-[Disalog-ICS-NJU/tlaplus-lamport-projects][prophfile] project. This module was
-originally documented in the Lamport and Abadi paper.
+The [Prophecy.tla](Prophecy.tla) module comes from the [zipfile] that
+accompanies the Lamport and Merz paper.
 
-[prophfile]: https://github.com/Disalg-ICS-NJU/tlaplus-lamport-projects/blob/master/learning-tlaplus/Hengfeng-Wei/learning-tlaplus-papers/AuxiliaryVariables-Lamport/auxiliary/Prophecy.tla
+[zipfile]: http://lamport.azurewebsites.net/tla/auxiliary/auxiliary.html
 [aux]:  http://lamport.azurewebsites.net/pubs/pubs.html#auxiliary
 
 ## Concurrent queue from Herlihy & Wing paper
