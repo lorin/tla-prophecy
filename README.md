@@ -10,7 +10,7 @@ specification.
 
 [refinement mappings]: https://www.microsoft.com/en-us/research/publication/the-existence-of-refinement-mappings/
 
-Two years later, in their [landmark paper on linearizability][herlihy], Herlihy and Wing
+Two years later, in their [paper][herlihy] that introduced the concept of linearizability, Herlihy and Wing
 provided an example of a particular concurrent queue implementation that
 demonstrated that it is not always possible to define a refinement mapping. 
 
