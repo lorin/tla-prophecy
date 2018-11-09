@@ -43,9 +43,10 @@ accompanies the Lamport and Merz paper.
 ## Concurrent queue from Herlihy & Wing paper
 
 The Herlihy & Wing paper provides an example implementation of a concurrent
-queue that is linearizable.
+queue that is linearizable, and yet, does not admit a refinement mapping
+to a sequential queue.
 
-Here is the algorithm, from Section 4.2, page 475, using the pseudocode syntax
+Here's the algorithm from Section 4.2 (p475), using the pseudocode syntax
 from the original paper:
 
 ```
@@ -167,8 +168,8 @@ C1: call Deq()
 
 ## High-level queue specification
 
-Here's simple specification for a FIFO: it supports enqueue and dequeueing
-values:
+Here's simple specification for a queue (FIFO). THe specification supports
+enqueueing and dequeueing values:
 
 ```
 EXTENDS Sequences
@@ -182,7 +183,6 @@ Enq(val, q, qp) == qp = Append(q, val)
 Deq(val, q, qp) == /\ q /= << >>
                    /\ val = Head(q)
                    /\ qp = Tail(q)
-                   
                    
 Init == /\ items = << >>
 
@@ -209,7 +209,7 @@ THEOREM SpecP => Q!Spec
 The interesting part of the queue implementation is that enqueuing requires two operations:
 
 * allocating a slot for writing (E1)
-* writing the data (E3)
+* writing the data (E2)
 
 We need to decide at which point the enqueueing should take effect. But we
 can't know this, because it will vary depending on how the other processes get
