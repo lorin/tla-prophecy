@@ -71,8 +71,7 @@ The queue is represented as a record:
 rep = record [back: int, items: array [item]] 
 ```
 
-The syntax assumes pass-by-reference, so that variables passed as arguments
-can be mutated.
+The syntax assumes pass-by-reference, so that the `q` variable can be modified.
 
 The algorithm assumes the presence of the following atomic operations
 
@@ -85,13 +84,23 @@ The algorithm assumes the presence of the following atomic operations
 
 `SWAP(x,y)` sets `x` to `y` and returns the value of `x` before being set.
 
+Note that the enqueue operation (`Enq`) is implemented as a sequence of two
+atomic operations: `INC` and `STORE`.
+
+Also note that the implementation is non-blocking: there are no locks, mutexes,
+critical sections, or other concurrency primitives provided by the system,
+other than the atomic `INC`, `STORE`, `READ` and `SWAP` operations.
 
 
 ## Implementing the queue in PlusCal
 
-A PlusCal implementation of this queue is straightforward. There are some minor
-modifications required because PlusCal doesn't implement pass-by-reference and
-procedures don't have a notion of return values.
+Translating from pseudocode to PlusCal is pretty straightforward. I opted to
+translate it as directly as possible. 
+
+There are some superificial differences in the PlusCal translation:
+
+ * PlusCal doesn't implement pass-by-reference
+ * Procedures and macros have no notion of a return value.
 
 We can't pass the queue as an argument to the Enq and Deq procedures because
 those procedures mutate the queue, and PlusCal is effectively pass-by-value,
@@ -105,9 +114,7 @@ For the `Deq` proedure, we use the the `rInd` variable when a procedure or macro
 a natural number (here "Ind" stands for index) value, and an `rVal` variable
 when a procedure or macro returns a value from the set of `Values`.
 
-
-Here's a PlusCal implementation, which can be found in
-[QueueRep.tla](QueueRep.tla).
+Here's a PlusCal implementation, which can be found in [QueueRep.tla](QueueRep.tla).
 
 ```
 --algorithm Rep {
