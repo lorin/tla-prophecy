@@ -240,7 +240,7 @@ Pi == ProcSet
 
 `[Dom->Pi]` defines the set of all possible schedulings.
 
-In some cases, we may end up predicitng a process that has already completed.
+In some cases, we may end up predicting a process that has already completed.
 To handle this, we'll need to add a new sub-action to our model:
 
 
