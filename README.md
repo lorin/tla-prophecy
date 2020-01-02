@@ -243,7 +243,6 @@ Pi == ProcSet
 In some cases, we may end up predicting a process that has already completed.
 To handle this, we'll need to add a new sub-action to our model:
 
-
 ```
 Done(self) == /\ pc[self] = "Done"
               /\ UNCHANGED vars
