@@ -16,7 +16,7 @@ VARIABLES items,
 \* Used for refinement mapping
 \* From Herlihy & Wing, p478
 \* Let <r be the partial order such that x<r y if the STORE operation for x precedes the INC operation for y in H|REP
-VARIABLE before
+VARIABLE beforeBar
 
 null == CHOOSE y : y \notin Values
 
@@ -38,12 +38,19 @@ Init == /\ items = [j \in Nat\{0} |-> null]
         /\ range \in [DeQers -> Nat]
         /\ pce = [e \in EnQers |-> "inc"]
         /\ pcd = [d \in DeQers |-> "range"]
+        /\ beforeBar = {}
 
 
-IncEnq(e) == /\ pce[e] = "inc"
+IncEnq(e) ==  LET 
+                v == <<x[e], back>>
+                dones == {ee \in EnQers : pce[ee] = "done"} \* indexes of stored values
+                us == {<<items[u], u>>: u \in dones} \* (val, index) pair of stored values
+              IN
+               /\ pce[e] = "inc"
                /\ i' = [i EXCEPT ![e]=back]
                /\ back' = back+1
                /\ pce' = [pce EXCEPT ![e]="store"]
+               /\ beforeBar' = beforeBar \union {<<u, v>> : u \in us}
                /\ UNCHANGED <<items, x, range, pcd>>
 
 StoreEnq(e) == LET
@@ -94,11 +101,17 @@ Spec == Init /\ [Next]_v
 
 \* Refinement mapping
 
-CONSTANTS Done, Ids, NonElt, Busy
+CONSTANTS Done, NonElt, Busy
 
-INSTANCE IPOFifo WITH enq<-FALSE, deq<-FALSE, elts<-FALSE, before<-FALSE, adding<-FALSE, Data<-Values
+enqBar == FALSE
+deqBar == FALSE
+eltsBar == FALSE
+addingBar == FALSE
+
+
+INSTANCE IPOFifo WITH enq<-enqBar, deq<-deqBar, elts<-eltsBar, adding<-addingBar, before<-beforeBar, Data<-Values, Ids<-Nat\{0}
 
 =============================================================================
 \* Modification History
-\* Last modified Wed Jan 31 19:58:26 PST 2024 by lorin
+\* Last modified Wed Jan 31 20:34:03 PST 2024 by lorin
 \* Created Wed Jan 31 17:11:38 PST 2024 by lorin
