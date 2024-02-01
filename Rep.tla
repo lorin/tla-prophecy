@@ -20,10 +20,10 @@ Procs == EnQers \union DeQers
 TypeOK == /\ items \in [Nat \ {0} -> Values \union {null}]
           /\ back \in Nat
           /\ i \in [Procs -> Nat]
-          /\ x \in [Procs -> Values]
+          /\ x \in [Procs -> Values \union {null}]
           /\ range \in [DeQers -> Nat]
           /\ pce \in [EnQers -> {"alloc", "fill",  "done"}]
-          /\ pcd \in [DeQers -> {"range", "for", "swap", "return"}]
+          /\ pcd \in [DeQers -> {"range", "for", "swap", "return", "done"}]
 
 
 Init == /\ items = [j \in Nat\{0} |-> null]
@@ -36,15 +36,19 @@ Init == /\ items = [j \in Nat\{0} |-> null]
 
 
 AllocEnq(e) == /\ pce[e] = "alloc"
-               /\ i'[e] = back
+               /\ i' = [i EXCEPT ![e]=back]
                /\ back' = back+1
                /\ pce' = [pce EXCEPT ![e]="fill"]
                /\ UNCHANGED <<items, x, range, pcd>>
 
-FillEnq(e) == /\ pce[e] = "fill"
-              /\ items' = [items EXCEPT ![i[e]]=x[e]]
-              /\ pce' = [pce EXCEPT ![e]="done"]
-              /\ UNCHANGED <<back, i, x, range, pcd>>
+FillEnq(e) == LET
+                 ie == i[e]
+                 xe == x[e]
+              IN
+                /\ pce[e] = "fill"
+                /\ items' = [items EXCEPT ![ie]=xe]
+                /\ pce' = [pce EXCEPT ![e]="done"]
+                /\ UNCHANGED <<back, i, x, range, pcd>>
 
 
 RangeDeq(d) == /\ pcd[d] = "range"
@@ -54,8 +58,8 @@ RangeDeq(d) == /\ pcd[d] = "range"
                /\ UNCHANGED <<items, back, x, pce>>
 
 ForDeq(d) == /\ pcd[d] = "for"
-             /\ i'=[i EXCEPT ![d]=@+1]
-             /\ pcd' = [pcd EXCEPT ![d] = IF i'[d] <= range THEN "swap" ELSE "range"]
+             /\ i' = [i EXCEPT ![d]=@+1]
+             /\ pcd' = [pcd EXCEPT ![d] = IF i'[d] <= range[d] THEN "swap" ELSE "range"]
              /\ UNCHANGED <<items, back, x, range, pce>>
 
 SwapDeq(d) == LET id == i[d] IN 
@@ -84,7 +88,8 @@ v == <<items, back, pcd, pce, i, x, range>>
 Spec == Init /\ [Next]_v
 
 
+
 =============================================================================
 \* Modification History
-\* Last modified Wed Jan 31 19:11:12 PST 2024 by lorin
+\* Last modified Wed Jan 31 19:23:23 PST 2024 by lorin
 \* Created Wed Jan 31 17:11:38 PST 2024 by lorin
