@@ -17,8 +17,7 @@ CONSTANTS EnQers,
           Done,
           NonElt,
           Ids,
-          Busy,
-          NoData
+          Busy
           
            
 VARIABLES enq, deq, elts, before, adding
@@ -28,7 +27,7 @@ VARIABLES enq, deq, elts, before, adding
 beingAdded == {adding[e] : e \in EnQers} \ {NonElt}
 
 
-prec(u, v) == <<u,v>> \in before 
+u \prec v == <<u,v>> \in before 
 
 
 POInit == /\ enq = [e \in EnQers |-> Done]
@@ -58,7 +57,7 @@ BeginPODeq(d) == /\ deq[d] /= Busy
                  
 EndPODeq(d) == /\ deq[d] = Busy
                /\ \E el \in elts:
-                     /\ \A el2 \in elts: ~prec(el2, el)
+                     /\ \A el2 \in elts: ~(el2 \prec el)
                      /\ elts' = elts \ {el}
                      /\ deq' = [deq EXCEPT ![d]=el[1]]
                      /\ before' = before \intersect (elts' \X elts')
@@ -74,5 +73,5 @@ IPOFifo == POInit /\ [][PONext]_POv
 
 =============================================================================
 \* Modification History
-\* Last modified Wed Jan 31 17:09:15 PST 2024 by lorin
+\* Last modified Wed Jan 31 19:25:22 PST 2024 by lorin
 \* Created Tue Jan 30 20:41:39 PST 2024 by lorin
