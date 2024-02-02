@@ -1,4 +1,6 @@
--------------------------------- MODULE Rep --------------------------------
+------------------------------ MODULE RepAux -------------------------------
+
+Rep == INSTANCE Rep
 
 EXTENDS Naturals, Sequences
 
@@ -12,6 +14,12 @@ VARIABLES items,
           i,
           x,
           range \* deq only
+
+\* Used for refinement mapping
+\* From Herlihy & Wing, p478
+\* Let <r be the partial order such that x<r y if the STORE operation for x precedes the INC operation for y in H|REP
+CONSTANT  NonElt
+VARIABLES beforeBar, addingBar
 
 null == CHOOSE y : y \notin Values
 
@@ -33,6 +41,9 @@ Init == /\ items = [j \in Nat\{0} |-> null]
         /\ range \in [DeQers -> Nat]
         /\ pce = [e \in EnQers |-> "inc"]
         /\ pcd = [d \in DeQers |-> "range"]
+        /\ beforeBar = {}
+        /\ addingBar = [e \in EnQers |-> NonElt]
+        /\ enqBar = [e \in EnQers |-> Done]
 
 
 IncEnq(e) ==  LET 
@@ -45,6 +56,9 @@ IncEnq(e) ==  LET
                /\ i' = [i EXCEPT ![e]=back]
                /\ back' = back+1
                /\ pce' = [pce EXCEPT ![e]="store"]
+               /\ beforeBar' = beforeBar \union {<<u, v>> : u \in us}
+               /\ addingBar' = [addingBar EXCEPT ![e] = v]
+               /\ enqBar' = [encBar EXCEPT ![e]=xe]
                /\ UNCHANGED <<items, x, range, pcd>>
 
 StoreEnq(e) == LET
@@ -54,30 +68,32 @@ StoreEnq(e) == LET
                 /\ pce[e] = "store"
                 /\ items' = [items EXCEPT ![ie]=xe]
                 /\ pce' = [pce EXCEPT ![e]="done"]
-                /\ UNCHANGED <<back, i, x, range, pcd>>
+                /\ addingBar' = [addingBar EXCEPT ![e]=NonElt]
+                /\ enqBar' = [encBar EXCEPT ![e]=Done]
+                /\ UNCHANGED <<back, i, x, range, pcd, beforeBar>>
 
 
 RangeDeq(d) == /\ pcd[d] = "range"
                /\ range' = [range EXCEPT ![d]=back-1]
                /\ pcd' = [pcd EXCEPT ![d]="for"]
                /\ i' = [i EXCEPT ![d]=0] \* initialize i to 0 before the for loop
-               /\ UNCHANGED <<items, back, x, pce>>
+               /\ UNCHANGED <<items, back, x, pce, beforeBar, addingBar, enqBar>>
 
 ForDeq(d) == /\ pcd[d] = "for"
              /\ i' = [i EXCEPT ![d]=@+1]
              /\ pcd' = [pcd EXCEPT ![d] = IF i'[d] <= range[d] THEN "swap" ELSE "range"]
-             /\ UNCHANGED <<items, back, x, range, pce>>
+             /\ UNCHANGED <<items, back, x, range, pce, beforeBar, addingBar, enqBar>>
 
 SwapDeq(d) == LET id == i[d] IN 
               /\ pcd[d] = "swap"
               /\ x' = [x EXCEPT ![d]=items[id]]
               /\ items' = [items EXCEPT ![id] = null]
               /\ pcd' = [pcd EXCEPT ![d] = "return"]
-              /\ UNCHANGED <<back, i, range, pce>>
+              /\ UNCHANGED <<back, i, range, pce, beforeBar, addingBar, enqBar>>
 
 ReturnDeq(d) == /\ pcd[d] = "return"
                 /\ pcd' = [pcd EXCEPT ![d] = IF x[d] /= null THEN "done" ELSE "range"]
-                /\ UNCHANGED <<items, back, i, x, range, pce>>
+                /\ UNCHANGED <<items, back, i, x, range, pce, beforeBar, addingBar, enqBar>>
  
 
 Next == \/ \E e \in EnQers :
@@ -89,12 +105,21 @@ Next == \/ \E e \in EnQers :
             \/ SwapDeq(d)
             \/ ReturnDeq(d)
 
-v == <<items, back, pcd, pce, i, x, range>>
+v == <<items, back, pcd, pce, i, x, range, beforBar, addingBar, enqBar>>
 
 Spec == Init /\ [Next]_v
 
+\* Refinement mapping
+
+CONSTANTS Done, Busy
+
+deqBar == FALSE
+eltsBar == FALSE
+
+
+INSTANCE IPOFifo WITH enq<-enqBar, deq<-deqBar, elts<-eltsBar, adding<-addingBar, before<-beforeBar, Data<-Values, Ids<-Nat\{0}
 
 =============================================================================
 \* Modification History
-\* Last modified Fri Feb 02 12:11:10 PST 2024 by lorin
+\* Last modified Wed Jan 31 20:34:03 PST 2024 by lorin
 \* Created Wed Jan 31 17:11:38 PST 2024 by lorin
