@@ -1,13 +1,34 @@
 ------------------------------ MODULE RepAux -------------------------------
 
+EXTENDS Naturals, Sequences
+
+CONSTANTS Values, 
+          EnQers, 
+          DeQers
+
+VARIABLES items, 
+          back,
+          pcd, pce,
+          i,
+          x,
+          range 
+
 Rep == INSTANCE Rep
+
+\* Refinement mapping
+
+CONSTANTS Done, Busy
+
+deqBar == FALSE
+eltsBar == FALSE
+
 
 
 \* Used for refinement mapping
 \* From Herlihy & Wing, p478
 \* Let <r be the partial order such that x<r y if the STORE operation for x precedes the INC operation for y in H|REP
 CONSTANT  NonElt
-VARIABLES beforeBar, addingBar
+VARIABLES beforeBar, addingBar, enqBar
 
 TypeOK == Rep!TypeOK
 
@@ -25,16 +46,16 @@ IncEnq(e) ==  LET
                /\ Rep!IncEnq(e)
                /\ beforeBar' = beforeBar \union {<<u, v>> : u \in us}
                /\ addingBar' = [addingBar EXCEPT ![e] = v]
-               /\ enqBar' = [encBar EXCEPT ![e]=xe]
+               /\ enqBar' = [enqBar EXCEPT ![e]=xe]
                /\ UNCHANGED <<items, x, range, pcd>>
 
 StoreEnq(e) == LET
                  ie == i[e]
                  xe == x[e]
                IN
-                /\ RepP!StoreEnq(e)
+                /\ Rep!StoreEnq(e)
                 /\ addingBar' = [addingBar EXCEPT ![e]=NonElt]
-                /\ enqBar' = [encBar EXCEPT ![e]=Done]
+                /\ enqBar' = [enqBar EXCEPT ![e]=Done]
                 /\ UNCHANGED <<back, i, x, range, pcd, beforeBar>>
 
 
@@ -60,21 +81,15 @@ Next == \/ \E e \in EnQers :
             \/ SwapDeq(d)
             \/ ReturnDeq(d)
 
-v == Rep!v \o <<beforBar, addingBar, enqBar>>
+v == Rep!v \o <<beforeBar, addingBar, enqBar>>
 
 Spec == Init /\ [Next]_v
 
-\* Refinement mapping
-
-CONSTANTS Done, Busy
-
-deqBar == FALSE
-eltsBar == FALSE
 
 
 INSTANCE IPOFifo WITH enq<-enqBar, deq<-deqBar, elts<-eltsBar, adding<-addingBar, before<-beforeBar, Data<-Values, Ids<-Nat\{0}
 
 =============================================================================
 \* Modification History
-\* Last modified Wed Jan 31 20:34:03 PST 2024 by lorin
+\* Last modified Fri Feb 02 12:18:52 PST 2024 by lorin
 \* Created Wed Jan 31 17:11:38 PST 2024 by lorin
