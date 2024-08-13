@@ -1,5 +1,6 @@
 *.toolbox
 *.pdf
 *.out
+*.old
 .vscode
 states
