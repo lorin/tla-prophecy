@@ -3,26 +3,82 @@
 (* A high-level specification for a sequential queue                       *)
 (***************************************************************************)
 
-EXTENDS Sequences
+EXTENDS Sequences, Naturals
 
-CONSTANT Values
+CONSTANTS Val, Nmax, null, Producers, Consumers
 
-VARIABLE items
+ASSUME null \notin Val
 
-Enq(val, q, qp) == qp = Append(q, val)
+(*
+--algorithm Queue {
+    variable items = << >>
 
-Deq(val, q, qp) == /\ q /= << >>
-                   /\ val = Head(q)
-                   /\ qp = Tail(q)
-                   
-                   
-Init == /\ items = << >>
+    process (producer \in Producers)
+    variable x \in Val;
+    {
+      E: 
+          await Len(items) < Nmax;
+          items := <<x>> \o items;
+    }
 
-Next == \/ \E v \in Values : /\ Enq(v, items, items')
-        \/ \E v \in Values : /\ Deq(v, items, items')
-        
-Spec == Init /\ [] [Next]_<<items>>
+    process (consumer \in Consumers) 
+    variable r = null;
+    {
+        D:
+            await items # <<>>;
+            r := Head(items);
+            items := Tail(items);
+    }
+}
+*)
+\* BEGIN TRANSLATION (chksum(pcal) = "7bc98894" /\ chksum(tla) = "70cd88ba")
+VARIABLES pc, items, x, r
 
+vars == << pc, items, x, r >>
+
+ProcSet == (Producers) \cup (Consumers)
+
+Init == (* Global variables *)
+        /\ items = << >>
+        (* Process producer *)
+        /\ x \in [Producers -> Val]
+        (* Process consumer *)
+        /\ r = [self \in Consumers |-> null]
+        /\ pc = [self \in ProcSet |-> CASE self \in Producers -> "E"
+                                        [] self \in Consumers -> "D"]
+
+E(self) == /\ pc[self] = "E"
+           /\ Len(items) < Nmax
+           /\ items' = <<x[self]>> \o items
+           /\ pc' = [pc EXCEPT ![self] = "Done"]
+           /\ UNCHANGED << x, r >>
+
+producer(self) == E(self)
+
+D(self) == /\ pc[self] = "D"
+           /\ items # <<>>
+           /\ r' = [r EXCEPT ![self] = Head(items)]
+           /\ items' = Tail(items)
+           /\ pc' = [pc EXCEPT ![self] = "Done"]
+           /\ x' = x
+
+consumer(self) == D(self)
+
+(* Allow infinite stuttering to prevent deadlock on termination. *)
+Terminating == /\ \A self \in ProcSet: pc[self] = "Done"
+               /\ UNCHANGED vars
+
+Next == (\E self \in Producers: producer(self))
+           \/ (\E self \in Consumers: consumer(self))
+           \/ Terminating
+
+Spec == Init /\ [][Next]_vars
+
+Termination == <>(\A self \in ProcSet: pc[self] = "Done")
+
+\* END TRANSLATION 
+
+Inv == items = <<>>
               
 
 =============================================================================
