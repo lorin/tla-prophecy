@@ -1,214 +1,226 @@
 (***************************************************************************)
-(* Refinement mapping of the QueueRep specification to the Queue           *)
-(* specification, using prophecy variables.                                *)
 (*                                                                         *)
-(* We augment the QueueRep specification to create a new specification     *)
-(* named SpecP                                                             *)
-(***************************************************************************)
-
------------------------------ MODULE QueueRepP -----------------------------
-EXTENDS QueueRepPP
-
-(***************************************************************************)
-(* p is the prophecy variable                                              *)
-(*                                                                         *)
-(* ordP is a prediction of the ordering of when the producer enqueues      *)
-(* take effect. It is derived from p.                                      *)
-(*                                                                         *)
-(* ord is the ordering of when producer enqueues take effect.              *)
-(*                                                                         *)
-(* itemsBar is the refinement mapping                                      *)
+(* Queue representation type (REP) from Herlihy & Wing 1990                *)
 (*                                                                         *)
 (***************************************************************************)
-VARIABLE p, ord, ordP, itemsBar
+------------------------------ MODULE QueueRep ------------------------------
+EXTENDS Naturals, Sequences, TLC
 
-varsP == <<vars, p, ordP, ord, itemsBar>>
+CONSTANT Values
+CONSTANT Producers
+CONSTANT Consumers
+CONSTANT Nmax
 
-(****************************************************************************
-Ordering returns a sequence that represents the order in which the producer
-process's values be dequeued by the consumers, based on the prophecy of
-the scheduling of processes.
-****************************************************************************)
+null == CHOOSE x : x \notin Values
 
-RECURSIVE Ordering(_, _, _, _, _, _, _, _, _, _, _, _, _)
-Ordering(po, ordo, repo, pco, stacko, xo, i_o, preINCo, io, x_o, rangeo, rIndo, rValo) == 
-    LET consumersRemaining == {co \in Consumers : \/ pco[co] \in {"C1", "D1", "D2", "D3", "D4", "D5", "D6", "D10"}
-                                                  \/ pco[co]="D7" => rValo[co] = null }
-        self == po[1]
-    IN IF consumersRemaining = {} \/ po = << >> THEN ordo
-    ELSE
-CASE pco[self] = "E1" -> LET preINCp == [preINCo EXCEPT ![self] = repo.back]
-                         IN Ordering(Tail(po), ordo,
-                             [repo EXCEPT !.back = (repo.back)+1], [pco EXCEPT ![self] = "E2"],
-                             stacko, xo,
-                             [i_o EXCEPT ![self] = preINCp[self]],
-                             [preINCo EXCEPT ![self] = repo.back],
-                             io, x_o, rangeo, rIndo, rValo)
-[] pco[self] = "E2" -> Ordering(Tail(po), ordo,
-                        [repo EXCEPT !.items[i_o[self]] = xo[self]],
-                        [pco EXCEPT ![self] = "E3"],
-                        stacko, xo, i_o, preINCo, io, x_o, rangeo, rIndo, rValo)
-[] pco[self] = "E3" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = Head(stacko[self]).pc], [stacko EXCEPT ![self] = Tail(stacko[self])],
-                                xo, [i_o EXCEPT ![self] = Head(stacko[self]).i_o],
-                                [preINCo EXCEPT ![self] = Head(stacko[self]).preINCo], io, [xo EXCEPT ![self] = Head(stacko[self]).x], rangeo, rIndo, rValo)
-[] pco[self] = "D1" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = "D2"], stacko, xo, i_o, preINCo, io, x_o, rangeo, rIndo, rValo)
-[] pco[self] = "D2" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = "D3"], stacko, xo, i_o, preINCo, io, x_o, rangeo, [rIndo EXCEPT ![self] = repo.back], rValo)
-[] pco[self] = "D3" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = "D4"], stacko, xo, i_o, preINCo, io, x_o, [rangeo EXCEPT ![self] = rIndo[self]-1], rIndo, rValo)
-[] pco[self] = "D4" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = "D5"], stacko, xo, i_o, preINCo, [io EXCEPT ![self] = 1], x_o, rangeo, rIndo, rValo)
-[] pco[self] = "D5" -> Ordering(Tail(po), ordo, repo, IF (io[self]<=rangeo[self])
-                                                      THEN [pco EXCEPT ![self] = "D6"]
-                                                      ELSE [pco EXCEPT ![self] = "D1"], stacko, xo, i_o, preINCo, io, x_o, rangeo, rIndo, rValo)
-[] pco[self] = "D6" -> Ordering(Tail(po),
-                                IF repo.items[io[self]] = null THEN ordo
-                                ELSE LET prod == CHOOSE prod \in Producers : i_o[prod] = io[self]
-                                IN Append(ordo, prod),
-                                [repo EXCEPT !.items[io[self]] = null],
-                                [pco EXCEPT ![self] = "D7"],
-                                stacko, xo, i_o, preINCo, io, x_o, rangeo, rIndo,
-                                [rValo EXCEPT ![self] = repo.items[io[self]]])
-[] pco[self] = "D7" -> LET x_p == [x_o EXCEPT ![self] = rValo[self]] 
-                       IN Ordering(Tail(po), ordo, repo, IF x_p[self] /= null THEN [pco EXCEPT ![self] = "D8"] ELSE  [pco EXCEPT ![self] = "D10"],
-                                   stacko, xo, i_o, preINCo, io, x_p, rangeo, rIndo, rValo)
-[] pco[self] = "D8" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = "D9"], stacko, xo, i_o, preINCo, io, x_o, rangeo, rIndo, [rValo EXCEPT ![self] = x_o[self]])
-[] pco[self] = "D9" -> Ordering(Tail(po), ordo, repo,
-                                [pco EXCEPT ![self] = Head(stacko[self]).pc],
-                                [stacko EXCEPT ![self] = Tail(stacko[self])],
-                                xo, i_o, preINCo,
-                                [io EXCEPT ![self] = Head(stacko[self]).i],
-                                [x_o EXCEPT ![self] = Head(stacko[self]).x_o],
-                                [rangeo EXCEPT ![self] = Head(stacko[self]).range],
-                                [rIndo EXCEPT ![self] = Head(stacko[self]).rInd],
-                                [rValo EXCEPT ![self] = Head(stacko[self]).rVal])
-[] pco[self] = "D10" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = "D5"], stacko, xo, i_o, preINCo, [io EXCEPT ![self] = io[self]+1], x_o, rangeo, rIndo, rValo)
+(*
+--algorithm Rep {
 
+variables rep = [back|->1, items|->[n \in 1..Nmax|->null]];
 
-[] pco[self] = "P1" -> Ordering(Tail(po), ordo, repo, [pco EXCEPT ![self] = "E1"],
-                        [stacko EXCEPT ![self] = << [ procedure |->  "Enq",
+macro INC(x) { x := x+1 || preINC := x }
+macro STORE(loc, val) { loc := val }
+macro READ(ind) { rInd := ind }
+macro SWAP(loc, val) { loc := val || rVal := loc }
+
+procedure Enq(x)
+variables i, preINC {
+E1:  INC(rep.back);
+     i := preINC;
+E2:  STORE(rep.items[i], x);
+E3:  return
+}
+
+procedure Deq()
+variables i, x, range, rInd, rVal {
+D1: while(TRUE) {
+D2:   READ(rep.back);
+D3:   range := rInd-1;
+D4:   i := 1;
+D5:   while(i<=range) {
+D6:     SWAP(rep.items[i], null);
+D7:     x := rVal;
+        if(x /= null) {
+D8:       rVal := x;
+D9:       return
+        };
+D10:    i:= i+1
+      }
+    }
+}
+
+process (producer \in Producers) {
+P1: with (item \in Values) {
+    call Enq(item)
+    }
+}
+
+process (consumer \in Consumers) {
+C1: call Deq()
+}
+}
+*)
+\* BEGIN TRANSLATION
+\* Procedure variable i of procedure Enq at line 27 col 11 changed to i_
+\* Procedure variable x of procedure Deq at line 35 col 14 changed to x_
+CONSTANT defaultInitValue
+VARIABLES rep, pc, stack, x, i_, preINC, i, x_, range, rInd, rVal
+
+vars == << rep, pc, stack, x, i_, preINC, i, x_, range, rInd, rVal >>
+
+ProcSet == (Producers) \cup (Consumers)
+
+Init == (* Global variables *)
+        /\ rep = [back|->1, items|->[n \in 1..Nmax|->null]]
+        (* Procedure Enq *)
+        /\ x = [ self \in ProcSet |-> defaultInitValue]
+        /\ i_ = [ self \in ProcSet |-> defaultInitValue]
+        /\ preINC = [ self \in ProcSet |-> defaultInitValue]
+        (* Procedure Deq *)
+        /\ i = [ self \in ProcSet |-> defaultInitValue]
+        /\ x_ = [ self \in ProcSet |-> defaultInitValue]
+        /\ range = [ self \in ProcSet |-> defaultInitValue]
+        /\ rInd = [ self \in ProcSet |-> defaultInitValue]
+        /\ rVal = [ self \in ProcSet |-> defaultInitValue]
+        /\ stack = [self \in ProcSet |-> << >>]
+        /\ pc = [self \in ProcSet |-> CASE self \in Producers -> "P1"
+                                        [] self \in Consumers -> "C1"]
+
+E1(self) == /\ pc[self] = "E1"
+            /\ /\ preINC' = [preINC EXCEPT ![self] = rep.back]
+               /\ rep' = [rep EXCEPT !.back = (rep.back)+1]
+            /\ i_' = [i_ EXCEPT ![self] = preINC'[self]]
+            /\ pc' = [pc EXCEPT ![self] = "E2"]
+            /\ UNCHANGED << stack, x, i, x_, range, rInd, rVal >>
+
+E2(self) == /\ pc[self] = "E2"
+            /\ rep' = [rep EXCEPT !.items[i_[self]] = x[self]]
+            /\ pc' = [pc EXCEPT ![self] = "E3"]
+            /\ UNCHANGED << stack, x, i_, preINC, i, x_, range, rInd, rVal >>
+
+E3(self) == /\ pc[self] = "E3"
+            /\ pc' = [pc EXCEPT ![self] = Head(stack[self]).pc]
+            /\ i_' = [i_ EXCEPT ![self] = Head(stack[self]).i_]
+            /\ preINC' = [preINC EXCEPT ![self] = Head(stack[self]).preINC]
+            /\ x' = [x EXCEPT ![self] = Head(stack[self]).x]
+            /\ stack' = [stack EXCEPT ![self] = Tail(stack[self])]
+            /\ UNCHANGED << rep, i, x_, range, rInd, rVal >>
+
+Enq(self) == E1(self) \/ E2(self) \/ E3(self)
+
+D1(self) == /\ pc[self] = "D1"
+            /\ pc' = [pc EXCEPT ![self] = "D2"]
+            /\ UNCHANGED << rep, stack, x, i_, preINC, i, x_, range, rInd, 
+                            rVal >>
+
+D2(self) == /\ pc[self] = "D2"
+            /\ rInd' = [rInd EXCEPT ![self] = rep.back]
+            /\ pc' = [pc EXCEPT ![self] = "D3"]
+            /\ UNCHANGED << rep, stack, x, i_, preINC, i, x_, range, rVal >>
+
+D3(self) == /\ pc[self] = "D3"
+            /\ range' = [range EXCEPT ![self] = rInd[self]-1]
+            /\ pc' = [pc EXCEPT ![self] = "D4"]
+            /\ UNCHANGED << rep, stack, x, i_, preINC, i, x_, rInd, rVal >>
+
+D4(self) == /\ pc[self] = "D4"
+            /\ i' = [i EXCEPT ![self] = 1]
+            /\ pc' = [pc EXCEPT ![self] = "D5"]
+            /\ UNCHANGED << rep, stack, x, i_, preINC, x_, range, rInd, rVal >>
+
+D5(self) == /\ pc[self] = "D5"
+            /\ IF i[self]<=range[self]
+                  THEN /\ pc' = [pc EXCEPT ![self] = "D6"]
+                  ELSE /\ pc' = [pc EXCEPT ![self] = "D1"]
+            /\ UNCHANGED << rep, stack, x, i_, preINC, i, x_, range, rInd, 
+                            rVal >>
+
+D6(self) == /\ pc[self] = "D6"
+            /\ /\ rVal' = [rVal EXCEPT ![self] = rep.items[i[self]]]
+               /\ rep' = [rep EXCEPT !.items[i[self]] = null]
+            /\ pc' = [pc EXCEPT ![self] = "D7"]
+            /\ UNCHANGED << stack, x, i_, preINC, i, x_, range, rInd >>
+
+D7(self) == /\ pc[self] = "D7"
+            /\ x_' = [x_ EXCEPT ![self] = rVal[self]]
+            /\ IF x_'[self] /= null
+                  THEN /\ pc' = [pc EXCEPT ![self] = "D8"]
+                  ELSE /\ pc' = [pc EXCEPT ![self] = "D10"]
+            /\ UNCHANGED << rep, stack, x, i_, preINC, i, range, rInd, rVal >>
+
+D8(self) == /\ pc[self] = "D8"
+            /\ rVal' = [rVal EXCEPT ![self] = x_[self]]
+            /\ pc' = [pc EXCEPT ![self] = "D9"]
+            /\ UNCHANGED << rep, stack, x, i_, preINC, i, x_, range, rInd >>
+
+D9(self) == /\ pc[self] = "D9"
+            /\ pc' = [pc EXCEPT ![self] = Head(stack[self]).pc]
+            /\ i' = [i EXCEPT ![self] = Head(stack[self]).i]
+            /\ x_' = [x_ EXCEPT ![self] = Head(stack[self]).x_]
+            /\ range' = [range EXCEPT ![self] = Head(stack[self]).range]
+            /\ rInd' = [rInd EXCEPT ![self] = Head(stack[self]).rInd]
+            /\ rVal' = [rVal EXCEPT ![self] = Head(stack[self]).rVal]
+            /\ stack' = [stack EXCEPT ![self] = Tail(stack[self])]
+            /\ UNCHANGED << rep, x, i_, preINC >>
+
+D10(self) == /\ pc[self] = "D10"
+             /\ i' = [i EXCEPT ![self] = i[self]+1]
+             /\ pc' = [pc EXCEPT ![self] = "D5"]
+             /\ UNCHANGED << rep, stack, x, i_, preINC, x_, range, rInd, rVal >>
+
+Deq(self) == D1(self) \/ D2(self) \/ D3(self) \/ D4(self) \/ D5(self)
+                \/ D6(self) \/ D7(self) \/ D8(self) \/ D9(self)
+                \/ D10(self)
+
+P1(self) == /\ pc[self] = "P1"
+            /\ \E item \in Values:
+                 /\ /\ stack' = [stack EXCEPT ![self] = << [ procedure |->  "Enq",
+                                                             pc        |->  "Done",
+                                                             i_        |->  i_[self],
+                                                             preINC    |->  preINC[self],
+                                                             x         |->  x[self] ] >>
+                                                         \o stack[self]]
+                    /\ x' = [x EXCEPT ![self] = item]
+                 /\ i_' = [i_ EXCEPT ![self] = defaultInitValue]
+                 /\ preINC' = [preINC EXCEPT ![self] = defaultInitValue]
+                 /\ pc' = [pc EXCEPT ![self] = "E1"]
+            /\ UNCHANGED << rep, i, x_, range, rInd, rVal >>
+
+producer(self) == P1(self)
+
+C1(self) == /\ pc[self] = "C1"
+            /\ stack' = [stack EXCEPT ![self] = << [ procedure |->  "Deq",
                                                      pc        |->  "Done",
-                                                     i_        |->  i_o[self],
-                                                     preINC     |->  preINCo[self],
-                                                     x         |->  xo[self] ] >>
-                                                 \o stacko[self]],
-                        LET item == CHOOSE item \in Values : TRUE IN [xo EXCEPT ![self] = item],
-                        [i_o EXCEPT ![self] = defaultInitValue],
-                        [preINCo EXCEPT ![self] = defaultInitValue], io, x_o, rangeo, rIndo, rValo)
+                                                     i         |->  i[self],
+                                                     x_        |->  x_[self],
+                                                     range     |->  range[self],
+                                                     rInd      |->  rInd[self],
+                                                     rVal      |->  rVal[self] ] >>
+                                                 \o stack[self]]
+            /\ i' = [i EXCEPT ![self] = defaultInitValue]
+            /\ x_' = [x_ EXCEPT ![self] = defaultInitValue]
+            /\ range' = [range EXCEPT ![self] = defaultInitValue]
+            /\ rInd' = [rInd EXCEPT ![self] = defaultInitValue]
+            /\ rVal' = [rVal EXCEPT ![self] = defaultInitValue]
+            /\ pc' = [pc EXCEPT ![self] = "D1"]
+            /\ UNCHANGED << rep, x, i_, preINC >>
+
+consumer(self) == C1(self)
+
+Next == (\E self \in ProcSet: Enq(self) \/ Deq(self))
+           \/ (\E self \in Producers: producer(self))
+           \/ (\E self \in Consumers: consumer(self))
+           \/ (* Disjunct to prevent deadlock on termination *)
+              ((\A self \in ProcSet: pc[self] = "Done") /\ UNCHANGED vars)
+
+Spec == Init /\ [][Next]_vars
+
+Termination == <>(\A self \in ProcSet: pc[self] = "Done")
+
+\* END TRANSLATION
 
 
-[] pco[self] = "C1" -> Ordering(Tail(po), ordo, repo, pco,
-                        [stacko EXCEPT ![self] = << [ procedure |->  "Deq",
-                                                     pc        |->  "Done",
-                                                     i         |->  io[self],
-                                                     x_        |->  x_o[self],
-                                                     range     |->  rangeo[self],
-                                                     rInd      |->  rIndo[self],
-                                                     rVal      |->  rValo[self] ] >> \o stacko[self]],
-                             xo, i_o, preINCo,
-                             [io EXCEPT ![self] = defaultInitValue],
-                             [x_o EXCEPT ![self] = defaultInitValue],
-                             [rangeo EXCEPT ![self] = defaultInitValue],
-                             [rIndo EXCEPT ![self] = defaultInitValue],
-                             [rValo EXCEPT ![self] = defaultInitValue])
-
-[] pco[self] = "Done" -> Ordering(Tail(po), ordo, repo, pco, stacko, xo, i_o, preINCo, io, x_o, rangeo, rIndo, rValo)
-
-
-InitP == /\ Init
-         /\ (p \in [Dom->Pi])
-         /\ ord = << >>
-         /\ ordP = Ordering(p, ord, rep, pc, stack, x, i_, rInd, i, x_, range, rInd, rVal)
-         /\ itemsBar = << >>
-
-TypeOK == /\ p \in [Dom->Pi]
-          /\ ordP \in UNION({[1..N -> Producers] : N \in 1..Cardinality(Producers)})
-          /\ ord \in UNION({[1..N -> Producers] : N \in 1..Cardinality(Producers)})
-          /\ itemsBar \in UNION({[1..N -> Values] : N \in 1..Cardinality(Producers)})
-          
-          
-(***************************************************************************)
-(* True if sp is a prefix of s                                             *)
-(***************************************************************************)
-IsPrefixOf(sp,s) == /\ Len(sp) <= Len(s)
-                    /\ sp = SubSeq(s, 1, Len(sp))
-
-(***************************************************************************)
-(* We take effect at E1 if we are next in line to take effect              *)
-(***************************************************************************)
-RefinementE1(self) == LET ordAndSelf == Append(ord,self)
-                      IN IF IsPrefixOf(ordAndSelf, ordP)
-                         THEN /\ ord' = ordAndSelf
-                              /\ itemsBar' = Append(itemsBar, x[self])
-                         ELSE UNCHANGED <<ord, itemsBar>>
-
-(***************************************************************************)
-(* We take effect at E2 if we have not yet taken effect                    *)
-(***************************************************************************)
-RefinementE2(self) == LET alreadyTakenEffect == \E j \in DOMAIN ord : ord[j] = self
-                      IN IF alreadyTakenEffect
-                         THEN UNCHANGED <<ord, itemsBar>>
-                         ELSE /\ ord' = Append(ord,self)
-                              /\ itemsBar' = Append(itemsBar, x[self])
-
-(***************************************************************************)
-(*  Dequeue takes effect at D6 if the slot is populated with data          *)
-(***************************************************************************)
-RefinementD6(self) == /\ IF rep.items[i[self]] /= null THEN itemsBar' = Tail(itemsBar) ELSE UNCHANGED itemsBar
-                      /\ UNCHANGED ord
-                      /\ UNCHANGED ordP \* Predicted sequence never changes
-
-E1P(self) == ProphAction(E1(self), p, p', DomInj, PredDom, LAMBDA j: Pred(j, self)) /\ RefinementE1(self)
-E2P(self) == ProphAction(E2(self), p, p', DomInj, PredDom, LAMBDA j: Pred(j, self)) /\ RefinementE2(self)
-E3P(self) == ProphAction(E3(self), p, p', DomInj, PredDom, LAMBDA j: Pred(j, self)) /\ UNCHANGED <<itemsBar, ord>>
-
-EnqP(self) == E1P(self) \/ E2P(self) \/ E3P(self) 
-
-D1P(self) == ProphAction(D1(self), p, p', DomInj, PredDom, LAMBDA j: Pred(j, self)) /\ UNCHANGED <<itemsBar, ord>>
-D2P(self) == ProphAction(D2(self), p, p', DomInj, PredDom, LAMBDA j: Pred(j, self)) /\ UNCHANGED <<itemsBar, ord>>
-D3P(self) == ProphAction(D3(self), p, p', DomInj, PredDom, LAMBDA j: Pred(j, self)) /\ UNCHANGED <<itemsBar, ord>>
-D4P(self) == ProphAction(D4(self), p, p', DomInj, PredDom, LAMBDA j: Pred(j, self)) /\ UNCHANGED <<itemsBar, ord>>
-D5P(self) == ProphAction(D5(self), p, p', DomInj, PredDom, LAMBDA j: Pred(j, self)) /\ UNCHANGED <<itemsBar, ord>>
-D6P(self) == ProphAction(D6(self), p, p', DomInj, PredDom, LAMBDA j: Pred(j, self)) /\ RefinementD6(self)
-D7P(self) == ProphAction(D7(self), p, p', DomInj, PredDom, LAMBDA j: Pred(j, self)) /\ UNCHANGED <<itemsBar, ord>>
-D8P(self) == ProphAction(D8(self), p, p', DomInj, PredDom, LAMBDA j: Pred(j, self)) /\ UNCHANGED <<itemsBar, ord>>
-D9P(self) == ProphAction(D9(self), p, p', DomInj, PredDom, LAMBDA j: Pred(j, self)) /\ UNCHANGED <<itemsBar, ord>>
-D10P(self) == ProphAction(D10(self), p, p', DomInj, PredDom, LAMBDA j: Pred(j, self)) /\ UNCHANGED <<itemsBar, ord>>
-
-DeqP(self) == D1P(self) \/ D2P(self) \/ D3P(self) \/ D4P(self) \/ D5P(self)
-                \/ D6P(self) \/ D7P(self) \/ D8P(self) \/ D9P(self)
-                \/ D10P(self)
-
-
-P1P(self) == ProphAction(P1(self), p, p', DomInj, PredDom, LAMBDA j: Pred(j, self)) /\ UNCHANGED <<itemsBar, ord>>
-
-producerP(self) == P1P(self)
-
-C1P(self) == ProphAction(C1(self), p, p', DomInj, PredDom, LAMBDA j: Pred(j, self)) /\ UNCHANGED <<itemsBar, ord>>
-
-\* Need to add a no-op "done" to consume the done prophecies
-Done(self) == /\ pc[self] = "Done"
-              /\ UNCHANGED <<vars, itemsBar, ord>>
-
-DoneP(self) == ProphAction(Done(self), p, p', DomInj, PredDom, LAMBDA j: Pred(j, self))
-
-consumerP(self) == C1P(self)
-
-
-NextP == /\  \/ (\E self \in ProcSet: EnqP(self) \/ DeqP(self))
-             \/ (\E self \in Producers: producerP(self))
-             \/ (\E self \in Consumers: consumerP(self))
-             \/ (\E self \in ProcSet: DoneP(self)) \* consume prophecy var when executing a "done" process
-             \/ (* Disjunct to prevent deadlock on termination *)
-                ((\A self \in ProcSet: pc[self] = "Done") /\ UNCHANGED varsP)
-        /\ UNCHANGED ordP
-
-SpecP == /\ InitP /\ [][NextP]_varsP 
-
-
-TerminationP == <>(\A self \in ProcSet: pc[self] = "Done")
-
-Q == INSTANCE Queue WITH items<-itemsBar
-
-THEOREM SpecP => Q!Spec
 =============================================================================
 \* Modification History
-\* Last modified Thu Nov 08 17:06:44 PST 2018 by lhochstein
-\* Created Wed Oct 31 21:07:38 PDT 2018 by lhochstein
+\* Last modified Thu Nov 08 17:28:50 PST 2018 by lhochstein
+\* Created Wed Oct 24 18:53:25 PDT 2018 by lhochstein
