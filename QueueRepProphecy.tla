@@ -52,10 +52,9 @@ D10:    i:= i+1
     }
 }
 
-process (producer \in Producers) {
-P1: with (item \in Val) {
-    call Enq(item)
-    }
+process (producer \in Producers)
+variable item \in Val; {
+P1: call Enq(item)
 }
 
 process (consumer \in Consumers) {
@@ -67,9 +66,9 @@ C1: call Deq()
 \* BEGIN TRANSLATION
 \* Procedure variable i of procedure Enq at line 25 col 11 changed to i_
 CONSTANT defaultInitValue
-VARIABLES pc, rep, p, stack, v, i_, preINC, i, x, range, rInd, rVal
+VARIABLES pc, rep, p, stack, v, i_, preINC, i, x, range, rInd, rVal, item
 
-vars == << pc, rep, p, stack, v, i_, preINC, i, x, range, rInd, rVal >>
+vars == << pc, rep, p, stack, v, i_, preINC, i, x, range, rInd, rVal, item >>
 
 ProcSet == (Producers) \cup (Consumers)
 
@@ -86,6 +85,8 @@ Init == (* Global variables *)
         /\ range = [ self \in ProcSet |-> defaultInitValue]
         /\ rInd = [ self \in ProcSet |-> defaultInitValue]
         /\ rVal = [ self \in ProcSet |-> defaultInitValue]
+        (* Process producer *)
+        /\ item \in [Producers -> Val]
         /\ stack = [self \in ProcSet |-> << >>]
         /\ pc = [self \in ProcSet |-> CASE self \in Producers -> "P1"
                                         [] self \in Consumers -> "C1"]
@@ -97,12 +98,13 @@ E1(self) == /\ pc[self] = "E1"
             /\ \E pp \in Val:
                  p' = <<pp>> \o p
             /\ pc' = [pc EXCEPT ![self] = "E2"]
-            /\ UNCHANGED << stack, v, i, x, range, rInd, rVal >>
+            /\ UNCHANGED << stack, v, i, x, range, rInd, rVal, item >>
 
 E2(self) == /\ pc[self] = "E2"
             /\ rep' = [rep EXCEPT !.items[i_[self]] = v[self]]
             /\ pc' = [pc EXCEPT ![self] = "E3"]
-            /\ UNCHANGED << p, stack, v, i_, preINC, i, x, range, rInd, rVal >>
+            /\ UNCHANGED << p, stack, v, i_, preINC, i, x, range, rInd, rVal,
+                            item >>
 
 E3(self) == /\ pc[self] = "E3"
             /\ pc' = [pc EXCEPT ![self] = Head(stack[self]).pc]
@@ -110,56 +112,60 @@ E3(self) == /\ pc[self] = "E3"
             /\ preINC' = [preINC EXCEPT ![self] = Head(stack[self]).preINC]
             /\ v' = [v EXCEPT ![self] = Head(stack[self]).v]
             /\ stack' = [stack EXCEPT ![self] = Tail(stack[self])]
-            /\ UNCHANGED << rep, p, i, x, range, rInd, rVal >>
+            /\ UNCHANGED << rep, p, i, x, range, rInd, rVal, item >>
 
 Enq(self) == E1(self) \/ E2(self) \/ E3(self)
 
 D1(self) == /\ pc[self] = "D1"
             /\ pc' = [pc EXCEPT ![self] = "D2"]
-            /\ UNCHANGED << rep, p, stack, v, i_, preINC, i, x, range, rInd, 
-                            rVal >>
+            /\ UNCHANGED << rep, p, stack, v, i_, preINC, i, x, range, rInd,
+                            rVal, item >>
 
 D2(self) == /\ pc[self] = "D2"
             /\ rInd' = [rInd EXCEPT ![self] = rep.back]
             /\ pc' = [pc EXCEPT ![self] = "D3"]
-            /\ UNCHANGED << rep, p, stack, v, i_, preINC, i, x, range, rVal >>
+            /\ UNCHANGED << rep, p, stack, v, i_, preINC, i, x, range, rVal,
+                            item >>
 
 D3(self) == /\ pc[self] = "D3"
             /\ range' = [range EXCEPT ![self] = rInd[self]-1]
             /\ pc' = [pc EXCEPT ![self] = "D4"]
-            /\ UNCHANGED << rep, p, stack, v, i_, preINC, i, x, rInd, rVal >>
+            /\ UNCHANGED << rep, p, stack, v, i_, preINC, i, x, rInd, rVal,
+                            item >>
 
 D4(self) == /\ pc[self] = "D4"
             /\ i' = [i EXCEPT ![self] = 1]
             /\ pc' = [pc EXCEPT ![self] = "D5"]
-            /\ UNCHANGED << rep, p, stack, v, i_, preINC, x, range, rInd, rVal >>
+            /\ UNCHANGED << rep, p, stack, v, i_, preINC, x, range, rInd, rVal,
+                            item >>
 
 D5(self) == /\ pc[self] = "D5"
             /\ IF i[self]<=range[self]
                   THEN /\ pc' = [pc EXCEPT ![self] = "D6"]
                   ELSE /\ pc' = [pc EXCEPT ![self] = "D1"]
-            /\ UNCHANGED << rep, p, stack, v, i_, preINC, i, x, range, rInd, 
-                            rVal >>
+            /\ UNCHANGED << rep, p, stack, v, i_, preINC, i, x, range, rInd,
+                            rVal, item >>
 
 D6(self) == /\ pc[self] = "D6"
             /\ /\ rVal' = [rVal EXCEPT ![self] = rep.items[i[self]]]
                /\ rep' = [rep EXCEPT !.items[i[self]] = null]
             /\ pc' = [pc EXCEPT ![self] = "D7"]
-            /\ UNCHANGED << p, stack, v, i_, preINC, i, x, range, rInd >>
+            /\ UNCHANGED << p, stack, v, i_, preINC, i, x, range, rInd, item >>
 
 D7(self) == /\ pc[self] = "D7"
             /\ x' = [x EXCEPT ![self] = rVal[self]]
             /\ IF x'[self] /= null
                   THEN /\ pc' = [pc EXCEPT ![self] = "D8"]
                   ELSE /\ pc' = [pc EXCEPT ![self] = "D10"]
-            /\ UNCHANGED << rep, p, stack, v, i_, preINC, i, range, rInd, rVal >>
+            /\ UNCHANGED << rep, p, stack, v, i_, preINC, i, range, rInd, rVal,
+                            item >>
 
 D8(self) == /\ pc[self] = "D8"
             /\ Head(p) = x[self]
             /\ rVal' = [rVal EXCEPT ![self] = x[self]]
             /\ p' = Tail(p)
             /\ pc' = [pc EXCEPT ![self] = "D9"]
-            /\ UNCHANGED << rep, stack, v, i_, preINC, i, x, range, rInd >>
+            /\ UNCHANGED << rep, stack, v, i_, preINC, i, x, range, rInd, item >>
 
 D9(self) == /\ pc[self] = "D9"
             /\ pc' = [pc EXCEPT ![self] = Head(stack[self]).pc]
@@ -169,31 +175,30 @@ D9(self) == /\ pc[self] = "D9"
             /\ rInd' = [rInd EXCEPT ![self] = Head(stack[self]).rInd]
             /\ rVal' = [rVal EXCEPT ![self] = Head(stack[self]).rVal]
             /\ stack' = [stack EXCEPT ![self] = Tail(stack[self])]
-            /\ UNCHANGED << rep, p, v, i_, preINC >>
+            /\ UNCHANGED << rep, p, v, i_, preINC, item >>
 
 D10(self) == /\ pc[self] = "D10"
              /\ i' = [i EXCEPT ![self] = i[self]+1]
              /\ pc' = [pc EXCEPT ![self] = "D5"]
-             /\ UNCHANGED << rep, p, stack, v, i_, preINC, x, range, rInd, 
-                             rVal >>
+             /\ UNCHANGED << rep, p, stack, v, i_, preINC, x, range, rInd,
+                             rVal, item >>
 
 Deq(self) == D1(self) \/ D2(self) \/ D3(self) \/ D4(self) \/ D5(self)
                 \/ D6(self) \/ D7(self) \/ D8(self) \/ D9(self)
                 \/ D10(self)
 
 P1(self) == /\ pc[self] = "P1"
-            /\ \E item \in Val:
-                 /\ /\ stack' = [stack EXCEPT ![self] = << [ procedure |->  "Enq",
-                                                             pc        |->  "Done",
-                                                             i_        |->  i_[self],
-                                                             preINC    |->  preINC[self],
-                                                             v         |->  v[self] ] >>
-                                                         \o stack[self]]
-                    /\ v' = [v EXCEPT ![self] = item]
-                 /\ i_' = [i_ EXCEPT ![self] = defaultInitValue]
-                 /\ preINC' = [preINC EXCEPT ![self] = defaultInitValue]
-                 /\ pc' = [pc EXCEPT ![self] = "E1"]
-            /\ UNCHANGED << rep, p, i, x, range, rInd, rVal >>
+            /\ /\ stack' = [stack EXCEPT ![self] = << [ procedure |->  "Enq",
+                                                        pc        |->  "Done",
+                                                        i_        |->  i_[self],
+                                                        preINC    |->  preINC[self],
+                                                        v         |->  v[self] ] >>
+                                                    \o stack[self]]
+               /\ v' = [v EXCEPT ![self] = item[self]]
+            /\ i_' = [i_ EXCEPT ![self] = defaultInitValue]
+            /\ preINC' = [preINC EXCEPT ![self] = defaultInitValue]
+            /\ pc' = [pc EXCEPT ![self] = "E1"]
+            /\ UNCHANGED << rep, p, i, x, range, rInd, rVal, item >>
 
 producer(self) == P1(self)
 
@@ -212,7 +217,7 @@ C1(self) == /\ pc[self] = "C1"
             /\ rInd' = [rInd EXCEPT ![self] = defaultInitValue]
             /\ rVal' = [rVal EXCEPT ![self] = defaultInitValue]
             /\ pc' = [pc EXCEPT ![self] = "D1"]
-            /\ UNCHANGED << rep, p, v, i_, preINC >>
+            /\ UNCHANGED << rep, p, v, i_, preINC, item >>
 
 consumer(self) == C1(self)
 
@@ -233,6 +238,42 @@ Termination == <>(\A self \in ProcSet: pc[self] = "Done")
 
 NotDone == ~(\A self \in ProcSet: pc[self] = "Done")
 
+pcBar == [c \in Producers \union Consumers |->
+    CASE pc[c] \in {"P1", "E1","E2","E3"} -> "E"
+      [] pc[c] \in {"C1", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "D9", "D10"} -> "D"
+      [] pc[c] = "done" -> "done"
+]
+itemsBar == p
+xBar == item
+rBar == [c \in Consumers |-> IF rVal[c]=defaultInitValue THEN null ELSE rVal[c]]
+
+Mapping ==
+    INSTANCE Queue WITH
+        pc <- pcBar,
+        items <- itemsBar,
+        x <- xBar,
+        r <- rBar
+
+Refinement == Mapping!Spec
+
+Alias == [
+    pcBar |-> pcBar,
+    itemsBar |-> itemsBar,
+    xBar |-> xBar,
+    rBar |-> rBar,
+    preINC |-> preINC,
+    rVal |-> rVal,
+    i |-> i,
+    p |-> p,
+    v |-> v,
+    x |-> x,
+    pc |-> pc,
+    rep |-> rep,
+    rInd |-> rInd,
+    ragne |-> range,
+    i_ |-> i_,
+    stack |-> stack
+]
 
 =============================================================================
 \* Modification History
