@@ -246,12 +246,12 @@ NotDone == ~(\A self \in ProcSet: pc[self] = "Done")
 
 pcBar == [c \in Producers \union Consumers |->
     CASE pc[c] \in {"P1", "E1"} -> "E"
-      [] pc[c] \in {"C1", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "D9", "D10"} -> "D"
-      [] pc[c] \in {"E2", "E3", "Done"} -> "Done"
+      [] pc[c] \in {"C1", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "D10"} -> "D"
+      [] pc[c] \in {"E2", "E3", "D9", "Done"} -> "Done"
 ]
 itemsBar == p
 xBar == p1
-rBar == [c \in Consumers |-> IF rVal[c]=defaultInitValue THEN null ELSE rVal[c]]
+rBar == [c \in Consumers |-> IF pc[c] \in {"D9", "Done"} THEN rVal[c] ELSE null]
 
 Mapping ==
     INSTANCE Queue WITH
