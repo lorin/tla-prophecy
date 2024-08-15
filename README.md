@@ -20,8 +20,10 @@ specification of a sequential queue.
 
 Lamport and Abadi later proposed the idea of *prophecy variables*  as a
 technique to resolve the problems in refinement mapping revealed by Herlihy and Wing.
-Prophecy variables are described in detail in the paper [Auxiliary Variables in TLA+][aux]
-by Lamport and Mertz.
+Prophecy variables are described in :
+
+* [A science of concurrent programs](https://lamport.azurewebsites.net/tla/science.pdf) by Lamport
+* [Auxiliary Variables in TLA+][aux] by Lamport and Mertz
 
 As it happens, Lamport and Mertz note that prophecy variables aren't actually
 necessary for defining a refinement mapping for the example provided by Herlihy
@@ -34,10 +36,6 @@ and Wing, provided changes are made to the high-level specification:
 However, as an exercise in learning how prophecy variables work, I used prophecy variables to
 define a refinement example for the queue example provided by Herlihy and Wing.
 
-The [Prophecy.tla](Prophecy.tla) module comes from the [zipfile] that
-accompanies the Lamport and Merz paper.
-
-[zipfile]: http://lamport.azurewebsites.net/tla/auxiliary/auxiliary.html
 [aux]:  http://lamport.azurewebsites.net/pubs/pubs.html#auxiliary
 
 ## Concurrent queue from Herlihy & Wing paper
