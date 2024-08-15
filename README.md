@@ -66,7 +66,7 @@ Deq = proc (q: queue) returns (item)
 
 The queue is represented as a record:
 
-```
+```tla
 rep = record [back: int, items: array [item]] 
 ```
 
