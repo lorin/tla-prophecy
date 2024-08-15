@@ -197,43 +197,44 @@ The full spec can be found in [QueueRep.tla](QueueRep.tla)
 
 ## High-level queue specification
 
-Here's simple specification for a queue (FIFO). THe specification supports
-enqueueing and dequeueing values:
+Here's simple specification for a queue. It models a set of producer and consumer
+processes, where a producer enqueues an item onto the queue, and the consumer dequeues an item,
+blocking if the queue is empty.
 
 ```
-EXTENDS Sequences
+EXTENDS Sequences, Naturals
 
-CONSTANT Values
+CONSTANTS Val, null, Producers, Consumers
 
-VARIABLE items
+ASSUME null \notin Val
 
-Enq(val, q, qp) == qp = Append(q, val)
+(*
+--algorithm Queue {
+    variable items = << >>
 
-Deq(val, q, qp) == /\ q /= << >>
-                   /\ val = Head(q)
-                   /\ qp = Tail(q)
-                   
-Init == /\ items = << >>
+    process (producer \in Producers)
+    variable x \in Val;
+    {
+      E: 
+          items := <<x>> \o items;
+    }
 
-Next == \/ \E v \in Values : /\ Enq(v, items, items')
-        \/ \E v \in Values : /\ Deq(v, items, items')
-        
-Spec == Init /\ [] [Next]_<<items>>
+    process (consumer \in Consumers) 
+    variable r = null;
+    {
+        D:
+            await items # <<>>;
+            r := Head(items);
+            items := Tail(items);
+    }
+}
+*)
 ```
 
 ## Refinement mapping
 
 The challenge is to show a refinement mapping from our queue implementation to
-this specification. Something that will ultimately look like this:
-
-```
-SpecP == \* The specification of the concurrent queue, with the prophecy variable
-itemsBar == ... \* The refinement mapping
-
-Q == INSTANCE Queue WITH items<-itemsBar
-
-THEOREM SpecP => Q!Spec
-```
+this specification. 
 
 The interesting part of the queue implementation is that enqueuing requires two operations:
 
@@ -252,3 +253,6 @@ mapping. We implement their abstraction function in
 use prophecy variables instead.
 
 ## Prophecy variable
+
+We can use prophecy variables to predict the order in which values will get dequeued.
+
