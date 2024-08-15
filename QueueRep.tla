@@ -20,11 +20,11 @@ macro STORE(loc, val) { loc := val }
 macro READ(ind) { rInd := ind }
 macro SWAP(loc, val) { loc := val || rVal := loc }
 
-procedure Enq(x)
+procedure Enq(v)
 variables i, preINC {
 E1:  INC(rep.back);
      i := preINC;
-E2:  STORE(rep.items[i], x);
+E2:  STORE(rep.items[i], v);
 E3:  return
 }
 
