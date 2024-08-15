@@ -5,7 +5,7 @@
 
 EXTENDS Sequences, Naturals
 
-CONSTANTS Val, Nmax, null, Producers, Consumers
+CONSTANTS Val, null, Producers, Consumers
 
 ASSUME null \notin Val
 
@@ -17,7 +17,6 @@ ASSUME null \notin Val
     variable x \in Val;
     {
       E: 
-          await Len(items) < Nmax;
           items := <<x>> \o items;
     }
 
@@ -31,7 +30,7 @@ ASSUME null \notin Val
     }
 }
 *)
-\* BEGIN TRANSLATION (chksum(pcal) = "7bc98894" /\ chksum(tla) = "70cd88ba")
+\* BEGIN TRANSLATION (chksum(pcal) = "2919db1b" /\ chksum(tla) = "352a78a9")
 VARIABLES pc, items, x, r
 
 vars == << pc, items, x, r >>
@@ -48,7 +47,6 @@ Init == (* Global variables *)
                                         [] self \in Consumers -> "D"]
 
 E(self) == /\ pc[self] = "E"
-           /\ Len(items) < Nmax
            /\ items' = <<x[self]>> \o items
            /\ pc' = [pc EXCEPT ![self] = "Done"]
            /\ UNCHANGED << x, r >>
