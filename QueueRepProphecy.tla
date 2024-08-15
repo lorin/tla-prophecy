@@ -103,7 +103,7 @@ E1(self) == /\ pc[self] = "E1"
 E2(self) == /\ pc[self] = "E2"
             /\ rep' = [rep EXCEPT !.items[i_[self]] = v[self]]
             /\ pc' = [pc EXCEPT ![self] = "E3"]
-            /\ UNCHANGED << p, stack, v, i_, preINC, i, x, range, rInd, rVal,
+            /\ UNCHANGED << p, stack, v, i_, preINC, i, x, range, rInd, rVal, 
                             item >>
 
 E3(self) == /\ pc[self] = "E3"
@@ -118,32 +118,32 @@ Enq(self) == E1(self) \/ E2(self) \/ E3(self)
 
 D1(self) == /\ pc[self] = "D1"
             /\ pc' = [pc EXCEPT ![self] = "D2"]
-            /\ UNCHANGED << rep, p, stack, v, i_, preINC, i, x, range, rInd,
+            /\ UNCHANGED << rep, p, stack, v, i_, preINC, i, x, range, rInd, 
                             rVal, item >>
 
 D2(self) == /\ pc[self] = "D2"
             /\ rInd' = [rInd EXCEPT ![self] = rep.back]
             /\ pc' = [pc EXCEPT ![self] = "D3"]
-            /\ UNCHANGED << rep, p, stack, v, i_, preINC, i, x, range, rVal,
+            /\ UNCHANGED << rep, p, stack, v, i_, preINC, i, x, range, rVal, 
                             item >>
 
 D3(self) == /\ pc[self] = "D3"
             /\ range' = [range EXCEPT ![self] = rInd[self]-1]
             /\ pc' = [pc EXCEPT ![self] = "D4"]
-            /\ UNCHANGED << rep, p, stack, v, i_, preINC, i, x, rInd, rVal,
+            /\ UNCHANGED << rep, p, stack, v, i_, preINC, i, x, rInd, rVal, 
                             item >>
 
 D4(self) == /\ pc[self] = "D4"
             /\ i' = [i EXCEPT ![self] = 1]
             /\ pc' = [pc EXCEPT ![self] = "D5"]
-            /\ UNCHANGED << rep, p, stack, v, i_, preINC, x, range, rInd, rVal,
+            /\ UNCHANGED << rep, p, stack, v, i_, preINC, x, range, rInd, rVal, 
                             item >>
 
 D5(self) == /\ pc[self] = "D5"
             /\ IF i[self]<=range[self]
                   THEN /\ pc' = [pc EXCEPT ![self] = "D6"]
                   ELSE /\ pc' = [pc EXCEPT ![self] = "D1"]
-            /\ UNCHANGED << rep, p, stack, v, i_, preINC, i, x, range, rInd,
+            /\ UNCHANGED << rep, p, stack, v, i_, preINC, i, x, range, rInd, 
                             rVal, item >>
 
 D6(self) == /\ pc[self] = "D6"
@@ -157,7 +157,7 @@ D7(self) == /\ pc[self] = "D7"
             /\ IF x'[self] /= null
                   THEN /\ pc' = [pc EXCEPT ![self] = "D8"]
                   ELSE /\ pc' = [pc EXCEPT ![self] = "D10"]
-            /\ UNCHANGED << rep, p, stack, v, i_, preINC, i, range, rInd, rVal,
+            /\ UNCHANGED << rep, p, stack, v, i_, preINC, i, range, rInd, rVal, 
                             item >>
 
 D8(self) == /\ pc[self] = "D8"
@@ -180,7 +180,7 @@ D9(self) == /\ pc[self] = "D9"
 D10(self) == /\ pc[self] = "D10"
              /\ i' = [i EXCEPT ![self] = i[self]+1]
              /\ pc' = [pc EXCEPT ![self] = "D5"]
-             /\ UNCHANGED << rep, p, stack, v, i_, preINC, x, range, rInd,
+             /\ UNCHANGED << rep, p, stack, v, i_, preINC, x, range, rInd, 
                              rVal, item >>
 
 Deq(self) == D1(self) \/ D2(self) \/ D3(self) \/ D4(self) \/ D5(self)
@@ -239,9 +239,9 @@ Termination == <>(\A self \in ProcSet: pc[self] = "Done")
 NotDone == ~(\A self \in ProcSet: pc[self] = "Done")
 
 pcBar == [c \in Producers \union Consumers |->
-    CASE pc[c] \in {"P1", "E1","E2","E3"} -> "E"
+    CASE pc[c] \in {"P1", "E1"} -> "E"
       [] pc[c] \in {"C1", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "D9", "D10"} -> "D"
-      [] pc[c] = "done" -> "done"
+      [] pc[c] \in {"E2", "E3", "Done"} -> "Done"
 ]
 itemsBar == p
 xBar == item
