@@ -127,7 +127,7 @@ set to the value that `x` held before incremented.
 
 The PlusCal implementation for enqueue then looks like this:
 
-```
+```tla
 \*
 \* Enq(item)
 \*
@@ -163,7 +163,7 @@ And here's my implementation. I used the `rVal` variable to hold the return valu
 and the `rInd` variable to hold the return value of the `READ` operation.
 
 
-```
+```tla
 macro READ(ind) { rInd := ind }
 macro SWAP(loc, val) { loc := val || rVal := loc }
 
