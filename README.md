@@ -95,47 +95,84 @@ other than the atomic `INC`, `STORE`, `READ` and `SWAP` operations.
 
 ## Implementing the queue in PlusCal
 
-Translating from pseudocode to PlusCal is pretty straightforward. I opted to
-translate it as directly as possible. 
+Translating from the pseudocode to PlusCal is pretty straightforward. 
 
-There are some superificial differences in the PlusCal translation:
+### The queue
 
- * PlusCal doesn't implement pass-by-reference
- * Procedures and macros have no notion of a return value.
-
-We can't pass the queue as an argument to the Enq and Deq procedures because
-those procedures mutate the queue, and PlusCal is effectively pass-by-value,
-which means that the procedure can't mutate the queue. We use a global variable
-instead.
-
-PlusCal does not allow macros or procedures to return values, so we use
-variables for storing returend values. For the `Enq` procedure, we use the
-variable `preINC` to store the value of `INC(x)` before it is incremented.
-For the `Deq` proedure, we use the the `rInd` variable when a procedure or macro returns
-a natural number (here "Ind" stands for index) value, and an `rVal` variable
-when a procedure or macro returns a value from the set of `Values`.
-
-Here's a PlusCal implementation, which can be found in [QueueRep.tla](QueueRep.tla).
+The queue is modeled as a record:
 
 ```
---algorithm Rep {
-
 variables rep = [back|->1, items|->[n \in 1..Nmax|->null]];
+```
 
+### Enq operation
+
+Recall that the enqueue operation from the paper looks like this:
+
+```
+Enq = proc (q: queue, x: item)
+    i: int := INC(q.back) % Allocate a new slot.
+    STORE (q.items[i], x) % Fill it.
+    end Enq
+```
+
+I needed to model `INC` and `STORE` as atomic operations, so I used TLA+ macros for those:
+
+```
 macro INC(x) { x := x+1 || preINC := x }
 macro STORE(loc, val) { loc := val }
+```
+
+The `STORE` operation is pretty trivial, but the `INC` requires a little more explanation. 
+Because TLA+ macros don't have a concept of returning a value, I use a variable called `preINC` that gets
+set to the value that `x` held before incremented.
+
+The PlusCal implementation for enqueue then looks like this:
+
+```
+\*
+\* Enq(item)
+\*
+process (producer \in Producers) 
+variables
+    item \in Val, 
+    i, preINC; {
+
+E1:  INC(rep.back);
+     i := preINC;
+E2:  STORE(rep.items[i], item);
+
+}
+```
+
+### Deq operation
+
+Hre's the pseudocode from the paper:
+
+```
+Deq = proc (q: queue) returns (item)
+    while true do
+        range: int := READ(q.back) -1
+        for i: int in 1 .. range do
+            x : item := SWAP(q.items[i], null)
+            if x ~= null then return(x) end
+            end
+        end
+    end Deq
+```
+
+And here's my implementation. I used the `rVal` variable to hold the return value of the Deq operation,
+and the `rInd` variable to hold the return value of the `READ` operation.
+
+
+```
 macro READ(ind) { rInd := ind }
 macro SWAP(loc, val) { loc := val || rVal := loc }
 
-procedure Enq(x)
-variables i, preINC {
-E1:  INC(rep.back);
-     i := preINC;
-E2:  STORE(rep.items[i], x);
-E3:  return
-}
-
-procedure Deq()
+\*
+\* Deq() -> rVal
+\*
+process (consumer \in Consumers) 
 variables i, x, range, rInd, rVal {
 D1: while(TRUE) {
 D2:   READ(rep.back);
@@ -146,24 +183,16 @@ D6:     SWAP(rep.items[i], null);
 D7:     x := rVal;
         if(x /= null) {
 D8:       rVal := x;
-D9:       return
+          p := Tail(p);
+D9:       goto "Done"
         };
 D10:    i:= i+1
       }
     }
 }
-
-process (producer \in Producers) {
-P1: with (item \in Values) {
-    call Enq(item)
-    }
-}
-
-process (consumer \in Consumers) {
-C1: call Deq()
-}
-}
 ```
+
+The full spec can be found in [QueueRep.tla](QueueRep.tla)
 
 
 ## High-level queue specification

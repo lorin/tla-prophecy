@@ -20,15 +20,22 @@ macro STORE(loc, val) { loc := val }
 macro READ(ind) { rInd := ind }
 macro SWAP(loc, val) { loc := val || rVal := loc }
 
-procedure Enq(v)
-variables i, preINC {
+\*
+\* Enq(item)
+\*
+process (producer \in Producers) 
+variables
+    item \in Val, 
+    i, preINC; {
 E1:  INC(rep.back);
      i := preINC;
-E2:  STORE(rep.items[i], v);
-E3:  return
+E2:  STORE(rep.items[i], item);
 }
 
-procedure Deq()
+\*
+\* Deq() -> rVal
+\*
+process (consumer \in Consumers) 
 variables i, x, range, rInd, rVal {
 D1: while(TRUE) {
 D2:   READ(rep.back);
@@ -39,22 +46,14 @@ D6:     SWAP(rep.items[i], null);
 D7:     x := rVal;
         if(x /= null) {
 D8:       rVal := x;
-D9:       return
+          p := Tail(p);
+D9:       goto "Done"
         };
 D10:    i:= i+1
       }
     }
 }
 
-process (producer \in Producers) {
-P1: with (item \in Values) {
-    call Enq(item)
-    }
-}
-
-process (consumer \in Consumers) {
-C1: call Deq()
-}
 }
 *)
 \* BEGIN TRANSLATION
