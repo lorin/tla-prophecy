@@ -6,12 +6,9 @@
 ------------------------------ MODULE QueueRep ------------------------------
 EXTENDS Naturals, Sequences, TLC
 
-CONSTANT Values
-CONSTANT Producers
-CONSTANT Consumers
-CONSTANT Nmax
+CONSTANTS Val, Producers, Consumers, Nmax
 
-null == CHOOSE x : x \notin Values
+null == CHOOSE x : x \notin Val
 
 (*
 --algorithm Rep {
@@ -64,9 +61,9 @@ C1: call Deq()
 \* Procedure variable i of procedure Enq at line 27 col 11 changed to i_
 \* Procedure variable x of procedure Deq at line 35 col 14 changed to x_
 CONSTANT defaultInitValue
-VARIABLES rep, pc, stack, x, i_, preINC, i, x_, range, rInd, rVal
+VARIABLES pc, rep, stack, x, i_, preINC, i, x_, range, rInd, rVal
 
-vars == << rep, pc, stack, x, i_, preINC, i, x_, range, rInd, rVal >>
+vars == << pc, rep, stack, x, i_, preINC, i, x_, range, rInd, rVal >>
 
 ProcSet == (Producers) \cup (Consumers)
 
@@ -207,11 +204,14 @@ C1(self) == /\ pc[self] = "C1"
 
 consumer(self) == C1(self)
 
+(* Allow infinite stuttering to prevent deadlock on termination. *)
+Terminating == /\ \A self \in ProcSet: pc[self] = "Done"
+               /\ UNCHANGED vars
+
 Next == (\E self \in ProcSet: Enq(self) \/ Deq(self))
            \/ (\E self \in Producers: producer(self))
            \/ (\E self \in Consumers: consumer(self))
-           \/ (* Disjunct to prevent deadlock on termination *)
-              ((\A self \in ProcSet: pc[self] = "Done") /\ UNCHANGED vars)
+           \/ Terminating
 
 Spec == Init /\ [][Next]_vars
 
