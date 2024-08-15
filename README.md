@@ -199,7 +199,7 @@ Here's simple specification for a queue. It models a set of producer and consume
 processes, where a producer enqueues an item onto the queue, and the consumer dequeues an item,
 blocking if the queue is empty.
 
-```
+```tla
 EXTENDS Sequences, Naturals
 
 CONSTANTS Val, null, Producers, Consumers
