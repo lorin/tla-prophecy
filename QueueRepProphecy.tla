@@ -31,7 +31,7 @@ variables
     i, preINC; {
 E1:  INC(rep.back);
      i := preINC;
-     ps := <<p>> \o ps;
+     ps := Append(ps, p);
 E2:  STORE(rep.items[i], item);
 }
 

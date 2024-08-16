@@ -17,7 +17,7 @@ ASSUME null \notin Val
     variable x \in Val;
     {
       E: 
-          items := <<x>> \o items;
+          items := Append(items, x);
     }
 
     process (consumer \in Consumers) 
