@@ -30,7 +30,7 @@ ASSUME null \notin Val
     }
 }
 *)
-\* BEGIN TRANSLATION (chksum(pcal) = "2919db1b" /\ chksum(tla) = "352a78a9")
+\* BEGIN TRANSLATION (chksum(pcal) = "1d86385f" /\ chksum(tla) = "eee3516f")
 VARIABLES pc, items, x, r
 
 vars == << pc, items, x, r >>
@@ -47,7 +47,7 @@ Init == (* Global variables *)
                                         [] self \in Consumers -> "D"]
 
 E(self) == /\ pc[self] = "E"
-           /\ items' = <<x[self]>> \o items
+           /\ items' = Append(items, x[self])
            /\ pc' = [pc EXCEPT ![self] = "Done"]
            /\ UNCHANGED << x, r >>
 
