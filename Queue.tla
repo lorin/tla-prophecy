@@ -13,6 +13,10 @@ ASSUME null \notin Val
 --algorithm Queue {
     variable items = << >>
 
+
+    \*
+    \* Enq(x)
+    \* 
     process (producer \in Producers)
     variable x \in Val;
     {
@@ -20,20 +24,23 @@ ASSUME null \notin Val
           items := Append(items, x);
     }
 
+    \*
+    \* Deq() -> retVal
+    \*
     process (consumer \in Consumers) 
-    variable r = null;
+    variable retVal = null;
     {
         D:
-            await items # <<>>;
-            r := Head(items);
+            await items /= <<>>;
+            retVal := Head(items);
             items := Tail(items);
     }
 }
 *)
-\* BEGIN TRANSLATION (chksum(pcal) = "1d86385f" /\ chksum(tla) = "eee3516f")
-VARIABLES pc, items, x, r
+\* BEGIN TRANSLATION (chksum(pcal) = "8edcca63" /\ chksum(tla) = "772e8152")
+VARIABLES pc, items, x, retVal
 
-vars == << pc, items, x, r >>
+vars == << pc, items, x, retVal >>
 
 ProcSet == (Producers) \cup (Consumers)
 
@@ -42,20 +49,20 @@ Init == (* Global variables *)
         (* Process producer *)
         /\ x \in [Producers -> Val]
         (* Process consumer *)
-        /\ r = [self \in Consumers |-> null]
+        /\ retVal = [self \in Consumers |-> null]
         /\ pc = [self \in ProcSet |-> CASE self \in Producers -> "E"
                                         [] self \in Consumers -> "D"]
 
 E(self) == /\ pc[self] = "E"
            /\ items' = Append(items, x[self])
            /\ pc' = [pc EXCEPT ![self] = "Done"]
-           /\ UNCHANGED << x, r >>
+           /\ UNCHANGED << x, retVal >>
 
 producer(self) == E(self)
 
 D(self) == /\ pc[self] = "D"
            /\ items # <<>>
-           /\ r' = [r EXCEPT ![self] = Head(items)]
+           /\ retVal' = [retVal EXCEPT ![self] = Head(items)]
            /\ items' = Tail(items)
            /\ pc' = [pc EXCEPT ![self] = "Done"]
            /\ x' = x

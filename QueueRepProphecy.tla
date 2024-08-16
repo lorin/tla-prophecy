@@ -1,19 +1,21 @@
 (***************************************************************************)
 (*                                                                         *)
-(* Queue representation type (REP) from Herlihy & Wing 1990.               *)
+(* Queue qresentation type (REP) from Herlihy & Wing 1990.                 *)
 (* Includes prophecy variables.                                            *)
 (***************************************************************************)
 ------------------------------ MODULE QueueRepProphecy -----------------------
 EXTENDS Naturals, Sequences, TLC
 
-CONSTANTS Val, Producers, Consumers, Nmax
+CONSTANTS item, Producers, Consumers, Nmax
 
-null == CHOOSE x : x \notin Val
+null == CHOOSE x : x \notin item
+
+Pi == item
 
 (*
 --algorithm Rep {
 
-variables rep = [back|->1, items|->[n \in 1..Nmax|->null]],
+variables q = [back|->1, items|->[n \in 1..Nmax|->null]],
           ps = <<>>;
 
 macro INC(x) { x := x+1 || INC_return := x }
@@ -22,30 +24,29 @@ macro READ(ind) { READ_return := ind }
 macro SWAP(loc, val) { loc := val || SWAP_return := loc }
 
 \*
-\* Enq(item)
+\* Enq(q: queue, x: item)
 \*
 process (producer \in Producers) 
 variables
-    item \in Val,
-    p \in Val, \* prophecy variable
-    i, INC_return; {
-E1:  INC(rep.back);
-     i := INC_return;
+    x \in item,
+    i, INC_return,
+    p \in Pi; {
+E1:  INC(q.back); i := INC_return; \* Allocate a new slot.h
      ps := Append(ps, p);
-E2:  STORE(rep.items[i], item);
+E2:  STORE(q.items[i], x);          \* Fill it
 }
 
 \*
-\* Deq() -> Deq_return
+\* Deq(q: queue) -> Deq_return : item
 \*
 process (consumer \in Consumers) 
 variables i, x, range, READ_return, SWAP_return, Deq_return {
 D1: while(TRUE) {
-D2:   READ(rep.back);
+D2:   READ(q.back);
 D3:   range := READ_return-1;
 D4:   i := 1;
 D5:   while(i<=range) {
-D6:     SWAP(rep.items[i], null);
+D6:     SWAP(q.items[i], null);
 D7:     x := SWAP_return;
         if(x /= null) {
 D8:       await Head(ps) = x;
@@ -61,24 +62,25 @@ D10:    i:= i+1
 }
 *)
 \* BEGIN TRANSLATION
-\* Process variable i of process producer at line 31 col 5 changed to i_
+\* Process variable x of process producer at line 31 col 5 changed to x_
+\* Process variable i of process producer at line 32 col 5 changed to i_
 CONSTANT defaultInitValue
-VARIABLES pc, rep, ps, item, p, i_, INC_return, i, x, range, READ_return, 
+VARIABLES pc, q, ps, x_, i_, INC_return, p, i, x, range, READ_return, 
           SWAP_return, Deq_return
 
-vars == << pc, rep, ps, item, p, i_, INC_return, i, x, range, READ_return, 
+vars == << pc, q, ps, x_, i_, INC_return, p, i, x, range, READ_return, 
            SWAP_return, Deq_return >>
 
 ProcSet == (Producers) \cup (Consumers)
 
 Init == (* Global variables *)
-        /\ rep = [back|->1, items|->[n \in 1..Nmax|->null]]
+        /\ q = [back|->1, items|->[n \in 1..Nmax|->null]]
         /\ ps = <<>>
         (* Process producer *)
-        /\ item \in [Producers -> Val]
-        /\ p \in [Producers -> Val]
+        /\ x_ \in [Producers -> item]
         /\ i_ = [self \in Producers |-> defaultInitValue]
         /\ INC_return = [self \in Producers |-> defaultInitValue]
+        /\ p \in [Producers -> Pi]
         (* Process consumer *)
         /\ i = [self \in Consumers |-> defaultInitValue]
         /\ x = [self \in Consumers |-> defaultInitValue]
@@ -90,57 +92,57 @@ Init == (* Global variables *)
                                         [] self \in Consumers -> "D1"]
 
 E1(self) == /\ pc[self] = "E1"
-            /\ /\ INC_return' = [INC_return EXCEPT ![self] = rep.back]
-               /\ rep' = [rep EXCEPT !.back = (rep.back)+1]
+            /\ /\ INC_return' = [INC_return EXCEPT ![self] = q.back]
+               /\ q' = [q EXCEPT !.back = (q.back)+1]
             /\ i_' = [i_ EXCEPT ![self] = INC_return'[self]]
             /\ ps' = Append(ps, p[self])
             /\ pc' = [pc EXCEPT ![self] = "E2"]
-            /\ UNCHANGED << item, p, i, x, range, READ_return, SWAP_return, 
+            /\ UNCHANGED << x_, p, i, x, range, READ_return, SWAP_return, 
                             Deq_return >>
 
 E2(self) == /\ pc[self] = "E2"
-            /\ rep' = [rep EXCEPT !.items[i_[self]] = item[self]]
+            /\ q' = [q EXCEPT !.items[i_[self]] = x_[self]]
             /\ pc' = [pc EXCEPT ![self] = "Done"]
-            /\ UNCHANGED << ps, item, p, i_, INC_return, i, x, range, 
+            /\ UNCHANGED << ps, x_, i_, INC_return, p, i, x, range, 
                             READ_return, SWAP_return, Deq_return >>
 
 producer(self) == E1(self) \/ E2(self)
 
 D1(self) == /\ pc[self] = "D1"
             /\ pc' = [pc EXCEPT ![self] = "D2"]
-            /\ UNCHANGED << rep, ps, item, p, i_, INC_return, i, x, range, 
+            /\ UNCHANGED << q, ps, x_, i_, INC_return, p, i, x, range, 
                             READ_return, SWAP_return, Deq_return >>
 
 D2(self) == /\ pc[self] = "D2"
-            /\ READ_return' = [READ_return EXCEPT ![self] = rep.back]
+            /\ READ_return' = [READ_return EXCEPT ![self] = q.back]
             /\ pc' = [pc EXCEPT ![self] = "D3"]
-            /\ UNCHANGED << rep, ps, item, p, i_, INC_return, i, x, range, 
+            /\ UNCHANGED << q, ps, x_, i_, INC_return, p, i, x, range, 
                             SWAP_return, Deq_return >>
 
 D3(self) == /\ pc[self] = "D3"
             /\ range' = [range EXCEPT ![self] = READ_return[self]-1]
             /\ pc' = [pc EXCEPT ![self] = "D4"]
-            /\ UNCHANGED << rep, ps, item, p, i_, INC_return, i, x, 
-                            READ_return, SWAP_return, Deq_return >>
+            /\ UNCHANGED << q, ps, x_, i_, INC_return, p, i, x, READ_return, 
+                            SWAP_return, Deq_return >>
 
 D4(self) == /\ pc[self] = "D4"
             /\ i' = [i EXCEPT ![self] = 1]
             /\ pc' = [pc EXCEPT ![self] = "D5"]
-            /\ UNCHANGED << rep, ps, item, p, i_, INC_return, x, range, 
+            /\ UNCHANGED << q, ps, x_, i_, INC_return, p, x, range, 
                             READ_return, SWAP_return, Deq_return >>
 
 D5(self) == /\ pc[self] = "D5"
             /\ IF i[self]<=range[self]
                   THEN /\ pc' = [pc EXCEPT ![self] = "D6"]
                   ELSE /\ pc' = [pc EXCEPT ![self] = "D1"]
-            /\ UNCHANGED << rep, ps, item, p, i_, INC_return, i, x, range, 
+            /\ UNCHANGED << q, ps, x_, i_, INC_return, p, i, x, range, 
                             READ_return, SWAP_return, Deq_return >>
 
 D6(self) == /\ pc[self] = "D6"
-            /\ /\ SWAP_return' = [SWAP_return EXCEPT ![self] = rep.items[i[self]]]
-               /\ rep' = [rep EXCEPT !.items[i[self]] = null]
+            /\ /\ SWAP_return' = [SWAP_return EXCEPT ![self] = q.items[i[self]]]
+               /\ q' = [q EXCEPT !.items[i[self]] = null]
             /\ pc' = [pc EXCEPT ![self] = "D7"]
-            /\ UNCHANGED << ps, item, p, i_, INC_return, i, x, range, 
+            /\ UNCHANGED << ps, x_, i_, INC_return, p, i, x, range, 
                             READ_return, Deq_return >>
 
 D7(self) == /\ pc[self] = "D7"
@@ -148,7 +150,7 @@ D7(self) == /\ pc[self] = "D7"
             /\ IF x'[self] /= null
                   THEN /\ pc' = [pc EXCEPT ![self] = "D8"]
                   ELSE /\ pc' = [pc EXCEPT ![self] = "D10"]
-            /\ UNCHANGED << rep, ps, item, p, i_, INC_return, i, range, 
+            /\ UNCHANGED << q, ps, x_, i_, INC_return, p, i, range, 
                             READ_return, SWAP_return, Deq_return >>
 
 D8(self) == /\ pc[self] = "D8"
@@ -156,18 +158,18 @@ D8(self) == /\ pc[self] = "D8"
             /\ ps' = Tail(ps)
             /\ Deq_return' = [Deq_return EXCEPT ![self] = x[self]]
             /\ pc' = [pc EXCEPT ![self] = "D9"]
-            /\ UNCHANGED << rep, item, p, i_, INC_return, i, x, range, 
-                            READ_return, SWAP_return >>
+            /\ UNCHANGED << q, x_, i_, INC_return, p, i, x, range, READ_return, 
+                            SWAP_return >>
 
 D9(self) == /\ pc[self] = "D9"
             /\ pc' = [pc EXCEPT ![self] = "Done"]
-            /\ UNCHANGED << rep, ps, item, p, i_, INC_return, i, x, range, 
+            /\ UNCHANGED << q, ps, x_, i_, INC_return, p, i, x, range, 
                             READ_return, SWAP_return, Deq_return >>
 
 D10(self) == /\ pc[self] = "D10"
              /\ i' = [i EXCEPT ![self] = i[self]+1]
              /\ pc' = [pc EXCEPT ![self] = "D5"]
-             /\ UNCHANGED << rep, ps, item, p, i_, INC_return, x, range, 
+             /\ UNCHANGED << q, ps, x_, i_, INC_return, p, x, range, 
                              READ_return, SWAP_return, Deq_return >>
 
 consumer(self) == D1(self) \/ D2(self) \/ D3(self) \/ D4(self) \/ D5(self)
@@ -197,14 +199,15 @@ pcBar == [c \in Producers \union Consumers |->
 ]
 itemsBar == ps
 xBar == p
-rBar == [c \in Consumers |-> IF pc[c] \in {"D9", "Done"} THEN Deq_return[c] ELSE null]
+retValBar == [c \in Consumers |-> IF pc[c] \in {"D9", "Done"} THEN Deq_return[c] ELSE null]
 
 Mapping ==
     INSTANCE Queue WITH
         pc <- pcBar,
         items <- itemsBar,
         x <- xBar,
-        r <- rBar
+        retVal <- retValBar,
+        Val <- item
 
 Refinement == Mapping!Spec
 
@@ -212,7 +215,7 @@ Alias == [
     pcBar |-> pcBar,
     itemsBar |-> itemsBar,
     xBar |-> xBar,
-    rBar |-> rBar,
+    retValBar |-> retValBar,
     INC_return |-> INC_return,
     SWAP_return |-> SWAP_return,
     Deq_return |-> Deq_return,
@@ -220,7 +223,7 @@ Alias == [
     p |-> p,
     x |-> x,
     pc |-> pc,
-    rep |-> rep,
+    q |-> q,
     READ_return |-> READ_return,
     range |-> range,
     i_ |-> i_
