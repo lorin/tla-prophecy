@@ -37,7 +37,7 @@ ASSUME null \notin Val
     }
 }
 *)
-\* BEGIN TRANSLATION (chksum(pcal) = "8edcca63" /\ chksum(tla) = "772e8152")
+\* BEGIN TRANSLATION (chksum(pcal) = "c6445a49" /\ chksum(tla) = "8fa9040")
 VARIABLES pc, items, x, retVal
 
 vars == << pc, items, x, retVal >>
@@ -61,7 +61,7 @@ E(self) == /\ pc[self] = "E"
 producer(self) == E(self)
 
 D(self) == /\ pc[self] = "D"
-           /\ items # <<>>
+           /\ items /= <<>>
            /\ retVal' = [retVal EXCEPT ![self] = Head(items)]
            /\ items' = Tail(items)
            /\ pc' = [pc EXCEPT ![self] = "Done"]
