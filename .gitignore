@@ -3,5 +3,6 @@
 *.out
 *.old
 *.dvi
+trace.txt*
 .vscode
 states
