@@ -40,7 +40,7 @@ E2:  STORE(q.items[i], x);  \* Fill it
 \* Deq(q: queue) -> Deq_return : item
 \*
 process (con \in consumer)
-variables i, x, range, READ_return, SWAP_return, Deq_return {
+variables i, x, range, READ_return, SWAP_return, Deq_return=null {
 D1: while(TRUE) {
 D2:   READ(q.back);
 D3:   range := READ_return-1;
@@ -65,10 +65,10 @@ D10:    i:= i+1
 \* Process variable x of process prod at line 30 col 11 changed to x_
 \* Process variable i of process prod at line 31 col 11 changed to i_
 CONSTANT defaultInitValue
-VARIABLES pc, q, ps, x_, i_, INC_return, p, i, x, range, READ_return,
+VARIABLES pc, q, ps, x_, i_, INC_return, p, i, x, range, READ_return, 
           SWAP_return, Deq_return
 
-vars == << pc, q, ps, x_, i_, INC_return, p, i, x, range, READ_return,
+vars == << pc, q, ps, x_, i_, INC_return, p, i, x, range, READ_return, 
            SWAP_return, Deq_return >>
 
 ProcSet == (producer) \cup (consumer)
@@ -97,52 +97,52 @@ E1(self) == /\ pc[self] = "E1"
             /\ i_' = [i_ EXCEPT ![self] = INC_return'[self]]
             /\ ps' = Append(ps, p[self])
             /\ pc' = [pc EXCEPT ![self] = "E2"]
-            /\ UNCHANGED << x_, p, i, x, range, READ_return, SWAP_return,
+            /\ UNCHANGED << x_, p, i, x, range, READ_return, SWAP_return, 
                             Deq_return >>
 
 E2(self) == /\ pc[self] = "E2"
             /\ q' = [q EXCEPT !.items[i_[self]] = x_[self]]
             /\ pc' = [pc EXCEPT ![self] = "Done"]
-            /\ UNCHANGED << ps, x_, i_, INC_return, p, i, x, range,
+            /\ UNCHANGED << ps, x_, i_, INC_return, p, i, x, range, 
                             READ_return, SWAP_return, Deq_return >>
 
 prod(self) == E1(self) \/ E2(self)
 
 D1(self) == /\ pc[self] = "D1"
             /\ pc' = [pc EXCEPT ![self] = "D2"]
-            /\ UNCHANGED << q, ps, x_, i_, INC_return, p, i, x, range,
+            /\ UNCHANGED << q, ps, x_, i_, INC_return, p, i, x, range, 
                             READ_return, SWAP_return, Deq_return >>
 
 D2(self) == /\ pc[self] = "D2"
             /\ READ_return' = [READ_return EXCEPT ![self] = q.back]
             /\ pc' = [pc EXCEPT ![self] = "D3"]
-            /\ UNCHANGED << q, ps, x_, i_, INC_return, p, i, x, range,
+            /\ UNCHANGED << q, ps, x_, i_, INC_return, p, i, x, range, 
                             SWAP_return, Deq_return >>
 
 D3(self) == /\ pc[self] = "D3"
             /\ range' = [range EXCEPT ![self] = READ_return[self]-1]
             /\ pc' = [pc EXCEPT ![self] = "D4"]
-            /\ UNCHANGED << q, ps, x_, i_, INC_return, p, i, x, READ_return,
+            /\ UNCHANGED << q, ps, x_, i_, INC_return, p, i, x, READ_return, 
                             SWAP_return, Deq_return >>
 
 D4(self) == /\ pc[self] = "D4"
             /\ i' = [i EXCEPT ![self] = 1]
             /\ pc' = [pc EXCEPT ![self] = "D5"]
-            /\ UNCHANGED << q, ps, x_, i_, INC_return, p, x, range,
+            /\ UNCHANGED << q, ps, x_, i_, INC_return, p, x, range, 
                             READ_return, SWAP_return, Deq_return >>
 
 D5(self) == /\ pc[self] = "D5"
             /\ IF i[self]<=range[self]
                   THEN /\ pc' = [pc EXCEPT ![self] = "D6"]
                   ELSE /\ pc' = [pc EXCEPT ![self] = "D1"]
-            /\ UNCHANGED << q, ps, x_, i_, INC_return, p, i, x, range,
+            /\ UNCHANGED << q, ps, x_, i_, INC_return, p, i, x, range, 
                             READ_return, SWAP_return, Deq_return >>
 
 D6(self) == /\ pc[self] = "D6"
             /\ /\ SWAP_return' = [SWAP_return EXCEPT ![self] = q.items[i[self]]]
                /\ q' = [q EXCEPT !.items[i[self]] = null]
             /\ pc' = [pc EXCEPT ![self] = "D7"]
-            /\ UNCHANGED << ps, x_, i_, INC_return, p, i, x, range,
+            /\ UNCHANGED << ps, x_, i_, INC_return, p, i, x, range, 
                             READ_return, Deq_return >>
 
 D7(self) == /\ pc[self] = "D7"
@@ -150,7 +150,7 @@ D7(self) == /\ pc[self] = "D7"
             /\ IF x'[self] /= null
                   THEN /\ pc' = [pc EXCEPT ![self] = "D8"]
                   ELSE /\ pc' = [pc EXCEPT ![self] = "D10"]
-            /\ UNCHANGED << q, ps, x_, i_, INC_return, p, i, range,
+            /\ UNCHANGED << q, ps, x_, i_, INC_return, p, i, range, 
                             READ_return, SWAP_return, Deq_return >>
 
 D8(self) == /\ pc[self] = "D8"
@@ -158,18 +158,18 @@ D8(self) == /\ pc[self] = "D8"
             /\ ps' = Tail(ps)
             /\ Deq_return' = [Deq_return EXCEPT ![self] = x[self]]
             /\ pc' = [pc EXCEPT ![self] = "D9"]
-            /\ UNCHANGED << q, x_, i_, INC_return, p, i, x, range, READ_return,
+            /\ UNCHANGED << q, x_, i_, INC_return, p, i, x, range, READ_return, 
                             SWAP_return >>
 
 D9(self) == /\ pc[self] = "D9"
             /\ pc' = [pc EXCEPT ![self] = "Done"]
-            /\ UNCHANGED << q, ps, x_, i_, INC_return, p, i, x, range,
+            /\ UNCHANGED << q, ps, x_, i_, INC_return, p, i, x, range, 
                             READ_return, SWAP_return, Deq_return >>
 
 D10(self) == /\ pc[self] = "D10"
              /\ i' = [i EXCEPT ![self] = i[self]+1]
              /\ pc' = [pc EXCEPT ![self] = "D5"]
-             /\ UNCHANGED << q, ps, x_, i_, INC_return, p, x, range,
+             /\ UNCHANGED << q, ps, x_, i_, INC_return, p, x, range, 
                              READ_return, SWAP_return, Deq_return >>
 
 con(self) == D1(self) \/ D2(self) \/ D3(self) \/ D4(self) \/ D5(self)
@@ -199,6 +199,7 @@ TypeOk == /\ q \in [back: Nat, items: [1..Nmax -> item \union {null}]]
           /\ INC_return \in [producer->Nat \union {defaultInitValue}]
           /\ p \in [producer->Pi]
 
+(*
 
 pcBar == [c \in producer \union consumer |->
     CASE pc[c] \in {"P1", "E1"} -> "E"
@@ -218,6 +219,21 @@ Mapping ==
         Val <- item,
         Producers <- producer,
         Consumers <- consumer
+*)
+
+tmpBar == Deq_return
+rvalBar == null
+rval_Bar == null
+pcBar == null
+
+Mapping ==
+    INSTANCE LinQueue WITH
+        tmp <- tmpBar,
+        rval <- rvalBar,
+        rval_ <- rval_Bar,
+        pc <- pcBar
+
+
 
 Refinement == Mapping!Spec
 
@@ -231,10 +247,10 @@ Alias == [
     i |-> i,
     x |-> x,
     pc |-> pc,
+    tmpBar |-> tmpBar,
     pcBar |-> pcBar,
-    itemsBar |-> itemsBar,
-    xBar |-> xBar,
-    retValBar |-> retValBar,
+    rvalBar |-> rvalBar,
+    rval_Bar |-> rval_Bar,
     range |-> range,
     SWAP_return |-> SWAP_return,
     Deq_return |-> Deq_return,
