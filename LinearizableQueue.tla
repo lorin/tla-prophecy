@@ -44,6 +44,7 @@ DeqTakesEffect(Ti) == /\ op[Ti] = "deq"
                       /\ d' = Tail(d)
                       /\ UNCHANGED <<op,arg,done>>
 
+\* 
 DeqDone(Ti) == /\ op[Ti] = "deq"
                /\ up[Ti]
                /\ ~done[Ti]

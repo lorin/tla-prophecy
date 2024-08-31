@@ -5,7 +5,7 @@ A linearizable queue
 
 """
 
-from threading import Lock
+from threading import Thread, Lock
 
 class Node:
     def __init__(self, val, next=None, prev=None):
@@ -46,5 +46,3 @@ class Queue:
                 head.next = None
             self.lock.release()
             return val
-
-
