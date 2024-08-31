@@ -2,6 +2,7 @@
 *.pdf
 *.out
 *.old
+*.tex
 *.dvi
 trace.txt*
 .vscode
