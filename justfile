@@ -1,0 +1,2 @@
+run:
+		./queue.py
