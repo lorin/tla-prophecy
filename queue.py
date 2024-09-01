@@ -41,6 +41,7 @@ class Queue:
             if self.is_empty():
                 self.lock.release()
                 continue
+                
             val = self.head.val
             self.head = self.head.prev
             if self.head is None:
