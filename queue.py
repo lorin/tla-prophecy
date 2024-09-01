@@ -36,20 +36,21 @@ class Queue:
         self.lock.release()
 
     def dequeue(self):
-        while True:
+        empty = True
+        while empty:
             self.lock.acquire()
             if self.is_empty():
                 self.lock.release()
-                continue
-                
-            val = self.head.val
-            self.head = self.head.prev
-            if self.head is None:
-                self.tail = None
             else:
-                self.head.next = None
-            self.lock.release()
-            return val
+                empty = False
+        val = self.head.val
+        self.head = self.head.prev
+        if self.head is None:
+            self.tail = None
+        else:
+            self.head.next = None
+        self.lock.release()
+        return val
 
 def producer(q: Queue, n: int, vals: list[str]):
     time.sleep(random.random())
