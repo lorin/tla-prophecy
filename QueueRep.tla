@@ -10,8 +10,7 @@ CONSTANTS Val, Producers, Consumers, Nmax
 
 null == CHOOSE x : x \notin Val
 
-(*
---algorithm Rep {
+(*--algorithm Rep {
 
 variables rep = [back|->1, items|->[n \in 1..Nmax|->null]];
 
@@ -54,8 +53,7 @@ D10:    i:= i+1
     }
 }
 
-}
-*)
+}*)
 \* BEGIN TRANSLATION
 \* Procedure variable i of procedure Enq at line 27 col 11 changed to i_
 \* Procedure variable x of procedure Deq at line 35 col 14 changed to x_

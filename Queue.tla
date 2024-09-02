@@ -9,8 +9,7 @@ CONSTANTS Val, null, Producers, Consumers
 
 ASSUME null \notin Val
 
-(*
---algorithm Queue {
+(*--algorithm Queue {
     variable items = << >>
 
 
@@ -35,8 +34,8 @@ ASSUME null \notin Val
             retVal := Head(items);
             items := Tail(items);
     }
-}
-*)
+}*)
+
 \* BEGIN TRANSLATION (chksum(pcal) = "c6445a49" /\ chksum(tla) = "8fa9040")
 VARIABLES pc, items, x, retVal
 

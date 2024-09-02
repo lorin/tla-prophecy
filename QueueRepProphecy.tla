@@ -12,58 +12,106 @@ null == CHOOSE x : x \notin item
 
 Pi == item
 
-(*
---algorithm Rep {
+threads == producer \union consumer
 
-variables q = [back|->1, items|->[n \in 1..Nmax|->null]],
-          ps = <<>>;
+(*--algorithm Rep 
+variables 
+    q = [back|->1, items|->[n \in 1..Nmax|->null]];
+    ps = <<>>;
+    \* Public variables
+    op = [t \in threads |-> ""];
+    arg = [t \in threads |-> null];
+    rval = [t \in threads |-> null];
+    done = [t \in threads |-> TRUE];
 
-macro INC(x) { x := x+1 || INC_return := x }
-macro STORE(loc, val) { loc := val }
-macro READ(ind) { READ_return := ind }
-macro SWAP(loc, val) { loc := val || SWAP_return := loc }
+macro INC(x) begin
+     x := x+1 || INC_return := x;
+end macro
+
+macro STORE(loc, val) begin
+    loc := val;
+end macro
+
+macro READ(ind) begin
+     READ_return := ind;
+end macro
+
+macro SWAP(loc, val) begin
+     loc := val || SWAP_return := loc;
+end macro
 
 \*
 \* Enq(q: queue, x: item)
 \*
-process (prod \in producer)
-variables x \in item,
-          i, INC_return,
-          p \in Pi; {
-E1:  INC(q.back);
-     i := INC_return;       \* Allocate a new slot
-     ps := Append(ps, p);
-E2:  STORE(q.items[i], x);  \* Fill it
-}
+procedure Enq(q, x)
+variables 
+    i; 
+    INC_return;
+begin
+E1: INC(q.back);
+    i := INC_return;       \* Allocate a new slot
+    with p \in Pi do
+        ps := Append(ps, p);
+    end with;
+E2: STORE(q.items[i], x);    \* Fill it
+    return;
+end procedure;
 
 \*
-\* Deq(q: queue) -> Deq_return : item
+\* Deq(q: queue) -> rval[self] : item
 \*
-process (con \in consumer)
-variables i, x, range, READ_return, SWAP_return, Deq_return=null {
-D1: while(TRUE) {
+procedure Deq(q)
+variables i, x, range, READ_return, SWAP_return
+begin 
+D1: while(TRUE) do
 D2:   READ(q.back);
 D3:   range := READ_return-1;
 D4:   i := 1;
-D5:   while(i<=range) {
+D5:   while(i<=range) do
 D6:     SWAP(q.items[i], null);
 D7:     x := SWAP_return;
-        if(x /= null) {
+        if(x /= null) then
 D8:       await Head(ps) = x;
           ps := Tail(ps);
-          Deq_return := x;
-D9:       goto "Done"
-        };
-D10:    i:= i+1
-      }
-    }
-}
+          rval[self] := x;
+D9:       return;
+        end if;
+D10:    i:= i+1;
+      end while;
+    end while;
+end procedure;
 
-}
-*)
+
+process prod \in producer
+begin 
+enq:
+    with itm \in item
+        op[self] := "enq";
+        arg[self] := itm;
+        rval[self] := null;
+        done[self] := FALSE;
+        call Enq(q, itm);
+    end with
+enqdone:
+    done[self] := TRUE;
+end process;
+
+process con \in consumer
+deq:
+    op[self] := "deq";
+    arg[self] := null;
+    rval[self] := null;
+
+    call Deq(q);
+deqdone:
+    done[self] := TRUE;
+
+end process;
+
+end algorithm;*)
 \* BEGIN TRANSLATION
-\* Process variable x of process prod at line 30 col 11 changed to x_
-\* Process variable i of process prod at line 31 col 11 changed to i_
+\* Process variable x of process prod at line 39 col 11 changed to x_
+\* Process variable i of process prod at line 40 col 11 changed to i_
 CONSTANT defaultInitValue
 VARIABLES pc, q, ps, x_, i_, INC_return, p, i, x, range, READ_return, 
           SWAP_return, Deq_return
@@ -87,7 +135,7 @@ Init == (* Global variables *)
         /\ range = [self \in consumer |-> defaultInitValue]
         /\ READ_return = [self \in consumer |-> defaultInitValue]
         /\ SWAP_return = [self \in consumer |-> defaultInitValue]
-        /\ Deq_return = [self \in consumer |-> defaultInitValue]
+        /\ Deq_return = [self \in consumer |-> null]
         /\ pc = [self \in ProcSet |-> CASE self \in producer -> "E1"
                                         [] self \in consumer -> "D1"]
 
@@ -132,7 +180,7 @@ D4(self) == /\ pc[self] = "D4"
                             READ_return, SWAP_return, Deq_return >>
 
 D5(self) == /\ pc[self] = "D5"
-            /\ IF i[self]<=range[self]
+            /\ IF (i[self]<=range[self])
                   THEN /\ pc' = [pc EXCEPT ![self] = "D6"]
                   ELSE /\ pc' = [pc EXCEPT ![self] = "D1"]
             /\ UNCHANGED << q, ps, x_, i_, INC_return, p, i, x, range, 
@@ -147,7 +195,7 @@ D6(self) == /\ pc[self] = "D6"
 
 D7(self) == /\ pc[self] = "D7"
             /\ x' = [x EXCEPT ![self] = SWAP_return[self]]
-            /\ IF x'[self] /= null
+            /\ IF (x'[self] /= null)
                   THEN /\ pc' = [pc EXCEPT ![self] = "D8"]
                   ELSE /\ pc' = [pc EXCEPT ![self] = "D10"]
             /\ UNCHANGED << q, ps, x_, i_, INC_return, p, i, range, 
