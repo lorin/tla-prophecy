@@ -5,14 +5,13 @@
 #include <atomic>
 #include <print>
 #include <random>
-#include <string>
 #include <thread>
 #include <vector>
 
 using std::atomic;
 using std::atomic_exchange;
 using std::printf;
-using std::string;
+using std::thread;
 using std::vector;
 
 
@@ -51,23 +50,30 @@ private:
 
 
 void produce(Queue<char> *queue, char letters[26], int n) {
+    std::hash<std::thread::id> hasher;
+    int id = hasher(std::this_thread::get_id());
+
+
     unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
     std::default_random_engine generator(seed);
     std::uniform_int_distribution<int> distribution(0, 25);
 
     for(int i=0; i<n; ++i) {
         int offset = distribution(generator);
-        printf("enq(%c)\n", letters[offset]);
+        printf("%d: enq(%c)\n", id, letters[offset]);
         queue->enq(letters+offset);
-        printf("enq(%c) -> OK\n", letters[offset]);
+        printf("%d: enq(%c) -> OK\n", id, letters[offset]);
     }
 }
 
 void consume(Queue<char> *queue, int n) {
+    std::hash<std::thread::id> hasher;
+    int id = hasher(std::this_thread::get_id());
+
     for(int i=0; i<n; ++i) {
-        printf("deq()\n");
+        printf("%d: deq()\n", id);
         char *c = queue->deq();
-        printf("deq() -> %c\n", *c);
+        printf("%d: deq() -> %c\n", id, *c);
     }
 }
 
