@@ -77,7 +77,7 @@ end procedure;
 
 
 process prod \in Producers
-variable enq = Done; rval; id;
+variable enq = Done; id;
 begin 
 enq:
     with itm \in Values do
@@ -105,7 +105,7 @@ end algorithm;*)
 \* BEGIN TRANSLATION
 \* Label enq of process prod at line 83 col 5 changed to enq_
 \* Label deq of process con at line 98 col 5 changed to deq_
-\* Process variable id of process prod at line 80 col 28 changed to id_
+\* Process variable id of process prod at line 80 col 22 changed to id_
 \* Procedure variable i of procedure Enq at line 46 col 5 changed to i_
 \* Procedure variable x of procedure Deq at line 59 col 14 changed to x_
 \* Parameter q of procedure Enq at line 44 col 15 changed to q_
@@ -116,10 +116,10 @@ VARIABLES pc, queue, ids, nextId, stack
 GetId(ind) == (CHOOSE idd \in ids : idd[1]=ind)[2]
 
 VARIABLES q_, x, id, i_, INC_return, q, i, x_, range, READ_return, 
-          SWAP_return, enq, rval, id_, deq
+          SWAP_return, enq, id_, deq
 
 vars == << pc, queue, ids, nextId, stack, q_, x, id, i_, INC_return, q, i, x_, 
-           range, READ_return, SWAP_return, enq, rval, id_, deq >>
+           range, READ_return, SWAP_return, enq, id_, deq >>
 
 ProcSet == (Producers) \cup (Consumers)
 
@@ -142,7 +142,6 @@ Init == (* Global variables *)
         /\ SWAP_return = [ self \in ProcSet |-> defaultInitValue]
         (* Process prod *)
         /\ enq = [self \in Producers |-> Done]
-        /\ rval = [self \in Producers |-> defaultInitValue]
         /\ id_ = [self \in Producers |-> defaultInitValue]
         (* Process con *)
         /\ deq \in [Consumers -> Values]
@@ -156,15 +155,14 @@ E1(self) == /\ pc[self] = "E1"
             /\ i_' = [i_ EXCEPT ![self] = INC_return'[self]]
             /\ pc' = [pc EXCEPT ![self] = "E2"]
             /\ UNCHANGED << queue, ids, nextId, stack, x, id, q, i, x_, range, 
-                            READ_return, SWAP_return, enq, rval, id_, deq >>
+                            READ_return, SWAP_return, enq, id_, deq >>
 
 E2(self) == /\ pc[self] = "E2"
             /\ q_' = [q_ EXCEPT ![self].items[i_[self]] = x[self]]
             /\ ids' = (ids \union {<<i_[self], id[self]>>})
             /\ pc' = [pc EXCEPT ![self] = "E3"]
             /\ UNCHANGED << queue, nextId, stack, x, id, i_, INC_return, q, i, 
-                            x_, range, READ_return, SWAP_return, enq, rval, 
-                            id_, deq >>
+                            x_, range, READ_return, SWAP_return, enq, id_, deq >>
 
 E3(self) == /\ pc[self] = "E3"
             /\ pc' = [pc EXCEPT ![self] = Head(stack[self]).pc]
@@ -175,7 +173,7 @@ E3(self) == /\ pc[self] = "E3"
             /\ id' = [id EXCEPT ![self] = Head(stack[self]).id]
             /\ stack' = [stack EXCEPT ![self] = Tail(stack[self])]
             /\ UNCHANGED << queue, ids, nextId, q, i, x_, range, READ_return, 
-                            SWAP_return, enq, rval, id_, deq >>
+                            SWAP_return, enq, id_, deq >>
 
 Enq(self) == E1(self) \/ E2(self) \/ E3(self)
 
@@ -183,28 +181,28 @@ D1(self) == /\ pc[self] = "D1"
             /\ pc' = [pc EXCEPT ![self] = "D2"]
             /\ UNCHANGED << queue, ids, nextId, stack, q_, x, id, i_, 
                             INC_return, q, i, x_, range, READ_return, 
-                            SWAP_return, enq, rval, id_, deq >>
+                            SWAP_return, enq, id_, deq >>
 
 D2(self) == /\ pc[self] = "D2"
             /\ READ_return' = [READ_return EXCEPT ![self] = q[self].back]
             /\ pc' = [pc EXCEPT ![self] = "D3"]
             /\ UNCHANGED << queue, ids, nextId, stack, q_, x, id, i_, 
-                            INC_return, q, i, x_, range, SWAP_return, enq, 
-                            rval, id_, deq >>
+                            INC_return, q, i, x_, range, SWAP_return, enq, id_, 
+                            deq >>
 
 D3(self) == /\ pc[self] = "D3"
             /\ range' = [range EXCEPT ![self] = READ_return[self]-1]
             /\ pc' = [pc EXCEPT ![self] = "D4"]
             /\ UNCHANGED << queue, ids, nextId, stack, q_, x, id, i_, 
                             INC_return, q, i, x_, READ_return, SWAP_return, 
-                            enq, rval, id_, deq >>
+                            enq, id_, deq >>
 
 D4(self) == /\ pc[self] = "D4"
             /\ i' = [i EXCEPT ![self] = 1]
             /\ pc' = [pc EXCEPT ![self] = "D5"]
             /\ UNCHANGED << queue, ids, nextId, stack, q_, x, id, i_, 
                             INC_return, q, x_, range, READ_return, SWAP_return, 
-                            enq, rval, id_, deq >>
+                            enq, id_, deq >>
 
 D5(self) == /\ pc[self] = "D5"
             /\ IF (i[self]<=range[self])
@@ -212,22 +210,22 @@ D5(self) == /\ pc[self] = "D5"
                   ELSE /\ pc' = [pc EXCEPT ![self] = "D1"]
             /\ UNCHANGED << queue, ids, nextId, stack, q_, x, id, i_, 
                             INC_return, q, i, x_, range, READ_return, 
-                            SWAP_return, enq, rval, id_, deq >>
+                            SWAP_return, enq, id_, deq >>
 
 D6(self) == /\ pc[self] = "D6"
             /\ /\ SWAP_return' = [SWAP_return EXCEPT ![self] = q[self].items[i[self]]]
                /\ q' = [q EXCEPT ![self].items[i[self]] = null]
             /\ pc' = [pc EXCEPT ![self] = "D7"]
             /\ UNCHANGED << queue, ids, nextId, stack, q_, x, id, i_, 
-                            INC_return, i, x_, range, READ_return, enq, rval, 
-                            id_, deq >>
+                            INC_return, i, x_, range, READ_return, enq, id_, 
+                            deq >>
 
 D7(self) == /\ pc[self] = "D7"
             /\ x_' = [x_ EXCEPT ![self] = SWAP_return[self]]
             /\ pc' = [pc EXCEPT ![self] = "D8"]
             /\ UNCHANGED << queue, ids, nextId, stack, q_, x, id, i_, 
                             INC_return, q, i, range, READ_return, SWAP_return, 
-                            enq, rval, id_, deq >>
+                            enq, id_, deq >>
 
 D8(self) == /\ pc[self] = "D8"
             /\ IF (x_[self] /= null)
@@ -235,7 +233,7 @@ D8(self) == /\ pc[self] = "D8"
                   ELSE /\ pc' = [pc EXCEPT ![self] = "D10"]
             /\ UNCHANGED << queue, ids, nextId, stack, q_, x, id, i_, 
                             INC_return, q, i, x_, range, READ_return, 
-                            SWAP_return, enq, rval, id_, deq >>
+                            SWAP_return, enq, id_, deq >>
 
 D9(self) == /\ pc[self] = "D9"
             /\ deq' = [deq EXCEPT ![self] = x_[self]]
@@ -248,15 +246,14 @@ D9(self) == /\ pc[self] = "D9"
             /\ SWAP_return' = [SWAP_return EXCEPT ![self] = Head(stack[self]).SWAP_return]
             /\ q' = [q EXCEPT ![self] = Head(stack[self]).q]
             /\ stack' = [stack EXCEPT ![self] = Tail(stack[self])]
-            /\ UNCHANGED << queue, nextId, q_, x, id, i_, INC_return, enq, 
-                            rval, id_ >>
+            /\ UNCHANGED << queue, nextId, q_, x, id, i_, INC_return, enq, id_ >>
 
 D10(self) == /\ pc[self] = "D10"
              /\ i' = [i EXCEPT ![self] = i[self]+1]
              /\ pc' = [pc EXCEPT ![self] = "D5"]
              /\ UNCHANGED << queue, ids, nextId, stack, q_, x, id, i_, 
                              INC_return, q, x_, range, READ_return, 
-                             SWAP_return, enq, rval, id_, deq >>
+                             SWAP_return, enq, id_, deq >>
 
 Deq(self) == D1(self) \/ D2(self) \/ D3(self) \/ D4(self) \/ D5(self)
                 \/ D6(self) \/ D7(self) \/ D8(self) \/ D9(self)
@@ -282,14 +279,14 @@ enq_(self) == /\ pc[self] = "enq_"
                    /\ INC_return' = [INC_return EXCEPT ![self] = defaultInitValue]
                    /\ pc' = [pc EXCEPT ![self] = "E1"]
               /\ UNCHANGED << queue, ids, q, i, x_, range, READ_return, 
-                              SWAP_return, rval, deq >>
+                              SWAP_return, deq >>
 
 enqdone(self) == /\ pc[self] = "enqdone"
                  /\ enq' = [enq EXCEPT ![self] = Done]
                  /\ pc' = [pc EXCEPT ![self] = "enq_"]
                  /\ UNCHANGED << queue, ids, nextId, stack, q_, x, id, i_, 
                                  INC_return, q, i, x_, range, READ_return, 
-                                 SWAP_return, rval, id_, deq >>
+                                 SWAP_return, id_, deq >>
 
 prod(self) == enq_(self) \/ enqdone(self)
 
@@ -312,13 +309,13 @@ deq_(self) == /\ pc[self] = "deq_"
               /\ SWAP_return' = [SWAP_return EXCEPT ![self] = defaultInitValue]
               /\ pc' = [pc EXCEPT ![self] = "D1"]
               /\ UNCHANGED << queue, ids, nextId, q_, x, id, i_, INC_return, 
-                              enq, rval, id_ >>
+                              enq, id_ >>
 
 deqdone(self) == /\ pc[self] = "deqdone"
                  /\ pc' = [pc EXCEPT ![self] = "deq_"]
                  /\ UNCHANGED << queue, ids, nextId, stack, q_, x, id, i_, 
                                  INC_return, q, i, x_, range, READ_return, 
-                                 SWAP_return, enq, rval, id_, deq >>
+                                 SWAP_return, enq, id_, deq >>
 
 con(self) == deq_(self) \/ deqdone(self)
 
@@ -337,43 +334,25 @@ Termination == <>(\A self \in ProcSet: pc[self] = "Done")
 
 \* END TRANSLATION
 
-(*
-
-We need to generate an id associate with each item being enqeueud/dequeued.
-
-Initially, I was thinking of identifying this when I identified which array
-entry to go in. But we need this in the BeginEnq state, so we need to do it
-right away. 
-
-We can guarantee a unique id by just using a global and pass that.
-
-elts is the set of:
-    values in the array
-
-
-*)
-
 
 eltsInArray == LET inds == {j \in 1..Nmax : queue.items # null}
                IN {<<queue.items[j], GetId(j)>> : j \in inds}
 
 \* For states E1 and E2, an id has been chosen but it's not in the array yet
-eltsBeingEnqueued == LET pds == {pd \in Producers : pc[pd] \in "E1","E2"}
+eltsBeingEnqueued == LET pds == {pd \in Producers : pc[pd] \in {"E1","E2"}}
                      IN {<<x[pd], id[pd]>> : pd \in pds}
 
 eltsJustDequeued == LET crs == {cr \in Consumers : pc[cr]="D8" /\ x_[cr] # null }
-                     IN {<<x_[cr], GetId(i)>>}
+                    IN {<<x_[cr], GetId(i)>> : cr \in crs}
 
-elts == eltsInArray \union eltsBeingEnqueued \union eltsJustDequeued
+elts == UNION {eltsInArray, eltsBeingEnqueued, eltsJustDequeued}
 
-(*
- TODO:
-     adding is between start/end of the enq operations
- *)
-adding == {}
+adding == [pd \in Producers |-> 
+            CASE pc[pd] \in {"E1","E2","E3"} -> <<x[pd], id[pd]>>
+              [] pc[pd] = "enqdone" -> <<enq[pd], id_[pd]>>
+              [] OTHER -> null ]
 
 before == {}
-
 
 Mapping == INSTANCE IPOFifo WITH 
     EnQers <- Producers,
