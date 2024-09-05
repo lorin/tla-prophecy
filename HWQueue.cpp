@@ -9,7 +9,6 @@
 #include <vector>
 
 using std::atomic;
-using std::atomic_exchange;
 using std::printf;
 using std::thread;
 using std::vector;
@@ -17,41 +16,46 @@ using std::vector;
 
 template <typename T>
 class Queue {
+private:
+    atomic<int> back;
+    atomic<T *> *items;
+
 public:
     Queue(int sz) : back(0), items(new atomic<T *>[sz]) {}
+    ~Queue() { delete[] items; }
 
-    ~Queue() {
-        delete[] items;
-    }
+    void enq(T *x);
+    T *deq();
+        
+};
 
-    void enq(T *x) {
-        int i = back++;
-        items[i] = x;
-    }
+template<typename T>
+void Queue<T>::enq(T *x)
+{
+    int i = back.fetch_add(1);
+    std::atomic_store(&items[i], x);
+}
 
-    T *deq() {
-        while(true) {
-            int range = back;
-            for(int i=0;i<range;++i) {
-                T *x = atomic_exchange(&items[i], nullptr);
-                if(x != nullptr) {
-                    return x;
-                }
+template<typename T>
+T *Queue<T>::deq()
+{
+    while (true)
+    {
+        int range = std::atomic_load(&back);
+        for (int i = 0; i < range; ++i)
+        {
+            T *x = std::atomic_exchange(&items[i], nullptr);
+            if (x != nullptr)
+            {
+                return x;
             }
         }
     }
-
-private:
-    std::atomic<int> back;
-    int size;
-    std::atomic<T *> *items;
-};
-
-
+}
 
 void produce(Queue<char> *queue, char letters[26], int n) {
     std::hash<std::thread::id> hasher;
-    int id = hasher(std::this_thread::get_id());
+    unsigned int id = hasher(std::this_thread::get_id()) % 100;
 
 
     unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
@@ -60,27 +64,27 @@ void produce(Queue<char> *queue, char letters[26], int n) {
 
     for(int i=0; i<n; ++i) {
         int offset = distribution(generator);
-        printf("%d: enq(%c)\n", id, letters[offset]);
+        printf("%02u: enq(%c)\n", id, letters[offset]);
         queue->enq(letters+offset);
-        printf("%d: enq(%c) -> OK\n", id, letters[offset]);
+        printf("%02u: enq(%c) -> OK\n", id, letters[offset]);
     }
 }
 
 void consume(Queue<char> *queue, int n) {
     std::hash<std::thread::id> hasher;
-    int id = hasher(std::this_thread::get_id());
+    unsigned int id = hasher(std::this_thread::get_id()) % 100;
 
     for(int i=0; i<n; ++i) {
-        printf("%d: deq()\n", id);
+        printf("%02u: deq()\n", id);
         char *c = queue->deq();
-        printf("%d: deq() -> %c\n", id, *c);
+        printf("%02u: deq() -> %c\n", id, *c);
     }
 }
 
 int main() {
-    int producers = 3;
-    int consumers = 3;
-    int max_iterations = 5;
+    int producers = 10;
+    int consumers = 10;
+    int max_iterations = 10;
 
     char letters[26];
     for (char c = 'A'; c <= 'Z'; ++c) {
@@ -88,9 +92,18 @@ int main() {
     }
 
     Queue<char> queue(producers*max_iterations);
+    vector<thread> threads;
 
-    produce(&queue, letters, 2);
-    consume(&queue, 2);
+    for(int i=0;i<producers;++i) {
+         threads.push_back(thread(produce, &queue, letters, max_iterations));
+    }
+    for(int i=0;i<consumers;++i) {
+        threads.push_back(thread(&consume, &queue, max_iterations));
+    }
+
+    for (thread& t : threads) {
+        t.join();
+    }
 
     return 0;
 }
