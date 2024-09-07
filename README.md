@@ -102,7 +102,7 @@ Translating from the pseudocode to PlusCal is pretty straightforward.
 The queue is modeled as a record:
 
 ```
-variables rep = [back|->1, items|->[n \in 1..Nmax|->null]];
+q = [back|->1, items|->[n \in 1..Nmax|->null]];
 ```
 
 ### Enq operation
@@ -116,34 +116,24 @@ Enq = proc (q: queue, x: item)
     end Enq
 ```
 
-I needed to model `INC` and `STORE` as atomic operations, so I used TLA+ macros for those:
 
-```
-macro INC(x) { x := x+1 || preINC := x }
-macro STORE(loc, val) { loc := val }
-```
+I needed to model `INC` and `STORE` as atomic operations. In TLA+, an atomic operation is one where there's a single label.
+The `||` operator means that the operations happen in parallel, which is a handy way to implement the equivalent of `i = x++`:
 
-The `STORE` operation is pretty trivial, but the `INC` requires a little more explanation. 
-Because TLA+ macros don't have a concept of returning a value, I use a variable called `preINC` that gets
-set to the value that `x` held before incremented.
-
-The PlusCal implementation for enqueue then looks like this:
 
 ```tla
-\*
-\* Enq(item)
-\*
-process (producer \in Producers) 
-variables
-    item \in Val, 
-    i, preINC; {
-
-E1:  INC(rep.back);
-     i := preINC;
-E2:  STORE(rep.items[i], item);
-
-}
+(***********************************)
+(* Enq(x: Values)                  *)
+(***********************************)
+procedure Enq(x)
+variable i;
+begin
+E1: x := x+1 || i := x; (* Allocate a new slot *)
+E2: q.items[i] := x;    (* Fill it *)
+E3: return;
+end procedure;
 ```
+
 
 ### Deq operation
 
@@ -161,98 +151,30 @@ Deq = proc (q: queue) returns (item)
     end Deq
 ```
 
-And here's my implementation. I used the `rVal` variable to hold the return value of the Deq operation,
-and the `rInd` variable to hold the return value of the `READ` operation.
+And here's my implementation. I used the `rval` variable to hold the return value of the Deq operation.
 
 
 ```tla
-macro READ(ind) { rInd := ind }
-macro SWAP(loc, val) { loc := val || rVal := loc }
-
-\*
-\* Deq() -> rVal
-\*
-process (consumer \in Consumers) 
-variables i, x, range, rInd, rVal {
-D1: while(TRUE) {
-D2:   READ(rep.back);
-D3:   range := rInd-1;
-D4:   i := 1;
-D5:   while(i<=range) {
-D6:     SWAP(rep.items[i], null);
-D7:     x := rVal;
-        if(x /= null) {
-D8:       rVal := x;
-          p := Tail(p);
-D9:       goto "Done"
-        };
-D10:    i:= i+1
-      }
-    }
-}
+(***********************************)
+(* Deq() -> rval[self] : Values    *)
+(***********************************)
+procedure Deq()
+variables j, y, range;
+begin
+D1: while(TRUE) do
+D2:   range := q.back-1;
+D3:   j := 1;
+D4:   while(j<=range) do
+D5:   q.items[j] := null || y := q.items[j];
+D6:   if(y /= null) then
+D7:       rval[self] := y;
+D8:       return;
+        end if;
+D9:     j:= j+1;
+      end while;
+    end while;
+end procedure;
 ```
 
 The full spec can be found in [QueueRep.tla](QueueRep.tla)
-
-
-## High-level queue specification
-
-Here's simple specification for a queue. It models a set of producer and consumer
-processes, where a producer enqueues an item onto the queue, and the consumer dequeues an item,
-blocking if the queue is empty.
-
-```tla
-EXTENDS Sequences, Naturals
-
-CONSTANTS Val, null, Producers, Consumers
-
-ASSUME null \notin Val
-
-(*
---algorithm Queue {
-    variable items = << >>
-
-    process (producer \in Producers)
-    variable x \in Val;
-    {
-      E: 
-          items := <<x>> \o items;
-    }
-
-    process (consumer \in Consumers) 
-    variable r = null;
-    {
-        D:
-            await items # <<>>;
-            r := Head(items);
-            items := Tail(items);
-    }
-}
-*)
-```
-
-## Refinement mapping
-
-The challenge is to show a refinement mapping from our queue implementation to
-this specification. 
-
-The interesting part of the queue implementation is that enqueuing requires two operations:
-
-* allocating a slot for writing (E1)
-* writing the data (E2)
-
-We need to decide at which point the enqueueing should take effect. But we
-can't know this, because it will vary depending on how the other processes get
-scheduled. The paper provides a good example on how it's not possible to choose
-a single refinement mapping because whatever you pick, there is a potential
-execution trace that will render the refinement mapping invalid.
-
-Herlihy and Wing propose using a set of potential mappings rather than a single
-mapping. We implement their abstraction function in
-[QueueAbs.tla](QueueAbs.tla) but we don't actually use this function since we
-use prophecy variables instead.
-
-## Prophecy variable
-
-We can use prophecy variables to predict the order in which values will get dequeued.
 
