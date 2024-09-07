@@ -15,7 +15,7 @@ Threads == Producers \union Consumers
 
 (*--algorithm Rep 
 variables 
-    queue = [back|->1, items|->[n \in 1..Nmax|->null]];
+    q = [back|->1, items|->[n \in 1..Nmax|->null]];
     ps = <<>>;
 
     \* Public variables
@@ -41,9 +41,9 @@ macro SWAP(loc, val) begin
 end macro
 
 \*
-\* Enq(q: queue, x: Values)
+\* Enq(x: Values)
 \*
-procedure Enq(q, x)
+procedure Enq(x)
 variables 
     i; INC_return;
 begin
@@ -57,10 +57,10 @@ E3: return;
 end procedure;
 
 \*
-\* Deq(q: queue) -> rval[self] : Values
+\* Deq() -> rval[self] : Values
 \*
-procedure Deq(q)
-variables j, x, range, READ_return, SWAP_return
+procedure Deq()
+variables j, y, range, READ_return, SWAP_return
 begin 
 D1: while(TRUE) do
 D2:   READ(q.back);
@@ -68,11 +68,11 @@ D3:   range := READ_return-1;
 D4:   j := 1;
 D5:   while(j<=range) do
 D6:     SWAP(q.items[j], null);
-D7:     x := SWAP_return;
-        if(x /= null) then
-D8:       await Head(ps) = x;
+D7:     y := SWAP_return;
+        if(y /= null) then
+D8:       await Head(ps) = y;
           ps := Tail(ps);
-          rval[self] := x;
+          rval[self] := y;
 D9:       return;
         end if;
 D10:    j:= j+1;
@@ -89,7 +89,7 @@ enq:
         arg[self] := itm;
         rval[self] := null;
         done[self] := FALSE;
-        call Enq(queue, itm);
+        call Enq(itm);
     end with;
 enqdone:
     done[self] := TRUE;
@@ -103,7 +103,7 @@ deq:
     rval[self] := null;
     done[self] := FALSE;
 
-    call Deq(queue);
+    call Deq();
 deqdone:
     done[self] := TRUE;
 
@@ -112,30 +112,27 @@ end process;
 end algorithm;*)
 \* BEGIN TRANSLATION
 \* Procedure variable x of procedure Deq at line 63 col 14 changed to x_
-\* Parameter q of procedure Enq at line 46 col 15 changed to q_
 CONSTANT defaultInitValue
-VARIABLES pc, queue, ps, op, arg, rval, done, stack, q_, x, i, INC_return, q, 
-          j, x_, range, READ_return, SWAP_return
+VARIABLES pc, q, ps, op, arg, rval, done, stack, x, i, INC_return, j, x_, 
+          range, READ_return, SWAP_return
 
-vars == << pc, queue, ps, op, arg, rval, done, stack, q_, x, i, INC_return, q, 
-           j, x_, range, READ_return, SWAP_return >>
+vars == << pc, q, ps, op, arg, rval, done, stack, x, i, INC_return, j, x_, 
+           range, READ_return, SWAP_return >>
 
 ProcSet == (Producers) \cup (Consumers)
 
 Init == (* Global variables *)
-        /\ queue = [back|->1, items|->[n \in 1..Nmax|->null]]
+        /\ q = [back|->1, items|->[n \in 1..Nmax|->null]]
         /\ ps = <<>>
         /\ op = [t \in Threads |-> ""]
         /\ arg = [t \in Threads |-> null]
         /\ rval = [t \in Threads |-> null]
         /\ done = [t \in Threads |-> TRUE]
         (* Procedure Enq *)
-        /\ q_ = [ self \in ProcSet |-> defaultInitValue]
         /\ x = [ self \in ProcSet |-> defaultInitValue]
         /\ i = [ self \in ProcSet |-> defaultInitValue]
         /\ INC_return = [ self \in ProcSet |-> defaultInitValue]
         (* Procedure Deq *)
-        /\ q = [ self \in ProcSet |-> defaultInitValue]
         /\ j = [ self \in ProcSet |-> defaultInitValue]
         /\ x_ = [ self \in ProcSet |-> defaultInitValue]
         /\ range = [ self \in ProcSet |-> defaultInitValue]
@@ -146,88 +143,84 @@ Init == (* Global variables *)
                                         [] self \in Consumers -> "deq"]
 
 E1(self) == /\ pc[self] = "E1"
-            /\ /\ INC_return' = [INC_return EXCEPT ![self] = q_[self].back]
-               /\ q_' = [q_ EXCEPT ![self].back = (q_[self].back)+1]
+            /\ /\ INC_return' = [INC_return EXCEPT ![self] = q.back]
+               /\ q' = [q EXCEPT !.back = (q.back)+1]
             /\ i' = [i EXCEPT ![self] = INC_return'[self]]
             /\ \E p \in Pi:
                  ps' = Append(ps, p)
             /\ pc' = [pc EXCEPT ![self] = "E2"]
-            /\ UNCHANGED << queue, op, arg, rval, done, stack, x, q, j, x_, 
-                            range, READ_return, SWAP_return >>
+            /\ UNCHANGED << op, arg, rval, done, stack, x, j, x_, range, 
+                            READ_return, SWAP_return >>
 
 E2(self) == /\ pc[self] = "E2"
-            /\ q_' = [q_ EXCEPT ![self].items[i[self]] = x[self]]
+            /\ q' = [q EXCEPT !.items[i[self]] = x[self]]
             /\ pc' = [pc EXCEPT ![self] = "E3"]
-            /\ UNCHANGED << queue, ps, op, arg, rval, done, stack, x, i, 
-                            INC_return, q, j, x_, range, READ_return, 
-                            SWAP_return >>
+            /\ UNCHANGED << ps, op, arg, rval, done, stack, x, i, INC_return, 
+                            j, x_, range, READ_return, SWAP_return >>
 
 E3(self) == /\ pc[self] = "E3"
             /\ pc' = [pc EXCEPT ![self] = Head(stack[self]).pc]
             /\ i' = [i EXCEPT ![self] = Head(stack[self]).i]
             /\ INC_return' = [INC_return EXCEPT ![self] = Head(stack[self]).INC_return]
-            /\ q_' = [q_ EXCEPT ![self] = Head(stack[self]).q_]
             /\ x' = [x EXCEPT ![self] = Head(stack[self]).x]
             /\ stack' = [stack EXCEPT ![self] = Tail(stack[self])]
-            /\ UNCHANGED << queue, ps, op, arg, rval, done, q, j, x_, range, 
+            /\ UNCHANGED << q, ps, op, arg, rval, done, j, x_, range, 
                             READ_return, SWAP_return >>
 
 Enq(self) == E1(self) \/ E2(self) \/ E3(self)
 
 D1(self) == /\ pc[self] = "D1"
             /\ pc' = [pc EXCEPT ![self] = "D2"]
-            /\ UNCHANGED << queue, ps, op, arg, rval, done, stack, q_, x, i, 
-                            INC_return, q, j, x_, range, READ_return, 
-                            SWAP_return >>
+            /\ UNCHANGED << q, ps, op, arg, rval, done, stack, x, i, 
+                            INC_return, j, x_, range, READ_return, SWAP_return >>
 
 D2(self) == /\ pc[self] = "D2"
-            /\ READ_return' = [READ_return EXCEPT ![self] = q[self].back]
+            /\ READ_return' = [READ_return EXCEPT ![self] = q.back]
             /\ pc' = [pc EXCEPT ![self] = "D3"]
-            /\ UNCHANGED << queue, ps, op, arg, rval, done, stack, q_, x, i, 
-                            INC_return, q, j, x_, range, SWAP_return >>
+            /\ UNCHANGED << q, ps, op, arg, rval, done, stack, x, i, 
+                            INC_return, j, x_, range, SWAP_return >>
 
 D3(self) == /\ pc[self] = "D3"
             /\ range' = [range EXCEPT ![self] = READ_return[self]-1]
             /\ pc' = [pc EXCEPT ![self] = "D4"]
-            /\ UNCHANGED << queue, ps, op, arg, rval, done, stack, q_, x, i, 
-                            INC_return, q, j, x_, READ_return, SWAP_return >>
+            /\ UNCHANGED << q, ps, op, arg, rval, done, stack, x, i, 
+                            INC_return, j, x_, READ_return, SWAP_return >>
 
 D4(self) == /\ pc[self] = "D4"
             /\ j' = [j EXCEPT ![self] = 1]
             /\ pc' = [pc EXCEPT ![self] = "D5"]
-            /\ UNCHANGED << queue, ps, op, arg, rval, done, stack, q_, x, i, 
-                            INC_return, q, x_, range, READ_return, SWAP_return >>
+            /\ UNCHANGED << q, ps, op, arg, rval, done, stack, x, i, 
+                            INC_return, x_, range, READ_return, SWAP_return >>
 
 D5(self) == /\ pc[self] = "D5"
             /\ IF (j[self]<=range[self])
                   THEN /\ pc' = [pc EXCEPT ![self] = "D6"]
                   ELSE /\ pc' = [pc EXCEPT ![self] = "D1"]
-            /\ UNCHANGED << queue, ps, op, arg, rval, done, stack, q_, x, i, 
-                            INC_return, q, j, x_, range, READ_return, 
-                            SWAP_return >>
+            /\ UNCHANGED << q, ps, op, arg, rval, done, stack, x, i, 
+                            INC_return, j, x_, range, READ_return, SWAP_return >>
 
 D6(self) == /\ pc[self] = "D6"
-            /\ /\ SWAP_return' = [SWAP_return EXCEPT ![self] = q[self].items[j[self]]]
-               /\ q' = [q EXCEPT ![self].items[j[self]] = null]
+            /\ /\ SWAP_return' = [SWAP_return EXCEPT ![self] = q.items[j[self]]]
+               /\ q' = [q EXCEPT !.items[j[self]] = null]
             /\ pc' = [pc EXCEPT ![self] = "D7"]
-            /\ UNCHANGED << queue, ps, op, arg, rval, done, stack, q_, x, i, 
-                            INC_return, j, x_, range, READ_return >>
+            /\ UNCHANGED << ps, op, arg, rval, done, stack, x, i, INC_return, 
+                            j, x_, range, READ_return >>
 
 D7(self) == /\ pc[self] = "D7"
             /\ x_' = [x_ EXCEPT ![self] = SWAP_return[self]]
             /\ IF (x_'[self] /= null)
                   THEN /\ pc' = [pc EXCEPT ![self] = "D8"]
                   ELSE /\ pc' = [pc EXCEPT ![self] = "D10"]
-            /\ UNCHANGED << queue, ps, op, arg, rval, done, stack, q_, x, i, 
-                            INC_return, q, j, range, READ_return, SWAP_return >>
+            /\ UNCHANGED << q, ps, op, arg, rval, done, stack, x, i, 
+                            INC_return, j, range, READ_return, SWAP_return >>
 
 D8(self) == /\ pc[self] = "D8"
             /\ Head(ps) = x_[self]
             /\ ps' = Tail(ps)
             /\ rval' = [rval EXCEPT ![self] = x_[self]]
             /\ pc' = [pc EXCEPT ![self] = "D9"]
-            /\ UNCHANGED << queue, op, arg, done, stack, q_, x, i, INC_return, 
-                            q, j, x_, range, READ_return, SWAP_return >>
+            /\ UNCHANGED << q, op, arg, done, stack, x, i, INC_return, j, x_, 
+                            range, READ_return, SWAP_return >>
 
 D9(self) == /\ pc[self] = "D9"
             /\ pc' = [pc EXCEPT ![self] = Head(stack[self]).pc]
@@ -236,17 +229,14 @@ D9(self) == /\ pc[self] = "D9"
             /\ range' = [range EXCEPT ![self] = Head(stack[self]).range]
             /\ READ_return' = [READ_return EXCEPT ![self] = Head(stack[self]).READ_return]
             /\ SWAP_return' = [SWAP_return EXCEPT ![self] = Head(stack[self]).SWAP_return]
-            /\ q' = [q EXCEPT ![self] = Head(stack[self]).q]
             /\ stack' = [stack EXCEPT ![self] = Tail(stack[self])]
-            /\ UNCHANGED << queue, ps, op, arg, rval, done, q_, x, i, 
-                            INC_return >>
+            /\ UNCHANGED << q, ps, op, arg, rval, done, x, i, INC_return >>
 
 D10(self) == /\ pc[self] = "D10"
              /\ j' = [j EXCEPT ![self] = j[self]+1]
              /\ pc' = [pc EXCEPT ![self] = "D5"]
-             /\ UNCHANGED << queue, ps, op, arg, rval, done, stack, q_, x, i, 
-                             INC_return, q, x_, range, READ_return, 
-                             SWAP_return >>
+             /\ UNCHANGED << q, ps, op, arg, rval, done, stack, x, i, 
+                             INC_return, x_, range, READ_return, SWAP_return >>
 
 Deq(self) == D1(self) \/ D2(self) \/ D3(self) \/ D4(self) \/ D5(self)
                 \/ D6(self) \/ D7(self) \/ D8(self) \/ D9(self)
@@ -258,27 +248,23 @@ enq(self) == /\ pc[self] = "enq"
                   /\ arg' = [arg EXCEPT ![self] = itm]
                   /\ rval' = [rval EXCEPT ![self] = null]
                   /\ done' = [done EXCEPT ![self] = FALSE]
-                  /\ /\ q_' = [q_ EXCEPT ![self] = queue]
-                     /\ stack' = [stack EXCEPT ![self] = << [ procedure |->  "Enq",
+                  /\ /\ stack' = [stack EXCEPT ![self] = << [ procedure |->  "Enq",
                                                               pc        |->  "enqdone",
                                                               i         |->  i[self],
                                                               INC_return |->  INC_return[self],
-                                                              q_        |->  q_[self],
                                                               x         |->  x[self] ] >>
                                                           \o stack[self]]
                      /\ x' = [x EXCEPT ![self] = itm]
                   /\ i' = [i EXCEPT ![self] = defaultInitValue]
                   /\ INC_return' = [INC_return EXCEPT ![self] = defaultInitValue]
                   /\ pc' = [pc EXCEPT ![self] = "E1"]
-             /\ UNCHANGED << queue, ps, q, j, x_, range, READ_return, 
-                             SWAP_return >>
+             /\ UNCHANGED << q, ps, j, x_, range, READ_return, SWAP_return >>
 
 enqdone(self) == /\ pc[self] = "enqdone"
                  /\ done' = [done EXCEPT ![self] = TRUE]
                  /\ pc' = [pc EXCEPT ![self] = "Done"]
-                 /\ UNCHANGED << queue, ps, op, arg, rval, stack, q_, x, i, 
-                                 INC_return, q, j, x_, range, READ_return, 
-                                 SWAP_return >>
+                 /\ UNCHANGED << q, ps, op, arg, rval, stack, x, i, INC_return, 
+                                 j, x_, range, READ_return, SWAP_return >>
 
 prod(self) == enq(self) \/ enqdone(self)
 
@@ -287,30 +273,27 @@ deq(self) == /\ pc[self] = "deq"
              /\ arg' = [arg EXCEPT ![self] = null]
              /\ rval' = [rval EXCEPT ![self] = null]
              /\ done' = [done EXCEPT ![self] = FALSE]
-             /\ /\ q' = [q EXCEPT ![self] = queue]
-                /\ stack' = [stack EXCEPT ![self] = << [ procedure |->  "Deq",
-                                                         pc        |->  "deqdone",
-                                                         j         |->  j[self],
-                                                         x_        |->  x_[self],
-                                                         range     |->  range[self],
-                                                         READ_return |->  READ_return[self],
-                                                         SWAP_return |->  SWAP_return[self],
-                                                         q         |->  q[self] ] >>
-                                                     \o stack[self]]
+             /\ stack' = [stack EXCEPT ![self] = << [ procedure |->  "Deq",
+                                                      pc        |->  "deqdone",
+                                                      j         |->  j[self],
+                                                      x_        |->  x_[self],
+                                                      range     |->  range[self],
+                                                      READ_return |->  READ_return[self],
+                                                      SWAP_return |->  SWAP_return[self] ] >>
+                                                  \o stack[self]]
              /\ j' = [j EXCEPT ![self] = defaultInitValue]
              /\ x_' = [x_ EXCEPT ![self] = defaultInitValue]
              /\ range' = [range EXCEPT ![self] = defaultInitValue]
              /\ READ_return' = [READ_return EXCEPT ![self] = defaultInitValue]
              /\ SWAP_return' = [SWAP_return EXCEPT ![self] = defaultInitValue]
              /\ pc' = [pc EXCEPT ![self] = "D1"]
-             /\ UNCHANGED << queue, ps, q_, x, i, INC_return >>
+             /\ UNCHANGED << q, ps, x, i, INC_return >>
 
 deqdone(self) == /\ pc[self] = "deqdone"
                  /\ done' = [done EXCEPT ![self] = TRUE]
                  /\ pc' = [pc EXCEPT ![self] = "Done"]
-                 /\ UNCHANGED << queue, ps, op, arg, rval, stack, q_, x, i, 
-                                 INC_return, q, j, x_, range, READ_return, 
-                                 SWAP_return >>
+                 /\ UNCHANGED << q, ps, op, arg, rval, stack, x, i, INC_return, 
+                                 j, x_, range, READ_return, SWAP_return >>
 
 con(self) == deq(self) \/ deqdone(self)
 
