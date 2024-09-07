@@ -11,18 +11,27 @@ null == CHOOSE x : x \notin Values
 
 Pi == Values
 
-Threads == Producers \union Consumers
 
 (*--algorithm Rep
 variables
+    (*********************************************)
+    (* Public variables                          *)
+    (*********************************************)
+    op = [t \in ProcSet |-> ""];
+    arg = [t \in ProcSet |-> null];
+    rval = [t \in ProcSet |-> null];
+    done = [t \in ProcSet |-> TRUE];
+
+    (*********************************************)
+    (* Internal variables                        *)
+    (*********************************************)
     q = [back|->1, items|->[n \in 1..Nmax|->null]];
+
+    (*********************************************)
+    (* Prophecy variable                         *)
+    (*********************************************)
     ps = <<>>;
 
-    \* Public variables
-    op = [t \in Threads |-> ""];
-    arg = [t \in Threads |-> null];
-    rval = [t \in Threads |-> null];
-    done = [t \in Threads |-> TRUE];
 
 \*
 \* Enq(x: Values)
@@ -30,8 +39,7 @@ variables
 procedure Enq(x)
 variable i;
 begin
-E1: i := x;
-    x := x+1;            (* Allocate a new slot *)
+E1: x := x+1 || i := x; (* Allocate a new slot *)
     with p \in Pi do
         ps := Append(ps, p);
     end with;
@@ -43,7 +51,7 @@ end procedure;
 \* Deq() -> rval[self] : Values
 \*
 procedure Deq()
-variables j, y, range, SWAP_return
+variables j, y, range;
 begin
 D1: while(TRUE) do
 D2:   range := q.back-1;
@@ -93,21 +101,19 @@ end process;
 end algorithm;*)
 \* BEGIN TRANSLATION
 CONSTANT defaultInitValue
-VARIABLES pc, q, ps, op, arg, rval, done, stack, x, i, j, y, range,
-          SWAP_return
+VARIABLES pc, op, arg, rval, done, q, ps, stack, x, i, j, y, range
 
-vars == << pc, q, ps, op, arg, rval, done, stack, x, i, j, y, range,
-           SWAP_return >>
+vars == << pc, op, arg, rval, done, q, ps, stack, x, i, j, y, range >>
 
 ProcSet == (Producers) \cup (Consumers)
 
 Init == (* Global variables *)
+        /\ op = [t \in ProcSet |-> ""]
+        /\ arg = [t \in ProcSet |-> null]
+        /\ rval = [t \in ProcSet |-> null]
+        /\ done = [t \in ProcSet |-> TRUE]
         /\ q = [back|->1, items|->[n \in 1..Nmax|->null]]
         /\ ps = <<>>
-        /\ op = [t \in Threads |-> ""]
-        /\ arg = [t \in Threads |-> null]
-        /\ rval = [t \in Threads |-> null]
-        /\ done = [t \in Threads |-> TRUE]
         (* Procedure Enq *)
         /\ x = [ self \in ProcSet |-> defaultInitValue]
         /\ i = [ self \in ProcSet |-> defaultInitValue]
@@ -115,7 +121,6 @@ Init == (* Global variables *)
         /\ j = [ self \in ProcSet |-> defaultInitValue]
         /\ y = [ self \in ProcSet |-> defaultInitValue]
         /\ range = [ self \in ProcSet |-> defaultInitValue]
-        /\ SWAP_return = [ self \in ProcSet |-> defaultInitValue]
         /\ stack = [self \in ProcSet |-> << >>]
         /\ pc = [self \in ProcSet |-> CASE self \in Producers -> "enq"
                                         [] self \in Consumers -> "deq"]
@@ -126,85 +131,76 @@ E1(self) == /\ pc[self] = "E1"
             /\ \E p \in Pi:
                  ps' = Append(ps, p)
             /\ pc' = [pc EXCEPT ![self] = "E2"]
-            /\ UNCHANGED << q, op, arg, rval, done, stack, j, y, range,
-                            SWAP_return >>
+            /\ UNCHANGED << op, arg, rval, done, q, stack, j, y, range >>
 
 E2(self) == /\ pc[self] = "E2"
             /\ q' = [q EXCEPT !.items[i[self]] = x[self]]
             /\ pc' = [pc EXCEPT ![self] = "E3"]
-            /\ UNCHANGED << ps, op, arg, rval, done, stack, x, i, j, y, range,
-                            SWAP_return >>
+            /\ UNCHANGED << op, arg, rval, done, ps, stack, x, i, j, y, range >>
 
 E3(self) == /\ pc[self] = "E3"
             /\ pc' = [pc EXCEPT ![self] = Head(stack[self]).pc]
             /\ i' = [i EXCEPT ![self] = Head(stack[self]).i]
             /\ x' = [x EXCEPT ![self] = Head(stack[self]).x]
             /\ stack' = [stack EXCEPT ![self] = Tail(stack[self])]
-            /\ UNCHANGED << q, ps, op, arg, rval, done, j, y, range,
-                            SWAP_return >>
+            /\ UNCHANGED << op, arg, rval, done, q, ps, j, y, range >>
 
 Enq(self) == E1(self) \/ E2(self) \/ E3(self)
 
 D1(self) == /\ pc[self] = "D1"
             /\ pc' = [pc EXCEPT ![self] = "D2"]
-            /\ UNCHANGED << q, ps, op, arg, rval, done, stack, x, i, j, y,
-                            range, SWAP_return >>
+            /\ UNCHANGED << op, arg, rval, done, q, ps, stack, x, i, j, y, 
+                            range >>
 
 D2(self) == /\ pc[self] = "D2"
             /\ range' = [range EXCEPT ![self] = q.back-1]
             /\ pc' = [pc EXCEPT ![self] = "D3"]
-            /\ UNCHANGED << q, ps, op, arg, rval, done, stack, x, i, j, y,
-                            SWAP_return >>
+            /\ UNCHANGED << op, arg, rval, done, q, ps, stack, x, i, j, y >>
 
 D3(self) == /\ pc[self] = "D3"
             /\ j' = [j EXCEPT ![self] = 1]
             /\ pc' = [pc EXCEPT ![self] = "D4"]
-            /\ UNCHANGED << q, ps, op, arg, rval, done, stack, x, i, y, range,
-                            SWAP_return >>
+            /\ UNCHANGED << op, arg, rval, done, q, ps, stack, x, i, y, range >>
 
 D4(self) == /\ pc[self] = "D4"
             /\ IF (j[self]<=range[self])
                   THEN /\ pc' = [pc EXCEPT ![self] = "D5"]
                   ELSE /\ pc' = [pc EXCEPT ![self] = "D1"]
-            /\ UNCHANGED << q, ps, op, arg, rval, done, stack, x, i, j, y,
-                            range, SWAP_return >>
+            /\ UNCHANGED << op, arg, rval, done, q, ps, stack, x, i, j, y, 
+                            range >>
 
 D5(self) == /\ pc[self] = "D5"
             /\ /\ q' = [q EXCEPT !.items[j[self]] = null]
                /\ y' = [y EXCEPT ![self] = q.items[j[self]]]
             /\ pc' = [pc EXCEPT ![self] = "D6"]
-            /\ UNCHANGED << ps, op, arg, rval, done, stack, x, i, j, range,
-                            SWAP_return >>
+            /\ UNCHANGED << op, arg, rval, done, ps, stack, x, i, j, range >>
 
 D6(self) == /\ pc[self] = "D6"
             /\ IF (y[self] /= null)
                   THEN /\ pc' = [pc EXCEPT ![self] = "D7"]
                   ELSE /\ pc' = [pc EXCEPT ![self] = "D9"]
-            /\ UNCHANGED << q, ps, op, arg, rval, done, stack, x, i, j, y,
-                            range, SWAP_return >>
+            /\ UNCHANGED << op, arg, rval, done, q, ps, stack, x, i, j, y, 
+                            range >>
 
 D7(self) == /\ pc[self] = "D7"
             /\ Head(ps) = y[self]
             /\ ps' = Tail(ps)
             /\ rval' = [rval EXCEPT ![self] = y[self]]
             /\ pc' = [pc EXCEPT ![self] = "D8"]
-            /\ UNCHANGED << q, op, arg, done, stack, x, i, j, y, range,
-                            SWAP_return >>
+            /\ UNCHANGED << op, arg, done, q, stack, x, i, j, y, range >>
 
 D8(self) == /\ pc[self] = "D8"
             /\ pc' = [pc EXCEPT ![self] = Head(stack[self]).pc]
             /\ j' = [j EXCEPT ![self] = Head(stack[self]).j]
             /\ y' = [y EXCEPT ![self] = Head(stack[self]).y]
             /\ range' = [range EXCEPT ![self] = Head(stack[self]).range]
-            /\ SWAP_return' = [SWAP_return EXCEPT ![self] = Head(stack[self]).SWAP_return]
             /\ stack' = [stack EXCEPT ![self] = Tail(stack[self])]
-            /\ UNCHANGED << q, ps, op, arg, rval, done, x, i >>
+            /\ UNCHANGED << op, arg, rval, done, q, ps, x, i >>
 
 D9(self) == /\ pc[self] = "D9"
             /\ j' = [j EXCEPT ![self] = j[self]+1]
             /\ pc' = [pc EXCEPT ![self] = "D4"]
-            /\ UNCHANGED << q, ps, op, arg, rval, done, stack, x, i, y, range,
-                            SWAP_return >>
+            /\ UNCHANGED << op, arg, rval, done, q, ps, stack, x, i, y, range >>
 
 Deq(self) == D1(self) \/ D2(self) \/ D3(self) \/ D4(self) \/ D5(self)
                 \/ D6(self) \/ D7(self) \/ D8(self) \/ D9(self)
@@ -223,13 +219,13 @@ enq(self) == /\ pc[self] = "enq"
                      /\ x' = [x EXCEPT ![self] = itm]
                   /\ i' = [i EXCEPT ![self] = defaultInitValue]
                   /\ pc' = [pc EXCEPT ![self] = "E1"]
-             /\ UNCHANGED << q, ps, j, y, range, SWAP_return >>
+             /\ UNCHANGED << q, ps, j, y, range >>
 
 enqdone(self) == /\ pc[self] = "enqdone"
                  /\ done' = [done EXCEPT ![self] = TRUE]
                  /\ pc' = [pc EXCEPT ![self] = "Done"]
-                 /\ UNCHANGED << q, ps, op, arg, rval, stack, x, i, j, y,
-                                 range, SWAP_return >>
+                 /\ UNCHANGED << op, arg, rval, q, ps, stack, x, i, j, y, 
+                                 range >>
 
 prod(self) == enq(self) \/ enqdone(self)
 
@@ -242,21 +238,19 @@ deq(self) == /\ pc[self] = "deq"
                                                       pc        |->  "deqdone",
                                                       j         |->  j[self],
                                                       y         |->  y[self],
-                                                      range     |->  range[self],
-                                                      SWAP_return |->  SWAP_return[self] ] >>
+                                                      range     |->  range[self] ] >>
                                                   \o stack[self]]
              /\ j' = [j EXCEPT ![self] = defaultInitValue]
              /\ y' = [y EXCEPT ![self] = defaultInitValue]
              /\ range' = [range EXCEPT ![self] = defaultInitValue]
-             /\ SWAP_return' = [SWAP_return EXCEPT ![self] = defaultInitValue]
              /\ pc' = [pc EXCEPT ![self] = "D1"]
              /\ UNCHANGED << q, ps, x, i >>
 
 deqdone(self) == /\ pc[self] = "deqdone"
                  /\ done' = [done EXCEPT ![self] = TRUE]
                  /\ pc' = [pc EXCEPT ![self] = "Done"]
-                 /\ UNCHANGED << q, ps, op, arg, rval, stack, x, i, j, y,
-                                 range, SWAP_return >>
+                 /\ UNCHANGED << op, arg, rval, q, ps, stack, x, i, j, y, 
+                                 range >>
 
 con(self) == deq(self) \/ deqdone(self)
 
@@ -283,13 +277,15 @@ TypeOk == /\ q \in [back: Nat, items: [1..Nmax -> Values \union {null}]]
           /\ INC_return \in [Producers->Nat \union {defaultInitValue}]
           *)
 
-up == [t \in Threads |-> CASE t \in Producers -> pc[t] \in {"enq","E2", "E3", "enqdone"}
+up == [t \in ProcSet |-> CASE t \in Producers -> pc[t] \in {"enq","E2", "E3", "enqdone"}
                            [] t \in Consumers -> pc[t] \in {"deq", "D9", "D10", "deqdone"}]
 
 
+(*
 LQ == INSTANCE LinearizableQueue WITH
     none <- null,
-    d <- ps
+    d <- ???,
+    Threads <- ProcSet
 
 Refinement == LQ!Spec
 
@@ -309,6 +305,7 @@ Alias == [
     x |-> x,
     range |-> range
 ]
+*)
 
 =============================================================================
 \* Modification History
