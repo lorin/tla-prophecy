@@ -8,3 +8,4 @@ trace.txt*
 .vscode
 states
 hwqueue
+out.*

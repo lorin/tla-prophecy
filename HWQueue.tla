@@ -352,6 +352,7 @@ adding == [pd \in Producers |->
               [] pc[pd] = "enqdone" -> <<enq[pd], id_[pd]>>
               [] OTHER -> null ]
 
+
 before == {}
 
 Mapping == INSTANCE IPOFifo WITH 
