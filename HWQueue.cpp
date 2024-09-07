@@ -16,7 +16,6 @@ using std::vector;
 
 template <typename T>
 class Queue {
-private:
     atomic<int> back;
     atomic<T *> *items;
 
@@ -30,25 +29,18 @@ public:
 };
 
 template<typename T>
-void Queue<T>::enq(T *x)
-{
-    int i = back.fetch_add(1);
-    std::atomic_store(&items[i], x);
+void Queue<T>::enq(T *x) {
+    int i = back++;
+    items[i] = x;
 }
 
 template<typename T>
-T *Queue<T>::deq()
-{
-    while (true)
-    {
-        int range = std::atomic_load(&back);
-        for (int i = 0; i < range; ++i)
-        {
+T *Queue<T>::deq() {
+    while (true) {
+        int range = back;
+        for (int i = 0; i < range; ++i) {
             T *x = std::atomic_exchange(&items[i], nullptr);
-            if (x != nullptr)
-            {
-                return x;
-            }
+            if (x != nullptr) return x;
         }
     }
 }
