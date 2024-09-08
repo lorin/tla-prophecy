@@ -64,13 +64,33 @@ BeginEnq(e) == /\ enq[e] = Done
 
 Prefix(seq, n) == SubSeq(seq, 1, n)
 
-(* The longest prefix of seq whose elements are in items *)
-LongestPrefix(seq, items) == 
-    IF \E n \in DOMAIN seq : Range(Prefix(seq,n)) \subseteq items
-    THEN LET n == CHOOSE n \in DOMAIN seq : /\ Range(Prefix(seq,n)) \subseteq items
-                                            /\ \/ n = Len(seq)
-                                            \/ seq[n+1] \notin items
-        IN Prefix(seq, n)
+IsBefore(e1,e2) == <<e1,e2>> \in before
+
+(**************************************)
+(* Invariants for seq that encodes pg *)
+(**************************************)
+\* Q1. Every datum in pg is in elts.
+Q1(pgp, items) == Range(pgp) \subseteq items
+
+\* Q2. No datum appears twice in pg.
+Q2(pgp) == \A i,j \in DOMAIN pgp : pgp[i]=pgp[j] => i=j
+
+\* Q3. For each i ∈ 1..Len(pg) and each datum u ∈ elts, if u ≺ pg(i) then u = pg (j) for some j ∈ 1..(i − 1).
+Q3(pgp, items) == \A i \in DOMAIN pgp, u \in items : 
+                    IsBefore(u, pgp[i]) => \E j \in 1..i-1 : u = pgp[j]
+
+PgInv(pgp, items) == /\ Q1(pgp, items)
+                     /\ Q2(pgp)
+                     /\ Q3(pgp, items)
+
+
+(* The longest prefix of pp that satisfies the PgInv invariant *)
+LongestPrefix(pp, items) == 
+    IF \E n \in DOMAIN pp : PgInv(Prefix(pp, n), items)
+    THEN LET n == CHOOSE n \in DOMAIN pp : /\ PgInv(Prefix(pp, n), items)
+                                            /\ \/ n = Len(pp)
+                                               \/ ~PgInv(Prefix(pp, n+1), items)
+          IN Prefix(pp, n)
     ELSE <<>>
 
 BeginEnqP(e) == LET w == adding'[e]
@@ -121,12 +141,11 @@ BeginDeq(d) == /\ deq[d] # Busy
 BeginDeqP(d) == /\ BeginDeq(d)
                 /\ UNCHANGED <<p,pg,eb,s,queueBar>>
 
-isBefore(e1,e2) == <<e1,e2>> \in before
 
 EndDeq(d) == /\ deq[d] = Busy
              /\ pg # <<>>
              /\ \E el \in elts:
-               /\ \A el2 \in elts: ~(isBefore(el2,el))
+               /\ \A el2 \in elts: ~(IsBefore(el2,el))
                /\ elts' = elts \ {el}
                /\ deq' = [deq EXCEPT ![d]=el[1]]
                /\ before' = before \intersect (elts' \X elts')
@@ -154,6 +173,9 @@ NextP == \/ \E e \in EnQers : \/ BeginEnqP(e)
          \/ \E d \in DeQers :  \/ BeginDeqP(d)
                                \/ EndDeqP(d)
 
+
+
 Spec == InitP /\ [][NextP]_v
+
 
 ====
