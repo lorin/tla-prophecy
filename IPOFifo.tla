@@ -6,9 +6,18 @@
 EXTENDS Sequences, Naturals
 
 CONSTANTS EnQers, DeQers, Data, Busy, Done, Ids
-VARIABLES enq,deq,elts,before,adding,p,pg,eb,s,queueBar
+VARIABLES
+    (* external variables *)
+    enq,deq,
+
+    (* internal variables *)
+    elts,before,adding,
+    (* auxiliary variables *)
+    p,pg,eb,s,queueBar
+
 v == <<enq,deq,elts,before,adding,p,pg,eb,s,queueBar>>
 
+\* The ultimate mapping to the queue that queueBar needs to eventually converge on
 qBar == pg \o eb
 
 NonElt == CHOOSE NonElt : NonElt \notin (Data \X Ids)
@@ -20,26 +29,58 @@ Init == /\ enq = [e \in EnQers |-> Done]
         /\ elts = {}
         /\ before = {}
         /\ adding = [e \in EnQers |-> NonElt]
-        /\ p = <<>>
-        /\ pg = <<>>
-        /\ eb = <<>>
-        /\ s = [e \in {EnQers \cup DeQers} |-> <<0,"">>]
-        /\ queueBar = <<>>
+
+InitP == /\ Init
+         /\ p = <<>>
+         /\ pg = <<>>
+         /\ eb = <<>>
+         /\ s = [e \in {EnQers \cup DeQers} |-> <<0,"">>]
+         /\ queueBar = <<>>
+
+ValuesOf(seq) == {s[i]: i \in DOMAIN seq}
+IndexOf(seq, val) == CHOOSE i \in DOMAIN seq : seq[i]=val
+
+(******************************************************)
+(* Append w to pg, as well as other valid values      *)
+(******************************************************)
+RECURSIVE Augment(_, _)
+Augment(seq, w) ==
+    IF \E x \in ValuesOf(p) : /\ IndexOf(seq, x) > IndexOf(seq, w)
+                              /\ x \in elts
+    THEN Augment(Append(pg, w), CHOOSE x \in ValuesOf(p) : IndexOf(seq, x) > IndexOf(seq, w) /\ x \in elts)
+    ELSE Append(pg, w)
 
 
 BeginEnq(e) == /\ enq[e] = Done
                /\ \E D \in Data : \E id \in {i \in Ids : <<D,i>> \notin (elts \union beingAdded)} :
-                    /\ enq' = [enq EXCEPT ![e]=D]
-                    /\ elts' = elts \union {<<D,id>>}
-                    /\ before' = before \union {<<el,<<D,id>>>> : el \in (elts \ beingAdded)}
-                    /\ adding' = [adding EXCEPT ![e]= <<D,id>> ]
-                    /\ \E el \in Data \X Ids : p' = Append(p, el)
-                    /\ pg' = IF eb = <<>> THEN Append(pg, <<D, id>>) ELSE pg
-               /\ deq' = deq
-               /\ UNCHANGED eb
+                    LET w == <<D,id>>
+                    IN /\ enq' = [enq EXCEPT ![e]=D]
+                       /\ elts' = elts \union {w}
+                       /\ before' = before \union {<<el,w>> : el \in (elts \ beingAdded)}
+                       /\ adding' = [adding EXCEPT ![e]= w ]
+               /\ UNCHANGED deq
+
+(**************************************************************************************************)
+(* Following each BeginPOEnq pq step such that Len(pg')>Len(pg) (which implies eb=<<>>), s adds   *)
+(* Len(pg') − Len(pg) stuttering steps. While there are k more of those stuttering steps left to  *)
+(* be executed, queueBar equals the sequence obtained by removing the last k elements of qBar.    *)
+(**************************************************************************************************)
+BeginEnqP(e) == LET w == adding'[e]
+                 IN \/ /\ s[e][1]=0
+                       /\ BeginEnq(e)
+                       /\ \E el \in Data \X Ids : p' = Append(p, el)
+                       /\ pg' = IF eb = <<>> THEN Augment(pg, w) ELSE pg
+                       /\ s' = IF eb = <<>> THEN [s EXCEPT ![e] = <<Len(pg')-Len(pg),"BeginEnq">>] ELSE s
+                       /\ UNCHANGED <<eb,queueBar>>
+                    \/ LET k==s[e][1] IN
+                       /\ k>0
+                       /\ s[e][2]="BeginEnq"
+                       /\ queueBar' = SubSeq(qBar,1,Len(qBar)-k)
+                       /\ s' = [s EXCEPT ![e] = <<k-1,"BeginEnq">>]
+                       /\ UNCHANGED <<eb,pg>>
 
 EndEnq(e) == /\ enq[e] # Done
-             /\ enq' = [enq EXCEPT ![e]=Done] 
+             /\ enq' = [enq EXCEPT ![e]=Done]
              /\ adding' = [adding EXCEPT ![e]=NonElt]
              /\ UNCHANGED <<deq, elts, before, p>>
 
@@ -65,7 +106,10 @@ EndEnqP(e) == \/ /\ ENABLED EndEnq(e)
 
 BeginDeq(d) == /\ deq[d] # Busy
                /\ deq' = [deq EXCEPT ![d]=Busy]
-               /\ UNCHANGED <<enq, elts, before, adding, p, eb>>
+               /\ UNCHANGED <<enq, elts, before, adding>>
+
+BeginDeqP(d) == /\ BeginDeq(d)
+                /\ UNCHANGED <<p,pg,eb,s,queueBar>>
 
 isBefore(e1,e2) == <<e1,e2>> \in before
 
@@ -95,11 +139,11 @@ EndDeqP(d) ==  \/ /\ ENABLED EndDeq(d)
                   /\ EndDeq(d)
                   /\ UNCHANGED queueBar
 
-Next == \/ \E e \in EnQers : BeginEnq(e) \/ EndEnqP(e)
-        \/ \E d \in DeQers : BeginDeq(d) \/ EndDeqP(d)
+NextP == \/ \E e \in EnQers : \/ BeginEnqP(e)
+                              \/ EndEnqP(e)
+         \/ \E d \in DeQers :  \/ BeginDeqP(d)
+                               \/ EndDeqP(d)
 
-
-Spec == Init /\ [][Next]_v
-
+Spec == InitP /\ [][NextP]_v
 
 ====
