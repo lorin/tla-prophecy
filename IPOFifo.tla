@@ -56,44 +56,30 @@ BeginEnq(e) == /\ enq[e] = Done
                /\ UNCHANGED deq
 
 
-(******************************************************)
-(* Append w to seq, as well as other valid values     
-
-(* The sequence pg can be made longer by a BeginPOEnqp step as follows. 
-(* Suppose the step appends the prediction u to p and adds the datum w 
-(* to elts. The value of pg at the beginning of the step is a proper 
-(* prefix of p\o<<u>>. If w equals the prediction in p\o<<u>> immediately 
-(* after pg, then w will be appended to pg iff doing so would not violate Q3. 
-
-If w can be appended to pg and the prediction following w in p is already in elts, 
-then it might be possible to append that datum to pg as well. And so on. 
-Thus, it’s possible for the BeginPOEnqp step to append several datums to pg.
-(******************************************************)
-RECURSIVE Augment(_, _)
-Augment(seq, w) ==
-    LET pgp == Append(seq, w)
-        pfw == p[IndexOf(p, w)+1]
-     IN 
-
-    IF \E x \in Range(seq) : /\ IndexOf(seq, x) > IndexOf(seq, w)
-                             /\ x \in elts
-    THEN Augment(Append(seq, w), CHOOSE x \in Range(seq) : IndexOf(seq, x) > IndexOf(seq, w) /\ x \in elts)
-    ELSE Append(seq, w)
-
 (**************************************************************************************************)
 (* Following each BeginPOEnq pq step such that Len(pg')>Len(pg) (which implies eb=<<>>), s adds   *)
 (* Len(pg') − Len(pg) stuttering steps. While there are k more of those stuttering steps left to  *)
 (* be executed, queueBar equals the sequence obtained by removing the last k elements of qBar.    *)
 (**************************************************************************************************)
 
-Last(seq) == seq[Len(seq)]
+Prefix(seq, n) == SubSeq(seq, 1, n)
+
+(* The longest prefix of seq whose elements are in items *)
+LongestPrefix(seq, items) == 
+    IF \E n \in DOMAIN seq : Range(Prefix(seq,n)) \subseteq items
+    THEN LET n == CHOOSE n \in DOMAIN seq : /\ Range(Prefix(seq,n)) \subseteq items
+                                            /\ \/ n = Len(seq)
+                                            \/ seq[n+1] \notin items
+        IN Prefix(seq, n)
+    ELSE <<>>
 
 BeginEnqP(e) == LET w == adding'[e]
-                    u == Last(p')
                  IN \/ /\ s[e][1]=0
                        /\ BeginEnq(e)
                        /\ \E el \in Data \X Ids : p' = Append(p, el)
-                       /\ pg' = IF eb = <<>> THEN Augment(pg, w) ELSE pg
+                       /\ pg' = IF eb = <<>> 
+                                THEN LongestPrefix(p', elts')
+                                ELSE pg
                        /\ s' = IF eb = <<>> THEN [s EXCEPT ![e] = <<Len(pg')-Len(pg),"BeginEnq">>] ELSE s
                        /\ UNCHANGED <<eb,queueBar>>
                     \/ LET k==s[e][1] IN
@@ -123,7 +109,7 @@ EndEnqP(e) == \/ /\ ENABLED EndEnq(e)
               \/ /\ s[e] = <<1,"EndEnq">>
                  /\ s' = [s EXCEPT ![e] = <<0,"EndEnq">>]
                  /\ EndEnq(e)
-                 /\ UNCHANGED <<eb,s,pg,queueBar>>
+                 /\ UNCHANGED <<eb,pg,queueBar>>
               \/ /\ ~InBlockedState
                  /\ EndEnq(e)
                  /\ UNCHANGED <<eb,s,pg,queueBar>>
