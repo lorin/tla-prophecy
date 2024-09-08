@@ -5,7 +5,11 @@
 
 EXTENDS Sequences, Naturals
 
-CONSTANTS EnQers, DeQers, Data, Busy, Done, Ids
+CONSTANTS EnQers, DeQers, Data, Ids
+
+Done == CHOOSE Done : Done \notin Data
+Busy == CHOOSE Busy : Busy \notin Data
+
 VARIABLES
     (* external variables *)
     enq,deq,
@@ -34,21 +38,21 @@ InitP == /\ Init
          /\ p = <<>>
          /\ pg = <<>>
          /\ eb = <<>>
-         /\ s = [e \in {EnQers \cup DeQers} |-> <<0,"">>]
+         /\ s = [e \in EnQers \cup DeQers |-> <<0,"">>]
          /\ queueBar = <<>>
 
-ValuesOf(seq) == {s[i]: i \in DOMAIN seq}
+Range(seq) == {seq[i]: i \in DOMAIN seq}
 IndexOf(seq, val) == CHOOSE i \in DOMAIN seq : seq[i]=val
 
 (******************************************************)
-(* Append w to pg, as well as other valid values      *)
+(* Append w to seq, as well as other valid values     *)
 (******************************************************)
 RECURSIVE Augment(_, _)
 Augment(seq, w) ==
-    IF \E x \in ValuesOf(p) : /\ IndexOf(seq, x) > IndexOf(seq, w)
-                              /\ x \in elts
-    THEN Augment(Append(pg, w), CHOOSE x \in ValuesOf(p) : IndexOf(seq, x) > IndexOf(seq, w) /\ x \in elts)
-    ELSE Append(pg, w)
+    IF \E x \in Range(seq) : /\ IndexOf(seq, x) > IndexOf(seq, w)
+                             /\ x \in elts
+    THEN Augment(Append(seq, w), CHOOSE x \in Range(seq) : IndexOf(seq, x) > IndexOf(seq, w) /\ x \in elts)
+    ELSE Append(seq, w)
 
 
 BeginEnq(e) == /\ enq[e] = Done
@@ -77,7 +81,7 @@ BeginEnqP(e) == LET w == adding'[e]
                        /\ s[e][2]="BeginEnq"
                        /\ queueBar' = SubSeq(qBar,1,Len(qBar)-k)
                        /\ s' = [s EXCEPT ![e] = <<k-1,"BeginEnq">>]
-                       /\ UNCHANGED <<eb,pg>>
+                       /\ UNCHANGED <<adding,before,deq,elts,enq,p,eb,pg>>
 
 EndEnq(e) == /\ enq[e] # Done
              /\ enq' = [enq EXCEPT ![e]=Done]
@@ -99,10 +103,10 @@ EndEnqP(e) == \/ /\ ENABLED EndEnq(e)
               \/ /\ s[e] = <<1,"EndEnq">>
                  /\ s' = [s EXCEPT ![e] = <<0,"EndEnq">>]
                  /\ EndEnq(e)
-                 /\ UNCHANGED <<eb,s>>
+                 /\ UNCHANGED <<eb,s,pg,queueBar>>
               \/ /\ ~InBlockedState
                  /\ EndEnq(e)
-                 /\ UNCHANGED <<eb,s>>
+                 /\ UNCHANGED <<eb,s,pg,queueBar>>
 
 BeginDeq(d) == /\ deq[d] # Busy
                /\ deq' = [deq EXCEPT ![d]=Busy]
