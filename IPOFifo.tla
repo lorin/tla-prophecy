@@ -3,11 +3,11 @@
 (* From Lamport's Science of Concurrent Programs *)
 (*************************************************)
 
-EXTENDS Sequences
+EXTENDS Sequences, Naturals
 
 CONSTANTS EnQers, DeQers, Data, Busy, Done, Ids
-VARIABLES enq,deq,elts,before,adding,p,pg,eb, queueBar
-v == <<enq,deq,elts,before,adding,p,pg,eb>>
+VARIABLES enq,deq,elts,before,adding,p,pg,eb,s,queueBar
+v == <<enq,deq,elts,before,adding,p,pg,eb,s,queueBar>>
 
 qBar == pg \o eb
 
@@ -23,6 +23,7 @@ Init == /\ enq = [e \in EnQers |-> Done]
         /\ p = <<>>
         /\ pg = <<>>
         /\ eb = <<>>
+        /\ s = [e \in {EnQers \cup DeQers} |-> <<0,"">>]
         /\ queueBar = <<>>
 
 InBlockedState == \E u \in elts : u \notin beingAdded /\ u \notin {pg[i] : i \in DOMAIN pg}
@@ -62,9 +63,22 @@ EndDeq(d) == /\ deq[d] = Busy
                /\ pg' = Tail(pg)
              /\ UNCHANGED <<enq, adding, eb>>
 
+(***********************************************************************************)
+(* s adds a single stuttering step before each EndPODeqpq step.                    *)
+(* The value of queueBar equals Tail(qBar) immediately after that stuttering step. *)
+(***********************************************************************************)
+EndDeqP(d) ==  \/ /\ ENABLED EndDeq(d)
+                  /\ s[d][1] = 0
+                  /\ s' = [s EXCEPT ![d] = <<1,"EnqDeq">>]
+                  /\ queueBar' = Tail(qBar)
+                  /\ UNCHANGED <<enq,deq,elts,before,adding,p,pg,eb>>
+               \/ /\ s[d] = <<1,"EnqDeq">>
+                  /\ s' = [s EXCEPT ![d]= <<0,"EnqDeq">>]
+                  /\ EndDeq(d)
+                  /\ UNCHANGED queueBar
 
 Next == \/ \E e \in EnQers : BeginEnq(e) \/ EndEnq(e)
-        \/ \E d \in DeQers : BeginDeq(d) \/ EndDeq(d)
+        \/ \E d \in DeQers : BeginDeq(d) \/ EndDeqP(d)
 
 
 Spec == Init /\ [][Next]_v
