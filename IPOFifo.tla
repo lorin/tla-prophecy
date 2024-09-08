@@ -26,7 +26,6 @@ Init == /\ enq = [e \in EnQers |-> Done]
         /\ s = [e \in {EnQers \cup DeQers} |-> <<0,"">>]
         /\ queueBar = <<>>
 
-InBlockedState == \E u \in elts : u \notin beingAdded /\ u \notin {pg[i] : i \in DOMAIN pg}
 
 BeginEnq(e) == /\ enq[e] = Done
                /\ \E D \in Data : \E id \in {i \in Ids : <<D,i>> \notin (elts \union beingAdded)} :
@@ -42,8 +41,27 @@ BeginEnq(e) == /\ enq[e] = Done
 EndEnq(e) == /\ enq[e] # Done
              /\ enq' = [enq EXCEPT ![e]=Done] 
              /\ adding' = [adding EXCEPT ![e]=NonElt]
-             /\ eb' = IF InBlockedState THEN Append(eb, adding[e]) ELSE eb
              /\ UNCHANGED <<deq, elts, before, p>>
+
+InBlockedState == \E u \in elts : u \notin beingAdded /\ u \notin {pg[i] : i \in DOMAIN pg}
+
+(*************************************************************************************************************)
+(* s adds a stuttering step before each EndPOEnqpq step that appends an element w to eb (and hence to qBar). *)
+(* Immediately after that stuttering step, queueBar equals qBar \o << w >>.                                  *)
+(*************************************************************************************************************)
+EndEnqP(e) == \/ /\ ENABLED EndEnq(e)
+                 /\ InBlockedState
+                 /\ s[e][1] = 0
+                 /\ s' = [s EXCEPT ![e] = <<1,"EndEnq">>]
+                 /\ eb' = Append(eb, adding[e])
+                 /\ UNCHANGED  <<enq,deq,elts,before,adding,p,pg,queueBar>>
+              \/ /\ s[e] = <<1,"EndEnq">>
+                 /\ s' = [s EXCEPT ![e] = <<0,"EndEnq">>]
+                 /\ EndEnq(e)
+                 /\ UNCHANGED <<eb,s>>
+              \/ /\ ~InBlockedState
+                 /\ EndEnq(e)
+                 /\ UNCHANGED <<eb,s>>
 
 BeginDeq(d) == /\ deq[d] # Busy
                /\ deq' = [deq EXCEPT ![d]=Busy]
@@ -77,7 +95,7 @@ EndDeqP(d) ==  \/ /\ ENABLED EndDeq(d)
                   /\ EndDeq(d)
                   /\ UNCHANGED queueBar
 
-Next == \/ \E e \in EnQers : BeginEnq(e) \/ EndEnq(e)
+Next == \/ \E e \in EnQers : BeginEnq(e) \/ EndEnqP(e)
         \/ \E d \in DeQers : BeginDeq(d) \/ EndDeqP(d)
 
 
