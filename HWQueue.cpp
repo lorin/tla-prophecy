@@ -46,9 +46,7 @@ T *Queue<T>::deq() {
         int range = back;
         for (int i = 0; i < range; ++i) {
             T *x = std::atomic_exchange(&items[i], nullptr);
-            if (x != nullptr) {
-                return x;
-            }
+            if (x != nullptr) return x;
         }
     }
 }
