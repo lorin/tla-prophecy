@@ -3,9 +3,11 @@
 (*************************************************)
 ---- MODULE IPOFifo ----
 
+EXTENDS Sequences
+
 CONSTANTS EnQers, DeQers, Data, Busy, Done, Ids
-VARIABLES enq,deq,elts,before,adding
-v ==    <<enq,deq,elts,before,adding>>
+VARIABLES enq,deq,elts,before,adding,p
+v == <<enq,deq,elts,before,adding,p>>
 
 NonElt == CHOOSE NonElt : NonElt \notin (Data \X Ids)
 
@@ -16,6 +18,7 @@ Init == /\ enq = [e \in EnQers |-> Done]
         /\ elts = {}
         /\ before = {}
         /\ adding = [e \in EnQers |-> NonElt]
+        /\ p = <<>>
 
 BeginEnq(e) == /\ enq[e] = Done
                /\ \E D \in Data : \E id \in {i \in Ids : <<D,i>> \notin (elts \union beingAdded)} :
@@ -23,16 +26,17 @@ BeginEnq(e) == /\ enq[e] = Done
                     /\ elts' = elts \union {<<D,id>>}
                     /\ before' = before \union {<<el,<<D,id>>>> : el \in (elts \ beingAdded)}
                     /\ adding' = [adding EXCEPT ![e]= <<D,id>> ]
+                    /\ \E el \in Data \X Ids : p' = Append(p, el)
                /\ deq' = deq
 
 EndEnq(e) == /\ enq[e] # Done
              /\ enq' = [enq EXCEPT ![e]=Done] 
              /\ adding' = [adding EXCEPT ![e]=NonElt]
-             /\ UNCHANGED <<deq, elts, before>>
+             /\ UNCHANGED <<deq, elts, before, p>>
 
 BeginDeq(d) == /\ deq[d] # Busy
                /\ deq' = [deq EXCEPT ![d]=Busy]
-               /\ UNCHANGED <<enq, elts, before, adding>>
+               /\ UNCHANGED <<enq, elts, before, adding, p>>
 
 isBefore(e1,e2) == <<e1,e2>> \in before
 
@@ -42,6 +46,8 @@ EndDeq(d) == /\ deq[d] = Busy
                /\ elts' = elts \ {el}
                /\ deq' = [deq EXCEPT ![d]=el[1]]
                /\ before' = before \intersect (elts' \X elts')
+               /\ elts' = elts \ {p[1]}
+               /\ p' = Tail(p)
              /\ UNCHANGED <<enq, adding>>
 
 
