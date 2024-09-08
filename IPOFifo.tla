@@ -3,12 +3,13 @@
 (* From Lamport's Science of Concurrent Programs *)
 (*************************************************)
 
-EXTENDS Sequences, Naturals
+EXTENDS Sequences, Naturals, TLC
 
 CONSTANTS EnQers, DeQers, Data, Ids
 
 Done == CHOOSE Done : Done \notin Data
 Busy == CHOOSE Busy : Busy \notin Data
+NonElt == CHOOSE NonElt : NonElt \notin (Data \X Ids)
 
 VARIABLES
     (* external variables *)
@@ -24,7 +25,6 @@ v == <<enq,deq,elts,before,adding,p,pg,eb,s,queueBar>>
 \* The ultimate mapping to the queue that queueBar needs to eventually converge on
 qBar == pg \o eb
 
-NonElt == CHOOSE NonElt : NonElt \notin (Data \X Ids)
 
 beingAdded == {adding[e] : e \in EnQers} \ {NonElt}
 
@@ -44,15 +44,6 @@ InitP == /\ Init
 Range(seq) == {seq[i]: i \in DOMAIN seq}
 IndexOf(seq, val) == CHOOSE i \in DOMAIN seq : seq[i]=val
 
-(******************************************************)
-(* Append w to seq, as well as other valid values     *)
-(******************************************************)
-RECURSIVE Augment(_, _)
-Augment(seq, w) ==
-    IF \E x \in Range(seq) : /\ IndexOf(seq, x) > IndexOf(seq, w)
-                             /\ x \in elts
-    THEN Augment(Append(seq, w), CHOOSE x \in Range(seq) : IndexOf(seq, x) > IndexOf(seq, w) /\ x \in elts)
-    ELSE Append(seq, w)
 
 
 BeginEnq(e) == /\ enq[e] = Done
@@ -64,12 +55,41 @@ BeginEnq(e) == /\ enq[e] = Done
                        /\ adding' = [adding EXCEPT ![e]= w ]
                /\ UNCHANGED deq
 
+
+(******************************************************)
+(* Append w to seq, as well as other valid values     
+
+(* The sequence pg can be made longer by a BeginPOEnqp step as follows. 
+(* Suppose the step appends the prediction u to p and adds the datum w 
+(* to elts. The value of pg at the beginning of the step is a proper 
+(* prefix of p\o<<u>>. If w equals the prediction in p\o<<u>> immediately 
+(* after pg, then w will be appended to pg iff doing so would not violate Q3. 
+
+If w can be appended to pg and the prediction following w in p is already in elts, 
+then it might be possible to append that datum to pg as well. And so on. 
+Thus, it’s possible for the BeginPOEnqp step to append several datums to pg.
+(******************************************************)
+RECURSIVE Augment(_, _)
+Augment(seq, w) ==
+    LET pgp == Append(seq, w)
+        pfw == p[IndexOf(p, w)+1]
+     IN 
+
+    IF \E x \in Range(seq) : /\ IndexOf(seq, x) > IndexOf(seq, w)
+                             /\ x \in elts
+    THEN Augment(Append(seq, w), CHOOSE x \in Range(seq) : IndexOf(seq, x) > IndexOf(seq, w) /\ x \in elts)
+    ELSE Append(seq, w)
+
 (**************************************************************************************************)
 (* Following each BeginPOEnq pq step such that Len(pg')>Len(pg) (which implies eb=<<>>), s adds   *)
 (* Len(pg') − Len(pg) stuttering steps. While there are k more of those stuttering steps left to  *)
 (* be executed, queueBar equals the sequence obtained by removing the last k elements of qBar.    *)
 (**************************************************************************************************)
+
+Last(seq) == seq[Len(seq)]
+
 BeginEnqP(e) == LET w == adding'[e]
+                    u == Last(p')
                  IN \/ /\ s[e][1]=0
                        /\ BeginEnq(e)
                        /\ \E el \in Data \X Ids : p' = Append(p, el)
