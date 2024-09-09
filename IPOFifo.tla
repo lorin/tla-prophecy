@@ -44,8 +44,6 @@ InitP == /\ Init
 Range(seq) == {seq[i]: i \in DOMAIN seq}
 IndexOf(seq, val) == CHOOSE i \in DOMAIN seq : seq[i]=val
 
-
-
 BeginEnq(e) == /\ enq[e] = Done
                /\ \E D \in Data : \E id \in {i \in Ids : <<D,i>> \notin (elts \union beingAdded)} :
                     LET w == <<D,id>>
@@ -181,7 +179,7 @@ Spec == InitP /\ [][NextP]_v
 (* The value of enqInnerBar(e) for an enqueuer e should equal Done except when adding[e] equals the datum that e is enqueueing, *)
 (* and that datum is not yet in queueBar. This means that enqInnerBar can be defined in terms of adding and queueBar.           *)
 (********************************************************************************************************************************)
-enqInnerBar == [e \in EnQers |-> LET u == adding[e] IN IF u # NonElt /\ u \notin Range(queueBar) THEN u ELSE Done]
+enqInnerBar == [e \in EnQers |-> LET u == adding[e] IN IF u # NonElt /\ u \notin Range(queueBar) THEN Busy ELSE Done]
 
 
 (**********************************************************************************************************************************)
