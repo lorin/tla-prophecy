@@ -177,5 +177,27 @@ NextP == \/ \E e \in EnQers : \/ BeginEnqP(e)
 
 Spec == InitP /\ [][NextP]_v
 
+(********************************************************************************************************************************)
+(* The value of enqInnerBar(e) for an enqueuer e should equal Done except when adding[e] equals the datum that e is enqueueing, *)
+(* and that datum is not yet in queueBar. This means that enqInnerBar can be defined in terms of adding and queueBar.           *)
+(********************************************************************************************************************************)
+enqInnerBar == [e \in EnQers |-> LET u == adding[e] IN IF u # NonElt /\ u \notin Range(queueBar) THEN u ELSE Done]
 
+
+(**********************************************************************************************************************************)
+(* The value of deqInnerBar(d) for a dequeuer d should equal the value of deq[d] except between when d has removed the first      *)
+(* element of queueBar (by executing the stuttering step added in case 1) and before the subsequent EndDeqP(d) step has occurred. *) 
+(* In that case, deq[d] should equal qBar(1). It’s therefore easy to define deqInnerBar as a state function of IPOFifo if the     *)
+(* value of the stuttering variable s added in case 1 contains the value of d for which the following EndPODeqpqs(d) step is to   *)
+(* be performed.                                                                                                                  *)
+(**********************************************************************************************************************************)
+deqInnerBar == [d \in DeQers |-> IF s[d] = <<1,"EnqDeq">> THEN qBar[1] ELSE deq[d]]
+
+Fifo == INSTANCE IFifo WITH
+            queue <- queueBar,
+            enqInner <- enqInnerBar,
+            deqInner <- deqInnerBar,
+            NoData <- Busy
+
+Linearizability == Fifo!Spec
 ====

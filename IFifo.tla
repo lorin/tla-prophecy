@@ -13,7 +13,7 @@ ASSUME NoData \notin Data
 
 
 Init == /\ enq = [e \in EnQers |-> Done]
-        /\ deq = [DeQers -> Data]
+        /\ deq \in [DeQers -> Data]
         /\ queue = <<>>
         /\ enqInner = [e \in EnQers |-> Done]
         /\ deqInner = deq
