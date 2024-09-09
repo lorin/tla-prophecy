@@ -54,12 +54,6 @@ BeginEnq(e) == /\ enq[e] = Done
                /\ UNCHANGED deq
 
 
-(**************************************************************************************************)
-(* Following each BeginPOEnq pq step such that Len(pg')>Len(pg) (which implies eb=<<>>), s adds   *)
-(* Len(pg') − Len(pg) stuttering steps. While there are k more of those stuttering steps left to  *)
-(* be executed, queueBar equals the sequence obtained by removing the last k elements of qBar.    *)
-(**************************************************************************************************)
-
 Prefix(seq, n) == SubSeq(seq, 1, n)
 
 IsBefore(e1,e2) == <<e1,e2>> \in before
@@ -91,8 +85,14 @@ LongestPrefix(pp, items) ==
           IN Prefix(pp, n)
     ELSE <<>>
 
+(**************************************************************************************************)
+(* Following each BeginEnqP step such that Len(pg')>Len(pg) (which implies eb=<<>>), s adds       *)
+(* Len(pg') − Len(pg) stuttering steps. While there are k more of those stuttering steps left to  *)
+(* be executed, queueBar equals the sequence obtained by removing the last k elements of qBar.    *)
+(**************************************************************************************************)
 BeginEnqP(e) == LET w == adding'[e]
-                 IN \/ /\ s[e][1]=0
+                 IN \/ /\ s[e][1] = 0
+                       /\ \A d \in DeQers : s[d][1] = 0
                        /\ BeginEnq(e)
                        /\ \E el \in Data \X Ids : p' = Append(p, el)
                        /\ pg' = IF eb = <<>> 
@@ -103,7 +103,7 @@ BeginEnqP(e) == LET w == adding'[e]
                     \/ LET k==s[e][1] IN
                        /\ k>0
                        /\ s[e][2]="BeginEnq"
-                       /\ queueBar' = SubSeq(qBar,1,Len(qBar)-k)
+                       /\ queueBar' = Prefix(qBar,Len(qBar)-(k-1))
                        /\ s' = [s EXCEPT ![e] = <<k-1,"BeginEnq">>]
                        /\ UNCHANGED <<adding,before,deq,elts,enq,p,eb,pg>>
 
@@ -112,23 +112,31 @@ EndEnq(e) == /\ enq[e] # Done
              /\ adding' = [adding EXCEPT ![e]=NonElt]
              /\ UNCHANGED <<deq, elts, before, p>>
 
-InBlockedState == \E u \in elts : u \notin beingAdded /\ u \notin {pg[i] : i \in DOMAIN pg}
+\* InBlockedState == \E u \in elts : u \notin beingAdded /\ u \notin {pg[i] : i \in DOMAIN pg}
 
 (*************************************************************************************************************)
-(* s adds a stuttering step before each EndPOEnqpq step that appends an element w to eb (and hence to qBar). *)
+(* s adds a stuttering step before each EndEnqP step that appends an element w to eb (and hence to qBar).    *)
 (* Immediately after that stuttering step, queueBar equals qBar \o << w >>.                                  *)
 (*************************************************************************************************************)
-EndEnqP(e) == \/ /\ ENABLED EndEnq(e)
+EndEnqP(e) == LET addingP == [adding EXCEPT ![e]=NonElt]
+                  beingAddedP == {addingP[ee] : ee \in EnQers} \ {NonElt}
+                  InBlockedState == \E u \in elts : u \notin beingAddedP /\ u \notin {pg[i] : i \in DOMAIN pg} 
+                  w == adding[e]
+              IN 
+          /\ \A d \in DeQers : s[d][1] = 0
+          /\  \/ /\ ENABLED EndEnq(e) (* stuttering state *)
                  /\ InBlockedState
                  /\ s[e][1] = 0
                  /\ s' = [s EXCEPT ![e] = <<1,"EndEnq">>]
-                 /\ eb' = Append(eb, adding[e])
-                 /\ UNCHANGED  <<enq,deq,elts,before,adding,p,pg,queueBar>>
+                 /\ eb' = Append(eb, w)
+                 /\ queueBar' = Append(qBar, w)
+                 /\ UNCHANGED  <<enq,deq,elts,before,adding,p,pg>>
               \/ /\ s[e] = <<1,"EndEnq">>
                  /\ s' = [s EXCEPT ![e] = <<0,"EndEnq">>]
                  /\ EndEnq(e)
                  /\ UNCHANGED <<eb,pg,queueBar>>
-              \/ /\ ~InBlockedState
+              \/ /\ s[e][1] = 0
+                 /\ ~InBlockedState
                  /\ EndEnq(e)
                  /\ UNCHANGED <<eb,s,pg,queueBar>>
 
@@ -137,6 +145,7 @@ BeginDeq(d) == /\ deq[d] # Busy
                /\ UNCHANGED <<enq, elts, before, adding>>
 
 BeginDeqP(d) == /\ BeginDeq(d)
+                /\ \A e \in EnQers : s[e][1] = 0
                 /\ UNCHANGED <<p,pg,eb,s,queueBar>>
 
 
@@ -157,6 +166,7 @@ EndDeq(d) == /\ deq[d] = Busy
 (* The value of queueBar equals Tail(qBar) immediately after that stuttering step. *)
 (***********************************************************************************)
 EndDeqP(d) ==  \/ /\ ENABLED EndDeq(d)
+                  /\ \A e \in EnQers : s[e][1] = 0
                   /\ s[d][1] = 0
                   /\ s' = [s EXCEPT ![d] = <<1,"EnqDeq">>]
                   /\ queueBar' = Tail(qBar)
@@ -181,7 +191,6 @@ Spec == InitP /\ [][NextP]_v
 (********************************************************************************************************************************)
 enqInnerBar == [e \in EnQers |-> LET u == adding[e] IN IF u # NonElt /\ u \notin Range(queueBar) THEN Busy ELSE Done]
 
-
 (**********************************************************************************************************************************)
 (* The value of deqInnerBar(d) for a dequeuer d should equal the value of deq[d] except between when d has removed the first      *)
 (* element of queueBar (by executing the stuttering step added in case 1) and before the subsequent EndDeqP(d) step has occurred. *) 
@@ -189,13 +198,31 @@ enqInnerBar == [e \in EnQers |-> LET u == adding[e] IN IF u # NonElt /\ u \notin
 (* value of the stuttering variable s added in case 1 contains the value of d for which the following EndPODeqpqs(d) step is to   *)
 (* be performed.                                                                                                                  *)
 (**********************************************************************************************************************************)
-deqInnerBar == [d \in DeQers |-> IF s[d] = <<1,"EnqDeq">> THEN qBar[1] ELSE deq[d]]
+deqInnerBar == [d \in DeQers |-> IF s[d] = <<1,"EnqDeq">> THEN qBar[1][1] ELSE deq[d]]
+
+queue == [i \in DOMAIN queueBar |-> queueBar[i][1]] 
 
 Fifo == INSTANCE IFifo WITH
-            queue <- queueBar,
             enqInner <- enqInnerBar,
             deqInner <- deqInnerBar,
             NoData <- Busy
 
 Linearizability == Fifo!Spec
+
+Alias == [
+    enq |-> enq,
+    deq |-> deq,
+    enqInnerBar |-> enqInnerBar,
+    deqInnerBar |-> deqInnerBar,
+    queueBar |-> queueBar,
+    queue |-> queue,
+    qBar |-> qBar,
+    elts |-> elts,
+    before |-> before,
+    adding |-> adding,
+    p |-> p,
+    pg |-> pg,
+    eb |-> eb,
+    s |-> s,
+    beingAdded |-> beingAdded]
 ====
