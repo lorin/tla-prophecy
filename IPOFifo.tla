@@ -17,6 +17,7 @@ VARIABLES
 
     (* internal variables *)
     elts,before,adding,
+
     (* auxiliary variables *)
     p,pg,eb,s,queueBar,enqInnerBar
 
@@ -91,23 +92,27 @@ LongestPrefix(pp, items) ==
 (* be executed, queueBar equals the sequence obtained by removing the last k elements of qBar.    *)
 (**************************************************************************************************)
 BeginEnqP(e) == LET w == adding'[e]
-                 IN \/ /\ s[e][1] = 0
-                       /\ \A d \in DeQers : s[d][1] = 0
-                       /\ BeginEnq(e)
-                       /\ \E el \in Data \X Ids : p' = Append(p, el)
-                       /\ pg' = IF eb = <<>> 
-                                THEN LongestPrefix(p', elts')
-                                ELSE pg
-                       /\ s' = IF eb = <<>> THEN [s EXCEPT ![e] = <<Len(pg')-Len(pg),"BeginEnq">>] ELSE s
-                       /\ enqInnerBar' = [enqInnerBar EXCEPT ![e]=Busy]
-                       /\ UNCHANGED <<eb,queueBar>>
-                    \/ LET k==s[e][1] IN
-                       /\ k>0
-                       /\ s[e][2]="BeginEnq"
-                       /\ queueBar' = Prefix(qBar,Len(qBar)-(k-1))
-                       /\ s' = [s EXCEPT ![e] = <<k-1,"BeginEnq">>]
-                       /\ enqInnerBar' = IF adding[e] \in Range(queueBar') THEN [enqInnerBar EXCEPT ![e]=Done] ELSE enqInnerBar
-                       /\ UNCHANGED <<adding,before,deq,elts,enq,p,eb,pg>>
+                 IN /\ \A ee \in EnQers \ {e} : s[ee][1] = 0
+                    /\ \/ /\ s[e][1] = 0
+                          /\ \A d \in DeQers : s[d][1] = 0
+                          /\ BeginEnq(e)
+                          /\ \E el \in Data \X Ids : p' = Append(p, el)
+                          /\ pg' = IF eb = <<>> 
+                                   THEN LongestPrefix(p', elts')
+                                   ELSE pg
+                          /\ s' = IF eb = <<>> THEN [s EXCEPT ![e] = <<Len(pg')-Len(pg),"BeginEnq">>] ELSE s
+                          /\ enqInnerBar' = [enqInnerBar EXCEPT ![e]=Busy]
+                          /\ UNCHANGED <<eb,queueBar>>
+                       \/ LET k==s[e][1] IN
+                          /\ k>0
+                          /\ s[e][2]="BeginEnq"
+                          /\ queueBar' = Prefix(qBar,Len(qBar)-(k-1))
+                          /\ s' = [s EXCEPT ![e] = <<k-1,"BeginEnq">>]
+                          /\ enqInnerBar' = LET v == qBar[Len(qBar)-(k-1)]
+                                             IN IF \E ee \in EnQers : adding[ee]=v 
+                                                THEN [enqInnerBar EXCEPT ![CHOOSE ee \in EnQers : adding[ee]=v]=Done] 
+                                                ELSE enqInnerBar
+                          /\ UNCHANGED <<adding,before,deq,elts,enq,p,eb,pg>>
 
 EndEnq(e) == /\ enq[e] # Done
              /\ enq' = [enq EXCEPT ![e]=Done]
@@ -120,10 +125,13 @@ EndEnq(e) == /\ enq[e] # Done
 (*************************************************************************************************************)
 EndEnqP(e) == LET addingP == [adding EXCEPT ![e]=NonElt]
                   beingAddedP == {addingP[ee] : ee \in EnQers} \ {NonElt}
-                  InBlockedState == \E u \in elts : u \notin beingAddedP /\ u \notin {pg[i] : i \in DOMAIN pg} 
                   w == adding[e]
+                  InBlockedState == /\ w \notin Range(pg) 
+                                    /\ \E u \in elts : /\ u \notin beingAddedP 
+                                                       /\ u \notin {pg[i] : i \in DOMAIN pg} 
               IN 
           /\ \A d \in DeQers : s[d][1] = 0
+          /\ \A ee \in EnQers \ {e} : s[ee][1] = 0
           /\  \/ /\ ENABLED EndEnq(e) (* stuttering state *)
                  /\ InBlockedState
                  /\ s[e][1] = 0
@@ -168,6 +176,7 @@ EndDeq(d) == /\ deq[d] = Busy
 (***********************************************************************************)
 EndDeqP(d) ==  \/ /\ ENABLED EndDeq(d)
                   /\ \A e \in EnQers : s[e][1] = 0
+                  /\ \A dd \in DeQers \ {d} : s[dd][1] = 0
                   /\ s[d][1] = 0
                   /\ s' = [s EXCEPT ![d] = <<1,"EnqDeq">>]
                   /\ queueBar' = Tail(qBar)
