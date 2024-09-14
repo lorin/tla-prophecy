@@ -1,9 +1,8 @@
+------------------------------ MODULE HWQueue -----------------------
 (***************************************************************************)
-(*                                                                         *)
 (* Queue qresentation type (REP) from Herlihy & Wing 1990.                 *)
 (* Includes prophecy variables.                                            *)
 (***************************************************************************)
------------------------------- MODULE HWQueue -----------------------
 EXTENDS Naturals, Sequences
 
 CONSTANTS Values, Producers, Consumers, Nmax, Busy, Done
