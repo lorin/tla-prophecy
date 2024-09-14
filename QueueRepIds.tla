@@ -43,6 +43,7 @@ define
     Del(f, k) == [x \in DOMAIN f \ {k} |-> f[k]]
     eltsInArray == LET inds == {i \in 1..(q.back-1) : q.items[i] # null}
                     IN {<<q.items[i], ids[i]>> : i \in inds}
+    queueIsFull == q.back > Nmax
 end define;
 
 
@@ -52,9 +53,10 @@ end define;
 procedure Enq(x, id)
 variable i;
 begin
-E1: q.back := q.back+1 || i := q.back; (* Allocate a new slot *)
+E1: await ~queueIsFull; \* Deadlock if the queue fills
+    q.back := q.back+1 || i := q.back; (* Allocate a new slot *)
     before := before \union {<<d, <<x, id>>>> : d \in eltsInArray};
-E2: q.items[i] := x;                   (* Fill it *)
+E2:     q.items[i] := x;                   (* Fill it *)
     ids := Add(ids, i, id);
 E3: return;
 end procedure;
@@ -123,6 +125,7 @@ Add(f, k, v) == [x \in DOMAIN f \union {k} |-> IF x=k THEN v ELSE f[x]]
 Del(f, k) == [x \in DOMAIN f \ {k} |-> f[k]]
 eltsInArray == LET inds == {i \in 1..(q.back-1) : q.items[i] # null}
                 IN {<<q.items[i], ids[i]>> : i \in inds}
+queueIsFull == q.back > Nmax
 
 VARIABLES x, id, i, j, y, range, idd, ide
 
@@ -156,6 +159,7 @@ Init == (* Global variables *)
                                         [] self \in Consumers -> "calldeq"]
 
 E1(self) == /\ pc[self] = "E1"
+            /\ ~queueIsFull
             /\ /\ i' = [i EXCEPT ![self] = q.back]
                /\ q' = [q EXCEPT !.back = q.back+1]
             /\ before' = (before \union {<<d, <<x[self], id[self]>>>> : d \in eltsInArray})
@@ -316,6 +320,8 @@ Spec == Init /\ [][Next]_vars
 Termination == <>(\A self \in ProcSet: pc[self] = "Done")
 
 \* END TRANSLATION
+
+BackNeverExceedsOneMoreThanQueueSize == q.back <= Nmax+1
 
 NonElt == CHOOSE NonElt: NonElt \notin (Values \X Nat)
 
