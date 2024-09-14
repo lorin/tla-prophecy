@@ -1,4 +1,5 @@
 ------------------------------ MODULE HWQueue -----------------------
+\* NOTE: I'm likely going to zap this, see QueueRepIds instead
 (***************************************************************************)
 (* Queue qresentation type (REP) from Herlihy & Wing 1990.                 *)
 (* Includes prophecy variables.                                            *)
