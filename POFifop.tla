@@ -4,7 +4,8 @@
 (*************************************************)
 EXTENDS Sequences
 
-CONSTANTS EnQers, DeQers, Data, Ids
+CONSTANTS EnQers, DeQers, Data, Ids,
+          Done, Busy, NonElt
 
 VARIABLES
     (* external variables *)
@@ -16,9 +17,9 @@ VARIABLES
     (* auxiliary variables *)
     p
 
-Done == CHOOSE Done : Done \notin Data
-Busy == CHOOSE Busy : Busy \notin Data
-NonElt == CHOOSE NonElt : NonElt \notin (Data \X Ids)
+ASSUME Done \notin Data
+ASSUME Busy \notin Data
+ASSUME NonElt \notin (Data \X Ids)
 
 POFifo == INSTANCE POFifo
 

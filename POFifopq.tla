@@ -14,21 +14,23 @@ VARIABLES
     (* internal variables *)
     elts,before,adding,
 
-    (* auxiliary variables *)
-    p,pg,eb,s,queueBar,enqInnerBar
+    (* prophecy variable *)
+    p,
+
+    (* history variables *)
+    pg,eb,s,queueBar,enqInnerBar
 
 Done == CHOOSE Done : Done \notin Data
 Busy == CHOOSE Busy : Busy \notin Data
 NonElt == CHOOSE NonElt : NonElt \notin (Data \X Ids)
 
-POFifo == INSTANCE POFifo
+POFifop == INSTANCE POFifop
 
 
 \* The ultimate mapping to the queue that queueBar needs to eventually converge on
 qBar == pg \o eb
 
-Init == /\ POFifo!Init
-        /\ p = <<>>
+Init == /\ POFifop!Init
         /\ pg = <<>>
         /\ eb = <<>>
         /\ s = [e \in EnQers \cup DeQers |-> <<0,"">>]
@@ -78,8 +80,7 @@ BeginEnq(e) == LET w == adding'[e]
                  IN /\ \A ee \in EnQers \ {e} : s[ee][1] = 0
                     /\ \/ /\ s[e][1] = 0
                           /\ \A d \in DeQers : s[d][1] = 0
-                          /\ POFifo!BeginEnq(e)
-                          /\ \E el \in Data \X Ids : p' = Append(p, el)
+                          /\ POFifop!BeginEnq(e)
                           /\ pg' = IF eb = <<>>
                                    THEN LongestPrefix(p', elts')
                                    ELSE pg
@@ -105,18 +106,18 @@ EndEnq(e) == LET addingP == [adding EXCEPT ![e]=NonElt]
                   beingAddedP == {addingP[ee] : ee \in EnQers} \ {NonElt}
                   w == adding[e]
                   (* There is a queued element which is not in pg, which means it must precede w*)
-                  IsBlocked == \E u \in elts : u \notin beingAddedP /\ u \notin Range(pg) 
+                  IsBlocked == \E u \in elts : u \notin beingAddedP /\ u \notin Range(pg)
               IN
           /\ \A d \in DeQers : s[d][1] = 0
           /\ \A ee \in EnQers \ {e} : s[ee][1] = 0
                 (* value has previously been added to queue, no stuttering step required *)
           /\ \/ /\ s[e][1] = 0
                 /\ enqInnerBar[e] = Done
-                /\ POFifo!EndEnq(e)
+                /\ POFifop!EndEnq(e)
                 /\ UNCHANGED <<p,pg,eb,s,queueBar,enqInnerBar>>
                 (* add a stuttering step which appends a value to eb (and, consequently, queueBar) *)
              \/ /\ s[e][1] = 0
-                /\ ENABLED POFifo!EndEnq(e) 
+                /\ ENABLED POFifop!EndEnq(e)
                 /\ enqInnerBar[e] = Busy
                 /\ w \notin Range(pg) (* w has not previously been identified as a dequeueable value *)
                 /\ IsBlocked
@@ -128,10 +129,10 @@ EndEnq(e) == LET addingP == [adding EXCEPT ![e]=NonElt]
                 (* final step after stuttering *)
              \/ /\ s[e] = <<1,"EndEnq">>
                 /\ s' = [s EXCEPT ![e] = <<0,"EndEnq">>]
-                /\ POFifo!EndEnq(e)
+                /\ POFifop!EndEnq(e)
                 /\ UNCHANGED <<p,pg,eb,queueBar,enqInnerBar>>
 
-BeginDeq(d) ==  /\ POFifo!BeginDeq(d)
+BeginDeq(d) ==  /\ POFifop!BeginDeq(d)
                 /\ \A e \in EnQers : s[e][1] = 0
                 /\ \A dd \in DeQers \ {d} : s[dd][1] = 0
                 /\ UNCHANGED <<p,pg,eb,s,queueBar,enqInnerBar>>
@@ -141,7 +142,7 @@ BeginDeq(d) ==  /\ POFifo!BeginDeq(d)
 (* s adds a single stuttering step before each EndDeq step.                        *)
 (* The value of queueBar equals Tail(qBar) immediately after that stuttering step. *)
 (***********************************************************************************)
-EndDeq(d) ==   \/ /\ ENABLED POFifo!EndDeq(d)
+EndDeq(d) ==   \/ /\ ENABLED POFifop!EndDeq(d)
                   /\ qBar # <<>>
                   /\ \A e \in EnQers : s[e][1] = 0
                   /\ \A dd \in DeQers \ {d} : s[dd][1] = 0
@@ -151,9 +152,7 @@ EndDeq(d) ==   \/ /\ ENABLED POFifo!EndDeq(d)
                   /\ UNCHANGED <<enq,deq,elts,before,adding,p,pg,eb,enqInnerBar>>
                \/ /\ s[d] = <<1,"EnqDeq">>
                   /\ s' = [s EXCEPT ![d]= <<0,"EnqDeq">>]
-                  /\ POFifo!EndDeq(d)
-                  /\ elts' = elts \ {p[1]}
-                  /\ p' = Tail(p)
+                  /\ POFifop!EndDeq(d)
                   /\ pg' = Tail(pg)
                   /\ UNCHANGED <<eb,queueBar,enqInnerBar>>
 
@@ -164,7 +163,7 @@ Next == \/ \E e \in EnQers : \/ BeginEnq(e)
 
 
 v == <<enq,deq,elts,before,adding,p,pg,eb,s,queueBar,enqInnerBar>>
-Spec == Init /\ [][Next]_v 
+Spec == Init /\ [][Next]_v
 
 (********************************************************************************************************************************)
 (* The value of enqInnerBar(e) for an enqueuer e should equal Done except when adding[e] equals the datum that e is enqueueing, *)
@@ -204,6 +203,5 @@ Alias == [
     p |-> p,
     pg |-> pg,
     eb |-> eb,
-    s |-> s,
-    beingAdded |-> POFifo!beingAdded]
+    s |-> s]
 ====
