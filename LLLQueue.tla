@@ -3,15 +3,15 @@ EXTENDS Sequences, Naturals
 
 CONSTANTS Values,Producers,Consumers, MaxNode
 
-AllPossibleNodes == 1..MaxNode 
+AllPossibleNodes == 1..MaxNode
 NoNode == 0
 
 NoVal == CHOOSE v : v \notin Values
 
 Threads == Producers \union Consumers
 
-(*--algorithm LLLQueue 
-variables 
+(*--algorithm LLLQueue
+variables
     nodes = {};
     vals = <<>>;
     next = <<>>;
@@ -80,8 +80,8 @@ end procedure;
 (* Dequeue            *)
 (**********************)
 procedure dequeue()
-variables 
-    empty = TRUE; 
+variables
+    empty = TRUE;
     old_head;
 begin
 D1: while empty do
@@ -137,7 +137,7 @@ end process;
 end algorithm; *)
 \* BEGIN TRANSLATION (chksum(pcal) = "16b3e18b" /\ chksum(tla) = "9f51116e")
 CONSTANT defaultInitValue
-VARIABLES pc, nodes, vals, next, prev, head, tail, lock, op, arg, rval, done, 
+VARIABLES pc, nodes, vals, next, prev, head, tail, lock, op, arg, rval, done,
           stack
 
 (* define statement *)
@@ -147,7 +147,7 @@ Remove(f,k) == [x \in DOMAIN f \ {k} |-> f[x]]
 
 VARIABLES val, new_tail, empty, old_head
 
-vars == << pc, nodes, vals, next, prev, head, tail, lock, op, arg, rval, done, 
+vars == << pc, nodes, vals, next, prev, head, tail, lock, op, arg, rval, done,
            stack, val, new_tail, empty, old_head >>
 
 ProcSet == (Producers) \cup (Consumers)
@@ -178,7 +178,7 @@ E1(self) == /\ pc[self] = "E1"
             /\ lock = {}
             /\ lock' = (lock \union {self})
             /\ pc' = [pc EXCEPT ![self] = "E2"]
-            /\ UNCHANGED << nodes, vals, next, prev, head, tail, op, arg, rval, 
+            /\ UNCHANGED << nodes, vals, next, prev, head, tail, op, arg, rval,
                             done, stack, val, new_tail, empty, old_head >>
 
 E2(self) == /\ pc[self] = "E2"
@@ -189,7 +189,7 @@ E2(self) == /\ pc[self] = "E2"
                  /\ prev' = Add(prev, n, NoNode)
                  /\ new_tail' = [new_tail EXCEPT ![self] = n]
             /\ pc' = [pc EXCEPT ![self] = "E3"]
-            /\ UNCHANGED << head, tail, lock, op, arg, rval, done, stack, val, 
+            /\ UNCHANGED << head, tail, lock, op, arg, rval, done, stack, val,
                             empty, old_head >>
 
 E3(self) == /\ pc[self] = "E3"
@@ -200,13 +200,13 @@ E3(self) == /\ pc[self] = "E3"
                        /\ head' = head
             /\ tail' = new_tail[self]
             /\ pc' = [pc EXCEPT ![self] = "E4"]
-            /\ UNCHANGED << nodes, vals, next, lock, op, arg, rval, done, 
+            /\ UNCHANGED << nodes, vals, next, lock, op, arg, rval, done,
                             stack, val, new_tail, empty, old_head >>
 
 E4(self) == /\ pc[self] = "E4"
             /\ lock' = lock \ {self}
             /\ pc' = [pc EXCEPT ![self] = "E5"]
-            /\ UNCHANGED << nodes, vals, next, prev, head, tail, op, arg, rval, 
+            /\ UNCHANGED << nodes, vals, next, prev, head, tail, op, arg, rval,
                             done, stack, val, new_tail, empty, old_head >>
 
 E5(self) == /\ pc[self] = "E5"
@@ -214,7 +214,7 @@ E5(self) == /\ pc[self] = "E5"
             /\ new_tail' = [new_tail EXCEPT ![self] = Head(stack[self]).new_tail]
             /\ val' = [val EXCEPT ![self] = Head(stack[self]).val]
             /\ stack' = [stack EXCEPT ![self] = Tail(stack[self])]
-            /\ UNCHANGED << nodes, vals, next, prev, head, tail, lock, op, arg, 
+            /\ UNCHANGED << nodes, vals, next, prev, head, tail, lock, op, arg,
                             rval, done, empty, old_head >>
 
 enqueue(self) == E1(self) \/ E2(self) \/ E3(self) \/ E4(self) \/ E5(self)
@@ -223,14 +223,14 @@ D1(self) == /\ pc[self] = "D1"
             /\ IF empty[self]
                   THEN /\ pc' = [pc EXCEPT ![self] = "D2"]
                   ELSE /\ pc' = [pc EXCEPT ![self] = "D5"]
-            /\ UNCHANGED << nodes, vals, next, prev, head, tail, lock, op, arg, 
+            /\ UNCHANGED << nodes, vals, next, prev, head, tail, lock, op, arg,
                             rval, done, stack, val, new_tail, empty, old_head >>
 
 D2(self) == /\ pc[self] = "D2"
             /\ lock = {}
             /\ lock' = (lock \union {self})
             /\ pc' = [pc EXCEPT ![self] = "D3"]
-            /\ UNCHANGED << nodes, vals, next, prev, head, tail, op, arg, rval, 
+            /\ UNCHANGED << nodes, vals, next, prev, head, tail, op, arg, rval,
                             done, stack, val, new_tail, empty, old_head >>
 
 D3(self) == /\ pc[self] = "D3"
@@ -239,13 +239,13 @@ D3(self) == /\ pc[self] = "D3"
                        /\ empty' = empty
                   ELSE /\ empty' = [empty EXCEPT ![self] = FALSE]
                        /\ pc' = [pc EXCEPT ![self] = "D1"]
-            /\ UNCHANGED << nodes, vals, next, prev, head, tail, lock, op, arg, 
+            /\ UNCHANGED << nodes, vals, next, prev, head, tail, lock, op, arg,
                             rval, done, stack, val, new_tail, old_head >>
 
 D4(self) == /\ pc[self] = "D4"
             /\ lock' = lock \ {self}
             /\ pc' = [pc EXCEPT ![self] = "D1"]
-            /\ UNCHANGED << nodes, vals, next, prev, head, tail, op, arg, rval, 
+            /\ UNCHANGED << nodes, vals, next, prev, head, tail, op, arg, rval,
                             done, stack, val, new_tail, empty, old_head >>
 
 D5(self) == /\ pc[self] = "D5"
@@ -258,7 +258,7 @@ D5(self) == /\ pc[self] = "D5"
                   ELSE /\ next' = [next EXCEPT ![head'] = NoNode]
                        /\ tail' = tail
             /\ pc' = [pc EXCEPT ![self] = "D6"]
-            /\ UNCHANGED << nodes, vals, prev, lock, op, arg, done, stack, val, 
+            /\ UNCHANGED << nodes, vals, prev, lock, op, arg, done, stack, val,
                             new_tail, empty >>
 
 D6(self) == /\ pc[self] = "D6"
@@ -267,13 +267,13 @@ D6(self) == /\ pc[self] = "D6"
             /\ next' = Remove(next, old_head[self])
             /\ prev' = Remove(prev, old_head[self])
             /\ pc' = [pc EXCEPT ![self] = "D7"]
-            /\ UNCHANGED << head, tail, lock, op, arg, rval, done, stack, val, 
+            /\ UNCHANGED << head, tail, lock, op, arg, rval, done, stack, val,
                             new_tail, empty, old_head >>
 
 D7(self) == /\ pc[self] = "D7"
             /\ lock' = lock \ {self}
             /\ pc' = [pc EXCEPT ![self] = "D8"]
-            /\ UNCHANGED << nodes, vals, next, prev, head, tail, op, arg, rval, 
+            /\ UNCHANGED << nodes, vals, next, prev, head, tail, op, arg, rval,
                             done, stack, val, new_tail, empty, old_head >>
 
 D8(self) == /\ pc[self] = "D8"
@@ -281,7 +281,7 @@ D8(self) == /\ pc[self] = "D8"
             /\ empty' = [empty EXCEPT ![self] = Head(stack[self]).empty]
             /\ old_head' = [old_head EXCEPT ![self] = Head(stack[self]).old_head]
             /\ stack' = [stack EXCEPT ![self] = Tail(stack[self])]
-            /\ UNCHANGED << nodes, vals, next, prev, head, tail, lock, op, arg, 
+            /\ UNCHANGED << nodes, vals, next, prev, head, tail, lock, op, arg,
                             rval, done, val, new_tail >>
 
 dequeue(self) == D1(self) \/ D2(self) \/ D3(self) \/ D4(self) \/ D5(self)
@@ -301,14 +301,14 @@ enq(self) == /\ pc[self] = "enq"
                      /\ val' = [val EXCEPT ![self] = x]
                   /\ new_tail' = [new_tail EXCEPT ![self] = defaultInitValue]
                   /\ pc' = [pc EXCEPT ![self] = "E1"]
-             /\ UNCHANGED << nodes, vals, next, prev, head, tail, lock, empty, 
+             /\ UNCHANGED << nodes, vals, next, prev, head, tail, lock, empty,
                              old_head >>
 
 enqdone(self) == /\ pc[self] = "enqdone"
                  /\ done' = [done EXCEPT ![self] = TRUE]
                  /\ pc' = [pc EXCEPT ![self] = "enq"]
-                 /\ UNCHANGED << nodes, vals, next, prev, head, tail, lock, op, 
-                                 arg, rval, stack, val, new_tail, empty, 
+                 /\ UNCHANGED << nodes, vals, next, prev, head, tail, lock, op,
+                                 arg, rval, stack, val, new_tail, empty,
                                  old_head >>
 
 p(self) == enq(self) \/ enqdone(self)
@@ -326,14 +326,14 @@ deq(self) == /\ pc[self] = "deq"
              /\ empty' = [empty EXCEPT ![self] = TRUE]
              /\ old_head' = [old_head EXCEPT ![self] = defaultInitValue]
              /\ pc' = [pc EXCEPT ![self] = "D1"]
-             /\ UNCHANGED << nodes, vals, next, prev, head, tail, lock, val, 
+             /\ UNCHANGED << nodes, vals, next, prev, head, tail, lock, val,
                              new_tail >>
 
 deqdone(self) == /\ pc[self] = "deqdone"
                  /\ done' = [done EXCEPT ![self] = TRUE]
                  /\ pc' = [pc EXCEPT ![self] = "deq"]
-                 /\ UNCHANGED << nodes, vals, next, prev, head, tail, lock, op, 
-                                 arg, rval, stack, val, new_tail, empty, 
+                 /\ UNCHANGED << nodes, vals, next, prev, head, tail, lock, op,
+                                 arg, rval, stack, val, new_tail, empty,
                                  old_head >>
 
 c(self) == deq(self) \/ deqdone(self)
@@ -351,7 +351,7 @@ Spec == Init /\ [][Next]_vars
 
 Termination == <>(\A self \in ProcSet: pc[self] = "Done")
 
-\* END TRANSLATION 
+\* END TRANSLATION
 
 TypeOk == /\ nodes \subseteq AllPossibleNodes
           /\ DOMAIN next \subseteq AllPossibleNodes
@@ -370,11 +370,20 @@ NodesInv == /\ vals \in [nodes -> Values]
 CS == LET locked == {"E2","E3","D3","D4","D5","D6","D7"}
       IN \A t1,t2 \in Threads: (pc[t1] \in locked  /\ pc[t2] \in locked) => t1=t2
 
+
+none == NoVal
+
 RECURSIVE Data(_)
 Data(n) == IF n = NoNode THEN <<>> ELSE <<vals[n]>> \o Data(prev[n])
 
 up == [t \in Threads |-> CASE t \in Producers -> pc[t] \in {"enq","E4","E5","enqdone"}
                            [] t \in Consumers -> pc[t] \in {"deq","D6", "D7","D8", "deqdone"}]
+
+LQ == INSTANCE LinearizableQueue WITH
+    up <- up,
+    d <- Data(head)
+
+Refinement == LQ!Spec
 
 Alias == [
     pc |-> pc,
@@ -386,10 +395,4 @@ Alias == [
     d |-> Data(head)
 ]
 
-LQ == INSTANCE LinearizableQueue WITH 
-    none <- NoVal,
-    d <- Data(head)
-
-Refinement == LQ!Spec
-    
 ====

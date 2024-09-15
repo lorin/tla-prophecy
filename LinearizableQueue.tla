@@ -2,7 +2,12 @@
 EXTENDS Sequences
 
 CONSTANTS Values,Threads,none 
-VARIABLES op,arg,rval,up,done,d
+VARIABLES 
+    (* external variables *)
+    op,arg,rval,done,
+    
+    (* internal variables *)
+    up,d
 
 ASSUME none \notin Values
 
