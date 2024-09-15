@@ -6,23 +6,24 @@ VARIABLES op,arg,rval,up,done,d
 
 ASSUME none \notin Values
 
-EnqStart(t,x) == /\ done[t] 
+EnqStart(t) == /\ done[t] 
                  /\ op' = [op EXCEPT ![t] = "enq"]
-                 /\ arg' = [arg EXCEPT ![t] = x]
+                 /\ \E x \in Values: arg' = [arg EXCEPT ![t] = x]
                  /\ rval' = [rval EXCEPT ![t] = none]
                  /\ up' = [up EXCEPT ![t] = FALSE]
                  /\ done' = [done EXCEPT ![t] = FALSE]
                  /\ UNCHANGED d
 
-EnqTakesEffect(t,x) ==  /\ op[t]="enq"
-                        /\ arg[t]=x
-                        /\ ~done[t] 
-                        /\ ~up[t]
-                        /\ up' = [up EXCEPT ![t] = TRUE]
-                        /\ d' = Append(d, x)
-                        /\ UNCHANGED <<op,arg,rval,done>>
+EnqTakesEffect(t) ==  /\ op[t] = "enq"
+                      /\ ~done[t] 
+                      /\ ~up[t]
+                      /\ \E x \in Values:
+                          /\ arg[t] = x
+                          /\ d' = Append(d, x)
+                      /\ up' = [up EXCEPT ![t] = TRUE]
+                      /\ UNCHANGED <<op,arg,rval,done>>
 
-EnqEnd(t) == /\ op[t]="enq"
+EnqEnd(t) == /\ op[t] = "enq"
              /\ up[t]
              /\ ~done[t]
              /\ done' = [done EXCEPT ![t] = TRUE]
@@ -36,19 +37,19 @@ DeqStart(t) == /\ done[t]
                /\ done' = [done EXCEPT ![t] = FALSE]
                /\ UNCHANGED d
 
-DeqTakesEffect(t,x) == /\ op[t] = "deq"
+DeqTakesEffect(t) == /\ op[t] = "deq"
                        /\ d # <<>>
-                       /\ x=Head(d)
                        /\ ~up[t]
                        /\ ~done[t]
-                       /\ rval' = [rval EXCEPT ![t]=x]
+                       /\ \E x \in Values: 
+                            /\ x = Head(d)
+                            /\ rval' = [rval EXCEPT ![t]=x]
                        /\ up' = [up EXCEPT ![t] = TRUE]
                        /\ d' = Tail(d)
                        /\ UNCHANGED <<op,arg,done>>
 
-
-DeqEnd(t,x) == /\ op[t] = "deq"
-               /\ rval[t]=x
+DeqEnd(t) == /\ op[t] = "deq"
+               /\ \E x \in Values: rval[t] = x
                /\ up[t]
                /\ ~done[t]
                /\ done' = [done EXCEPT ![t] = TRUE]
@@ -61,13 +62,13 @@ Init == /\ op = [t \in Threads |-> ""]
         /\ done = [t \in Threads |-> TRUE]
         /\ d = <<>>
 
-Next == \E t \in Threads, x \in Values:
-        \/ EnqStart(t,x)
-        \/ EnqTakesEffect(t,x)
+Next == \E t \in Threads:
+        \/ EnqStart(t)
+        \/ EnqTakesEffect(t)
         \/ EnqEnd(t)
         \/ DeqStart(t)
-        \/ DeqTakesEffect(t,x)
-        \/ DeqEnd(t,x)
+        \/ DeqTakesEffect(t)
+        \/ DeqEnd(t)
 
 Spec == Init /\ [][Next]_<<op,arg,rval,up,done,d>>
 ====
