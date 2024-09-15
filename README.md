@@ -22,9 +22,11 @@ Lamport and Abadi later proposed the idea of *prophecy variables*  as a
 technique to resolve the problems in refinement mapping revealed by Herlihy and Wing.
 Prophecy variables are described in:
 
-* [A science of concurrent programs](https://lamport.azurewebsites.net/tla/science.pdf) by Lamport
+* [A science of concurrent programs][science] by Lamport
 * [Prophecy Made Simple][simple] by Lamport and Mertz
 * [Auxiliary Variables in TLA+][aux] by Lamport and Mertz
+
+[science]: https://lamport.azurewebsites.net/tla/science.pdf
 
 As it happens, Lamport and Mertz note that prophecy variables aren't actually
 necessary for defining a refinement mapping for the example provided by Herlihy
@@ -177,3 +179,23 @@ end procedure;
 ```
 
 The full spec can be found in [QueueRep.tla](QueueRep.tla)
+
+## Refinement mappings
+
+In Chapter 6 of [A science of concurrent programs][science], Lamport describes a
+linearizable queue specification (IFifo) and a more general specification
+(IPOFifo) that captures the behavior of the Herlihy & Wing queue, but at a
+higher level of abstraction than the pseudocode. Lamport also sketches how to
+augment POFifo with history and prophecy variables in order to define a refinement mapping from IPOFifo to IFifo.
+
+This repo contains multiple TLA+ specs, including:
+
+* [Fifo.tla](Fifo.tla) - Lamport's IFifo spec from [A science of concurrent programs][science]
+* [POFifo.tla](POFifo.tla) - Lamport's IPOFifo spec [A science of concurrent programs][science]
+* [POFifop.tla](POFifop.tla) - Lamports' IPOFifo spec augmented with a prophecy variable, as sketched in [A science of concurrent programs][science]
+* [POFifopq.tla](POFifopq.tla) - Lamports' IPOFifo spec augmented with a prophecy variable and history variables to support a refinement mapping to Fifo.tla, as sketched in [A science of concurrent programs][science] . Also contains the refinement maping.
+* [QueueRep.tla](QueueRep.tla) - a PlusCal model of the Herlihy & Wing queue, which is closer in fidelity than POFifo.
+* [QueueRepIds.tla](QueueRepIds.tla) - the QueueRep model augmented with history variables to support a refinement mapping to POFifo, as well as the refinement mapping.
+
+
+
