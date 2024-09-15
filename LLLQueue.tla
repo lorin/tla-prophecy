@@ -60,24 +60,19 @@ end macro;
 procedure enqueue(val)
 variable new_tail;
 begin
-E1:
-    acquire(lock);
-E2: 
-    with n \in AllPossibleNodes \ nodes do
+E1: acquire(lock);
+E2: with n \in AllPossibleNodes \ nodes do
         Node(n, val, nxt);
         new_tail := n;
     end with;
-E3:
-    if IsEmpty then
+E3: if IsEmpty then
         head := new_tail;
     else
         prev[tail] := new_tail;
     end if;
     tail := new_tail;
-E4:
-    release(lock);
-E5:
-    return;
+E4: release(lock);
+E5: return;
 end procedure;
 
 
@@ -89,20 +84,15 @@ variables
     empty = TRUE; 
     old_head;
 begin
-D1:
-    while empty do
-D2:
-        acquire(lock);
-D3:
-        if IsEmpty then
-D4:
-            release(lock);
-        else
-            empty := FALSE;
-        end if;
+D1: while empty do
+D2:  acquire(lock);
+D3:  if IsEmpty then
+D4:     release(lock);
+     else
+        empty := FALSE;
+     end if;
     end while;
-D5:
-    old_head := head;
+D5: old_head := head;
     rval[self] := vals[old_head];
     head := prev[head];
     if head = NoNode then
@@ -110,12 +100,9 @@ D5:
     else
         next[head] := NoNode;
     end if;
-D6:
-    DeleteNode(old_head);
-D7:
-    release(lock);
-D8:
-    return;
+D6: DeleteNode(old_head);
+D7: release(lock);
+D8: return;
 end procedure;
 
 process p \in Producers
@@ -126,12 +113,12 @@ enq: \* choose a value
         arg[self] := x;
         rval[self] := NoVal;
         done[self] := FALSE;
+
         call enqueue(x);
     end with;
 enqdone:
     done[self] := TRUE;
     goto enq;
-
 end process;
 
 
@@ -147,7 +134,6 @@ deqdone:
     done[self] := TRUE;
     goto deq;
 end process;
-
 
 end algorithm; *)
 \* BEGIN TRANSLATION (chksum(pcal) = "b7a99ad4" /\ chksum(tla) = "59be2057")
