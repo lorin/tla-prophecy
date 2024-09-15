@@ -349,6 +349,18 @@ POFifo == INSTANCE POFifo WITH
 
 POFifoSpec == POFifo!Spec
 
+Alias == [
+    enq |-> enq,
+    deq |-> deq,
+    elts |-> elts,
+    before |-> before,
+    adding |-> adding,
+
+    q |-> q,
+    ids |-> ids,
+    nextId |-> nextId
+]
+
 =============================================================================
 \* Modification History
 \* Last modified Thu Nov 08 17:28:50 PST 2018 by lhochstein
