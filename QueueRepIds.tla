@@ -344,6 +344,7 @@ deq == [cn \in Consumers |-> CASE pc[cn] \in {"D8", "returndeq"} -> rval[cn]
                                [] pc[cn]="D6" /\ y[cn] = null -> Busy
                                [] pc[cn]="D7" -> y[cn]
                                [] pc[cn] \in {"D1", "D2", "D3", "D4", "D5", "D9"} -> Busy
+                               [] pc[cn]="calldeq" /\ rval[cn] # null -> rval[cn]
                                [] OTHER -> CHOOSE v \in Values : TRUE]
 
 adding == [pd \in Producers |-> IF pc[pd]="E2"
@@ -371,6 +372,8 @@ Alias == [
     j |-> j,
     x |-> x,
     y |-> y,
+
+    rval |-> rval,
 
     q |-> q,
     ids |-> ids,
