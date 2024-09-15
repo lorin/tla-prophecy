@@ -34,7 +34,7 @@ end define;
 macro Node(n, vl, nxt) begin
     nodes := nodes \union {n};
     vals := Add(vals, n, vl);
-    next := Add(next, n, tail);
+    next := Add(next, n, nxt);
     prev := Add(prev, n, NoNode);
 end macro;
 
@@ -62,7 +62,7 @@ variable new_tail;
 begin
 E1: acquire(lock);
 E2: with n \in AllPossibleNodes \ nodes do
-        Node(n, val, nxt);
+        Node(n, val, tail);
         new_tail := n;
     end with;
 E3: if IsEmpty then
