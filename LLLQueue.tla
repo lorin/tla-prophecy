@@ -105,8 +105,7 @@ D7: release(lock);
 D8: return;
 end procedure;
 
-process p \in Producers
-begin
+process p \in Producers begin
 enq: \* choose a value
     with x \in Values do
         op[self] := "enq";
