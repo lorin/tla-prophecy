@@ -6,7 +6,7 @@
 (***************************************************************************)
 EXTENDS Naturals, Sequences
 
-CONSTANTS Values, Producers, Consumers, Nmax, Busy, Done
+CONSTANTS Values, Producers, Consumers, Nmax, Busy, Done, MaxId
 
 null == CHOOSE x : x \notin Values
 
@@ -56,7 +56,7 @@ begin
 E1: await ~queueIsFull; \* Deadlock if the queue fills
     q.back := q.back+1 || i := q.back; (* Allocate a new slot *)
     before := before \union {<<d, <<x, id>>>> : d \in eltsInArray};
-E2:     q.items[i] := x;                   (* Fill it *)
+E2: q.items[i] := x;                   (* Fill it *)
     ids := Add(ids, i, id);
 E3: return;
 end procedure;
@@ -89,6 +89,7 @@ process prod \in Producers
 variable ide;
 begin
 callenq:
+    await nextId < MaxId;
     with item \in Values do
         op[self] := "enq";
         arg[self] := item;
@@ -325,7 +326,9 @@ BackNeverExceedsOneMoreThanQueueSize == q.back <= Nmax+1
 
 NonElt == CHOOSE NonElt: NonElt \notin (Values \X Nat)
 
-elts == LET eltsNotYetInArray == {<<x[e], id[e]>> : e \in {"E1", "E2"}}
+elts == LET aboutToWriteStates == {"E1", "E2"}
+            producersAboutToWrite == {e \in Producers : pc[e] \in aboutToWriteStates}
+            eltsNotYetInArray == {<<x[e], id[e]>> : e \in producersAboutToWrite}
         IN eltsInArray \union eltsNotYetInArray 
 
 enq == [pd \in Producers |-> IF pc[pd] \in {"E1", "E2", "E2"} THEN x[pd] ELSE Done]
@@ -342,7 +345,9 @@ POFifo == INSTANCE POFifo WITH
     EnQers <- Producers,
     DeQers <- Consumers,
     Data <- Values,
-    Ids <- Nat
+    Ids <- 1..MaxId
+
+POFifoSpec == POFifo!Spec
 
 =============================================================================
 \* Modification History
