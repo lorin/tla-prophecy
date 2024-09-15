@@ -1,6 +1,10 @@
 ---- MODULE POFifop ----
 (*************************************************)
+(*                                               *)
 (* From Lamport's Science of Concurrent Programs *)
+(*                                               *)
+(* Augments POFifo with a prophecy variable.     *)
+(*                                               *)
 (*************************************************)
 EXTENDS Sequences
 
@@ -14,7 +18,7 @@ VARIABLES
     (* internal variables *)
     elts,before,adding,
 
-    (* auxiliary variables *)
+    (* prophecy variable *)
     p
 
 ASSUME Done \notin Data

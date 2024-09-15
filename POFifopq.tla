@@ -1,7 +1,11 @@
 ---- MODULE POFifopq ----
-(*************************************************)
-(* From Lamport's Science of Concurrent Programs *)
-(*************************************************)
+(**************************************************************************)
+(*                                                                        *)
+(* From Lamport's Science of Concurrent Programs                          *)
+(*                                                                        *)
+(* Augments POFifop with history variables to support refinement mapping. *)
+(*                                                                        *)
+(**************************************************************************)
 
 EXTENDS Sequences, Naturals, TLC
 
