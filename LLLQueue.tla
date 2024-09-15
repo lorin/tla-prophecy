@@ -136,7 +136,7 @@ deqdone:
 end process;
 
 end algorithm; *)
-\* BEGIN TRANSLATION (chksum(pcal) = "b7a99ad4" /\ chksum(tla) = "59be2057")
+\* BEGIN TRANSLATION (chksum(pcal) = "16b3e18b" /\ chksum(tla) = "9f51116e")
 CONSTANT defaultInitValue
 VARIABLES pc, nodes, vals, next, prev, head, tail, lock, op, arg, rval, done, 
           stack
@@ -177,7 +177,7 @@ Init == (* Global variables *)
 
 E1(self) == /\ pc[self] = "E1"
             /\ lock = {}
-            /\ lock' = {self}
+            /\ lock' = (lock \union {self})
             /\ pc' = [pc EXCEPT ![self] = "E2"]
             /\ UNCHANGED << nodes, vals, next, prev, head, tail, op, arg, rval, 
                             done, stack, val, new_tail, empty, old_head >>
@@ -205,7 +205,7 @@ E3(self) == /\ pc[self] = "E3"
                             stack, val, new_tail, empty, old_head >>
 
 E4(self) == /\ pc[self] = "E4"
-            /\ lock' = {}
+            /\ lock' = lock \ {self}
             /\ pc' = [pc EXCEPT ![self] = "E5"]
             /\ UNCHANGED << nodes, vals, next, prev, head, tail, op, arg, rval, 
                             done, stack, val, new_tail, empty, old_head >>
@@ -229,7 +229,7 @@ D1(self) == /\ pc[self] = "D1"
 
 D2(self) == /\ pc[self] = "D2"
             /\ lock = {}
-            /\ lock' = {self}
+            /\ lock' = (lock \union {self})
             /\ pc' = [pc EXCEPT ![self] = "D3"]
             /\ UNCHANGED << nodes, vals, next, prev, head, tail, op, arg, rval, 
                             done, stack, val, new_tail, empty, old_head >>
@@ -244,7 +244,7 @@ D3(self) == /\ pc[self] = "D3"
                             rval, done, stack, val, new_tail, old_head >>
 
 D4(self) == /\ pc[self] = "D4"
-            /\ lock' = {}
+            /\ lock' = lock \ {self}
             /\ pc' = [pc EXCEPT ![self] = "D1"]
             /\ UNCHANGED << nodes, vals, next, prev, head, tail, op, arg, rval, 
                             done, stack, val, new_tail, empty, old_head >>
@@ -272,7 +272,7 @@ D6(self) == /\ pc[self] = "D6"
                             new_tail, empty, old_head >>
 
 D7(self) == /\ pc[self] = "D7"
-            /\ lock' = {}
+            /\ lock' = lock \ {self}
             /\ pc' = [pc EXCEPT ![self] = "D8"]
             /\ UNCHANGED << nodes, vals, next, prev, head, tail, op, arg, rval, 
                             done, stack, val, new_tail, empty, old_head >>
