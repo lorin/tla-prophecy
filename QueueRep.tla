@@ -60,12 +60,12 @@ end procedure;
 process prod \in Producers
 begin
 enq:
-    with itm \in Values do
+    with item \in Values do
         op[self] := "enq";
-        arg[self] := itm;
+        arg[self] := item;
         rval[self] := null;
         done[self] := FALSE;
-        call Enq(itm);
+        call Enq(item);
     end with;
 enqdone:
     done[self] := TRUE;
@@ -185,9 +185,9 @@ Deq(self) == D1(self) \/ D2(self) \/ D3(self) \/ D4(self) \/ D5(self)
                 \/ D6(self) \/ D7(self) \/ D8(self) \/ D9(self)
 
 enq(self) == /\ pc[self] = "enq"
-             /\ \E itm \in Values:
+             /\ \E item \in Values:
                   /\ op' = [op EXCEPT ![self] = "enq"]
-                  /\ arg' = [arg EXCEPT ![self] = itm]
+                  /\ arg' = [arg EXCEPT ![self] = item]
                   /\ rval' = [rval EXCEPT ![self] = null]
                   /\ done' = [done EXCEPT ![self] = FALSE]
                   /\ /\ stack' = [stack EXCEPT ![self] = << [ procedure |->  "Enq",
@@ -195,7 +195,7 @@ enq(self) == /\ pc[self] = "enq"
                                                               i         |->  i[self],
                                                               x         |->  x[self] ] >>
                                                           \o stack[self]]
-                     /\ x' = [x EXCEPT ![self] = itm]
+                     /\ x' = [x EXCEPT ![self] = item]
                   /\ i' = [i EXCEPT ![self] = defaultInitValue]
                   /\ pc' = [pc EXCEPT ![self] = "E1"]
              /\ UNCHANGED << q, j, y, range >>
