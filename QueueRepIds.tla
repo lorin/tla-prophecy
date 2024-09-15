@@ -40,7 +40,7 @@ variables
 
 define
     Add(f, k, v) == [x \in DOMAIN f \union {k} |-> IF x=k THEN v ELSE f[x]]
-    Del(f, k) == [x \in DOMAIN f \ {k} |-> f[k]]
+    Del(f, k) == [x \in DOMAIN f \ {k} |-> f[x]]
     eltsInArray == LET inds == {i \in 1..(q.back-1) : q.items[i] # null}
                     IN {<<q.items[i], ids[i]>> : i \in inds}
     queueIsFull == q.back > Nmax
@@ -72,11 +72,15 @@ D2:   range := q.back-1;
 D3:   j := 1;
 D4:   while(j<=range) do
 D5:   q.items[j] := null || y := q.items[j];
+
+      if(y /= null) then (* this is just for the refinement mapping *)
+         idd := ids[j];
+         before := before \ {r \in before : LET d == <<y, idd>> IN r[1]=d \/ r[2]=d};
+         ids := Del(ids, j);
+      end if;
+
 D6:   if(y /= null) then
 D7:       rval[self] := y;
-          idd := ids[j];
-          ids := Del(ids, j);
-          before := before \ {r \in before : LET d == <<y, idd>> IN r[1]=d \/ r[2]=d};
 D8:       return;
         end if;
 D9:     j:= j+1;
@@ -123,14 +127,14 @@ VARIABLES pc, op, arg, rval, done, q, ids, nextId, before, stack
 
 (* define statement *)
 Add(f, k, v) == [x \in DOMAIN f \union {k} |-> IF x=k THEN v ELSE f[x]]
-Del(f, k) == [x \in DOMAIN f \ {k} |-> f[k]]
+Del(f, k) == [x \in DOMAIN f \ {k} |-> f[x]]
 eltsInArray == LET inds == {i \in 1..(q.back-1) : q.items[i] # null}
                 IN {<<q.items[i], ids[i]>> : i \in inds}
 queueIsFull == q.back > Nmax
 
 VARIABLES x, id, i, j, y, range, idd, ide
 
-vars == << pc, op, arg, rval, done, q, ids, nextId, before, stack, x, id, i,
+vars == << pc, op, arg, rval, done, q, ids, nextId, before, stack, x, id, i, 
            j, y, range, idd, ide >>
 
 ProcSet == (Producers) \cup (Consumers)
@@ -165,14 +169,14 @@ E1(self) == /\ pc[self] = "E1"
                /\ q' = [q EXCEPT !.back = q.back+1]
             /\ before' = (before \union {<<d, <<x[self], id[self]>>>> : d \in eltsInArray})
             /\ pc' = [pc EXCEPT ![self] = "E2"]
-            /\ UNCHANGED << op, arg, rval, done, ids, nextId, stack, x, id, j,
+            /\ UNCHANGED << op, arg, rval, done, ids, nextId, stack, x, id, j, 
                             y, range, idd, ide >>
 
 E2(self) == /\ pc[self] = "E2"
             /\ q' = [q EXCEPT !.items[i[self]] = x[self]]
             /\ ids' = Add(ids, i[self], id[self])
             /\ pc' = [pc EXCEPT ![self] = "E3"]
-            /\ UNCHANGED << op, arg, rval, done, nextId, before, stack, x, id,
+            /\ UNCHANGED << op, arg, rval, done, nextId, before, stack, x, id, 
                             i, j, y, range, idd, ide >>
 
 E3(self) == /\ pc[self] = "E3"
@@ -181,57 +185,60 @@ E3(self) == /\ pc[self] = "E3"
             /\ x' = [x EXCEPT ![self] = Head(stack[self]).x]
             /\ id' = [id EXCEPT ![self] = Head(stack[self]).id]
             /\ stack' = [stack EXCEPT ![self] = Tail(stack[self])]
-            /\ UNCHANGED << op, arg, rval, done, q, ids, nextId, before, j, y,
+            /\ UNCHANGED << op, arg, rval, done, q, ids, nextId, before, j, y, 
                             range, idd, ide >>
 
 Enq(self) == E1(self) \/ E2(self) \/ E3(self)
 
 D1(self) == /\ pc[self] = "D1"
             /\ pc' = [pc EXCEPT ![self] = "D2"]
-            /\ UNCHANGED << op, arg, rval, done, q, ids, nextId, before, stack,
+            /\ UNCHANGED << op, arg, rval, done, q, ids, nextId, before, stack, 
                             x, id, i, j, y, range, idd, ide >>
 
 D2(self) == /\ pc[self] = "D2"
             /\ range' = [range EXCEPT ![self] = q.back-1]
             /\ pc' = [pc EXCEPT ![self] = "D3"]
-            /\ UNCHANGED << op, arg, rval, done, q, ids, nextId, before, stack,
+            /\ UNCHANGED << op, arg, rval, done, q, ids, nextId, before, stack, 
                             x, id, i, j, y, idd, ide >>
 
 D3(self) == /\ pc[self] = "D3"
             /\ j' = [j EXCEPT ![self] = 1]
             /\ pc' = [pc EXCEPT ![self] = "D4"]
-            /\ UNCHANGED << op, arg, rval, done, q, ids, nextId, before, stack,
+            /\ UNCHANGED << op, arg, rval, done, q, ids, nextId, before, stack, 
                             x, id, i, y, range, idd, ide >>
 
 D4(self) == /\ pc[self] = "D4"
             /\ IF (j[self]<=range[self])
                   THEN /\ pc' = [pc EXCEPT ![self] = "D5"]
                   ELSE /\ pc' = [pc EXCEPT ![self] = "D1"]
-            /\ UNCHANGED << op, arg, rval, done, q, ids, nextId, before, stack,
+            /\ UNCHANGED << op, arg, rval, done, q, ids, nextId, before, stack, 
                             x, id, i, j, y, range, idd, ide >>
 
 D5(self) == /\ pc[self] = "D5"
             /\ /\ q' = [q EXCEPT !.items[j[self]] = null]
                /\ y' = [y EXCEPT ![self] = q.items[j[self]]]
+            /\ IF (y'[self] /= null)
+                  THEN /\ idd' = [idd EXCEPT ![self] = ids[j[self]]]
+                       /\ before' = before \ {r \in before : LET d == <<y'[self], idd'[self]>> IN r[1]=d \/ r[2]=d}
+                       /\ ids' = Del(ids, j[self])
+                  ELSE /\ TRUE
+                       /\ UNCHANGED << ids, before, idd >>
             /\ pc' = [pc EXCEPT ![self] = "D6"]
-            /\ UNCHANGED << op, arg, rval, done, ids, nextId, before, stack, x,
-                            id, i, j, range, idd, ide >>
+            /\ UNCHANGED << op, arg, rval, done, nextId, stack, x, id, i, j, 
+                            range, ide >>
 
 D6(self) == /\ pc[self] = "D6"
             /\ IF (y[self] /= null)
                   THEN /\ pc' = [pc EXCEPT ![self] = "D7"]
                   ELSE /\ pc' = [pc EXCEPT ![self] = "D9"]
-            /\ UNCHANGED << op, arg, rval, done, q, ids, nextId, before, stack,
+            /\ UNCHANGED << op, arg, rval, done, q, ids, nextId, before, stack, 
                             x, id, i, j, y, range, idd, ide >>
 
 D7(self) == /\ pc[self] = "D7"
             /\ rval' = [rval EXCEPT ![self] = y[self]]
-            /\ idd' = [idd EXCEPT ![self] = ids[j[self]]]
-            /\ ids' = Del(ids, j[self])
-            /\ before' = before \ {r \in before : LET d == <<y[self], idd'[self]>> IN r[1]=d \/ r[2]=d}
             /\ pc' = [pc EXCEPT ![self] = "D8"]
-            /\ UNCHANGED << op, arg, done, q, nextId, stack, x, id, i, j, y,
-                            range, ide >>
+            /\ UNCHANGED << op, arg, done, q, ids, nextId, before, stack, x, 
+                            id, i, j, y, range, idd, ide >>
 
 D8(self) == /\ pc[self] = "D8"
             /\ pc' = [pc EXCEPT ![self] = Head(stack[self]).pc]
@@ -240,13 +247,13 @@ D8(self) == /\ pc[self] = "D8"
             /\ range' = [range EXCEPT ![self] = Head(stack[self]).range]
             /\ idd' = [idd EXCEPT ![self] = Head(stack[self]).idd]
             /\ stack' = [stack EXCEPT ![self] = Tail(stack[self])]
-            /\ UNCHANGED << op, arg, rval, done, q, ids, nextId, before, x, id,
+            /\ UNCHANGED << op, arg, rval, done, q, ids, nextId, before, x, id, 
                             i, ide >>
 
 D9(self) == /\ pc[self] = "D9"
             /\ j' = [j EXCEPT ![self] = j[self]+1]
             /\ pc' = [pc EXCEPT ![self] = "D4"]
-            /\ UNCHANGED << op, arg, rval, done, q, ids, nextId, before, stack,
+            /\ UNCHANGED << op, arg, rval, done, q, ids, nextId, before, stack, 
                             x, id, i, y, range, idd, ide >>
 
 Deq(self) == D1(self) \/ D2(self) \/ D3(self) \/ D4(self) \/ D5(self)
@@ -276,7 +283,7 @@ callenq(self) == /\ pc[self] = "callenq"
 returnenq(self) == /\ pc[self] = "returnenq"
                    /\ done' = [done EXCEPT ![self] = TRUE]
                    /\ pc' = [pc EXCEPT ![self] = "callenq"]
-                   /\ UNCHANGED << op, arg, rval, q, ids, nextId, before,
+                   /\ UNCHANGED << op, arg, rval, q, ids, nextId, before, 
                                    stack, x, id, i, j, y, range, idd, ide >>
 
 prod(self) == callenq(self) \/ returnenq(self)
@@ -303,7 +310,7 @@ calldeq(self) == /\ pc[self] = "calldeq"
 returndeq(self) == /\ pc[self] = "returndeq"
                    /\ done' = [done EXCEPT ![self] = TRUE]
                    /\ pc' = [pc EXCEPT ![self] = "calldeq"]
-                   /\ UNCHANGED << op, arg, rval, q, ids, nextId, before,
+                   /\ UNCHANGED << op, arg, rval, q, ids, nextId, before, 
                                    stack, x, id, i, j, y, range, idd, ide >>
 
 con(self) == calldeq(self) \/ returndeq(self)
@@ -327,17 +334,19 @@ BackNeverExceedsOneMoreThanQueueSize == q.back <= Nmax+1
 
 NonElt == CHOOSE NonElt: NonElt \notin (Values \X Nat)
 
-elts == LET aboutToWriteStates == {"E2"}
-            producersAboutToWrite == {e \in Producers : pc[e] \in aboutToWriteStates}
+elts == LET producersAboutToWrite == {e \in Producers : pc[e]="E2"}
             eltsNotYetInArray == {<<x[e], id[e]>> : e \in producersAboutToWrite}
         IN eltsInArray \union eltsNotYetInArray
 
 enq == [pd \in Producers |-> IF pc[pd] \in {"E2"} THEN x[pd] ELSE Done]
 deq == [cn \in Consumers |-> CASE pc[cn] \in {"D8", "returndeq"} -> rval[cn]
-                               [] pc[cn] \in {"D1", "D2", "D3", "D4", "D5", "D6", "D7", "D9"} -> Busy
+                               [] pc[cn]="D6" /\ y[cn] # null -> y[cn]
+                               [] pc[cn]="D6" /\ y[cn] = null -> Busy
+                               [] pc[cn]="D7" -> y[cn]
+                               [] pc[cn] \in {"D1", "D2", "D3", "D4", "D5", "D9"} -> Busy
                                [] OTHER -> CHOOSE v \in Values : TRUE]
 
-adding == [pd \in Producers |-> IF pc[pd] \in {"E2"}
+adding == [pd \in Producers |-> IF pc[pd]="E2"
                                 THEN <<x[pd], id[pd]>>
                                 ELSE NonElt ]
 
@@ -357,6 +366,11 @@ Alias == [
     elts |-> elts,
     before |-> before,
     adding |-> adding,
+
+    i |-> i,
+    j |-> j,
+    x |-> x,
+    y |-> y,
 
     q |-> q,
     ids |-> ids,
