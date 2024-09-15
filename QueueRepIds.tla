@@ -31,7 +31,7 @@ variables
      * support the refinement mapping.
      *)
     ids = <<>>; \* function that maps index to id
-    nextId = 0;
+    nextId = 1;
 
     (***
      * Set of data items where (D1,D2) is an element if D1 was added to q.items before D2 incremented q.back
@@ -142,7 +142,7 @@ Init == (* Global variables *)
         /\ done = [t \in ProcSet |-> TRUE]
         /\ q = [back|->1, items|->[n \in 1..Nmax|->null]]
         /\ ids = <<>>
-        /\ nextId = 0
+        /\ nextId = 1
         /\ before = {}
         (* Procedure Enq *)
         /\ x = [ self \in ProcSet |-> defaultInitValue]
@@ -253,6 +253,7 @@ Deq(self) == D1(self) \/ D2(self) \/ D3(self) \/ D4(self) \/ D5(self)
                 \/ D6(self) \/ D7(self) \/ D8(self) \/ D9(self)
 
 callenq(self) == /\ pc[self] = "callenq"
+                 /\ nextId < MaxId
                  /\ \E item \in Values:
                       /\ op' = [op EXCEPT ![self] = "enq"]
                       /\ arg' = [arg EXCEPT ![self] = item]
@@ -337,7 +338,7 @@ deq == [cn \in Consumers |-> CASE pc[cn] \in {"D8", "returndeq"} -> rval[cn]
                                [] OTHER -> CHOOSE v \in Values : TRUE]
 
 adding == [pd \in Producers |-> 
-            CASE pc[pd] \in {"E1","E2","E3"} -> <<x[pd], id[pd]>>
+            CASE pc[pd] \in {"E1","E2"} -> <<x[pd], id[pd]>>
               [] pc[pd] = "returnenq" -> <<arg[pd], ide[pd]>>
               [] OTHER -> NonElt ]
 
@@ -350,6 +351,8 @@ POFifo == INSTANCE POFifo WITH
 POFifoSpec == POFifo!Spec
 
 Alias == [
+    pc |-> pc,
+    
     enq |-> enq,
     deq |-> deq,
     elts |-> elts,
@@ -358,7 +361,10 @@ Alias == [
 
     q |-> q,
     ids |-> ids,
-    nextId |-> nextId
+    nextId |-> nextId,
+    Data |-> Values,
+    Ids |-> 1..MaxId,
+    beingAdded |-> {adding[e] : e \in Producers} \ {NonElt}
 ]
 
 =============================================================================

@@ -28,9 +28,6 @@ Init == /\ enq = [e \in EnQers |-> Done]
         /\ before = {}
         /\ adding = [e \in EnQers |-> NonElt]
 
-Range(seq) == {seq[i]: i \in DOMAIN seq}
-IndexOf(seq, val) == CHOOSE i \in DOMAIN seq : seq[i]=val
-
 BeginEnq(e) == /\ enq[e] = Done
                /\ \E D \in Data : \E id \in {i \in Ids : <<D,i>> \notin (elts \union beingAdded)} :
                     LET w == <<D,id>>
