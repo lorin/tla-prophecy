@@ -177,4 +177,3 @@ end procedure;
 ```
 
 The full spec can be found in [QueueRep.tla](QueueRep.tla)
-

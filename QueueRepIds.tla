@@ -2,7 +2,8 @@
 (***************************************************************************)
 (*                                                                         *)
 (* Queue representation type (REP) from Herlihy & Wing 1990.               *)
-(* Includes Ids to support refinemnet mapping.                             *)
+(* Includes Ids to support refinement mapping.                             *)
+(*                                                                         *)
 (***************************************************************************)
 EXTENDS Naturals, Sequences
 
