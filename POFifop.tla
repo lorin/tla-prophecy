@@ -30,8 +30,10 @@ POFifo == INSTANCE POFifo
 Init == /\ POFifo!Init 
         /\ p = <<>>
 
+Values == Data \X Ids
+
 BeginEnq(e) == /\ POFifo!BeginEnq(e)
-               /\ \E el \in Data \X Ids : p' = Append(p, el)
+               /\ \E el \in Values : p' = Append(p, el)
 
 EndEnq(e) == /\ POFifo!EndEnq(e)
              /\ UNCHANGED p
