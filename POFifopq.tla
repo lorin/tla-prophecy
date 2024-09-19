@@ -70,8 +70,8 @@ PgInv(pgp, items) == /\ Q1(pgp, items)
 LongestPrefix(pp, items) ==
     IF \E n \in DOMAIN pp : PgInv(Prefix(pp, n), items)
     THEN LET n == CHOOSE n \in DOMAIN pp : /\ PgInv(Prefix(pp, n), items)
-                                            /\ \/ n = Len(pp)
-                                               \/ ~PgInv(Prefix(pp, n+1), items)
+                                           /\ \/ n = Len(pp)
+                                              \/ ~PgInv(Prefix(pp, n+1), items)
           IN Prefix(pp, n)
     ELSE <<>>
 
@@ -80,11 +80,11 @@ LongestPrefix(pp, items) ==
 (* Len(pg') − Len(pg) stuttering steps. While there are k more of those stuttering steps left to  *)
 (* be executed, queueBar equals the sequence obtained by removing the last k elements of qBar.    *)
 (**************************************************************************************************)
-BeginEnq(e) == LET w == adding'[e]
+BeginPOEnq(e) == LET w == adding'[e]
                  IN /\ \A ee \in EnQers \ {e} : s[ee][1] = 0
                     /\ \/ /\ s[e][1] = 0
                           /\ \A d \in DeQers : s[d][1] = 0
-                          /\ POFifop!BeginEnq(e)
+                          /\ POFifop!BeginPOEnq(e)
                           /\ pg' = IF eb = <<>>
                                    THEN LongestPrefix(p', elts')
                                    ELSE pg
@@ -106,7 +106,7 @@ BeginEnq(e) == LET w == adding'[e]
 (* s adds a stuttering step before each EndEnqP step that appends an element w to eb (and hence to qBar).    *)
 (* Immediately after that stuttering step, queueBar equals qBar \o << w >>.                                  *)
 (*************************************************************************************************************)
-EndEnq(e) == LET addingP == [adding EXCEPT ![e]=NonElt]
+EndPOEnq(e) == LET addingP == [adding EXCEPT ![e]=NonElt]
                   beingAddedP == {addingP[ee] : ee \in EnQers} \ {NonElt}
                   w == adding[e]
                   (* There is a queued element which is not in pg, which means it must precede w*)
@@ -117,11 +117,11 @@ EndEnq(e) == LET addingP == [adding EXCEPT ![e]=NonElt]
                 (* value has previously been added to queue, no stuttering step required *)
           /\ \/ /\ s[e][1] = 0
                 /\ enqInnerBar[e] = Done
-                /\ POFifop!EndEnq(e)
+                /\ POFifop!EndPOEnq(e)
                 /\ UNCHANGED <<p,pg,eb,s,queueBar,enqInnerBar>>
                 (* add a stuttering step which appends a value to eb (and, consequently, queueBar) *)
              \/ /\ s[e][1] = 0
-                /\ ENABLED POFifop!EndEnq(e)
+                /\ ENABLED POFifop!EndPOEnq(e)
                 /\ enqInnerBar[e] = Busy
                 /\ w \notin Range(pg) (* w has not previously been identified as a dequeueable value *)
                 /\ IsBlocked
@@ -133,10 +133,10 @@ EndEnq(e) == LET addingP == [adding EXCEPT ![e]=NonElt]
                 (* final step after stuttering *)
              \/ /\ s[e] = <<1,"EndEnq">>
                 /\ s' = [s EXCEPT ![e] = <<0,"EndEnq">>]
-                /\ POFifop!EndEnq(e)
+                /\ POFifop!EndPOEnq(e)
                 /\ UNCHANGED <<p,pg,eb,queueBar,enqInnerBar>>
 
-BeginDeq(d) ==  /\ POFifop!BeginDeq(d)
+BeginPODeq(d) ==  /\ POFifop!BeginPODeq(d)
                 /\ \A e \in EnQers : s[e][1] = 0
                 /\ \A dd \in DeQers \ {d} : s[dd][1] = 0
                 /\ UNCHANGED <<p,pg,eb,s,queueBar,enqInnerBar>>
@@ -146,7 +146,7 @@ BeginDeq(d) ==  /\ POFifop!BeginDeq(d)
 (* s adds a single stuttering step before each EndDeq step.                        *)
 (* The value of queueBar equals Tail(qBar) immediately after that stuttering step. *)
 (***********************************************************************************)
-EndDeq(d) ==   \/ /\ ENABLED POFifop!EndDeq(d)
+EndPODeq(d) ==   \/ /\ ENABLED POFifop!EndPODeq(d)
                   /\ qBar # <<>>
                   /\ \A e \in EnQers : s[e][1] = 0
                   /\ \A dd \in DeQers \ {d} : s[dd][1] = 0
@@ -156,14 +156,14 @@ EndDeq(d) ==   \/ /\ ENABLED POFifop!EndDeq(d)
                   /\ UNCHANGED <<enq,deq,elts,before,adding,p,pg,eb,enqInnerBar>>
                \/ /\ s[d] = <<1,"EnqDeq">>
                   /\ s' = [s EXCEPT ![d]= <<0,"EnqDeq">>]
-                  /\ POFifop!EndDeq(d)
+                  /\ POFifop!EndPODeq(d)
                   /\ pg' = Tail(pg)
                   /\ UNCHANGED <<eb,queueBar,enqInnerBar>>
 
-Next == \/ \E e \in EnQers : \/ BeginEnq(e)
-                             \/ EndEnq(e)
-        \/ \E d \in DeQers :  \/ BeginDeq(d)
-                              \/ EndDeq(d)
+Next == \/ \E e \in EnQers : \/ BeginPOEnq(e)
+                             \/ EndPOEnq(e)
+        \/ \E d \in DeQers :  \/ BeginPODeq(d)
+                              \/ EndPODeq(d)
 
 
 v == <<enq,deq,elts,before,adding,p,pg,eb,s,queueBar,enqInnerBar>>

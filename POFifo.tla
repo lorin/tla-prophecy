@@ -28,7 +28,7 @@ Init == /\ enq = [e \in EnQers |-> Done]
         /\ before = {}
         /\ adding = [e \in EnQers |-> NonElt]
 
-BeginEnq(e) == /\ enq[e] = Done
+BeginPOEnq(e) == /\ enq[e] = Done
                /\ \E D \in Data : \E id \in {i \in Ids : <<D,i>> \notin (elts \union beingAdded)} :
                     LET w == <<D,id>>
                     IN /\ enq' = [enq EXCEPT ![e]=D]
@@ -38,17 +38,17 @@ BeginEnq(e) == /\ enq[e] = Done
                /\ UNCHANGED deq
 
 
-EndEnq(e) == /\ enq[e] # Done
+EndPOEnq(e) == /\ enq[e] # Done
              /\ enq' = [enq EXCEPT ![e]=Done]
              /\ adding' = [adding EXCEPT ![e]=NonElt]
              /\ UNCHANGED <<deq, elts, before>>
 
-BeginDeq(d) == /\ deq[d] # Busy
+BeginPODeq(d) == /\ deq[d] # Busy
                /\ deq' = [deq EXCEPT ![d]=Busy]
                /\ UNCHANGED <<enq, elts, before, adding>>
 
 
-EndDeq(d) == /\ deq[d] = Busy
+EndPODeq(d) == /\ deq[d] = Busy
              /\ \E el \in elts:
                /\ \A el2 \in elts: ~(IsBefore(el2,el))
                /\ elts' = elts \ {el}
@@ -56,10 +56,10 @@ EndDeq(d) == /\ deq[d] = Busy
                /\ before' = before \intersect (elts' \X elts')
              /\ UNCHANGED <<enq, adding>>
 
-Next == \/ \E e \in EnQers : \/ BeginEnq(e)
-                             \/ EndEnq(e)
-        \/ \E d \in DeQers :  \/ BeginDeq(d)
-                              \/ EndDeq(d)
+Next == \/ \E e \in EnQers : \/ BeginPOEnq(e)
+                             \/ EndPOEnq(e)
+        \/ \E d \in DeQers :  \/ BeginPODeq(d)
+                              \/ EndPODeq(d)
 
 
 v == <<enq,deq,elts,before,adding>>

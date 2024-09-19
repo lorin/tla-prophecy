@@ -32,23 +32,23 @@ Init == /\ POFifo!Init
 
 Values == Data \X Ids
 
-BeginEnq(e) == /\ POFifo!BeginEnq(e)
+BeginPOEnq(e) == /\ POFifo!BeginPOEnq(e)
                /\ \E el \in Values : p' = Append(p, el)
 
-EndEnq(e) == /\ POFifo!EndEnq(e)
+EndPOEnq(e) == /\ POFifo!EndPOEnq(e)
              /\ UNCHANGED p
 
-BeginDeq(d) ==  /\ POFifo!BeginDeq(d)
+BeginPODeq(d) ==  /\ POFifo!BeginPODeq(d)
                 /\ UNCHANGED p
 
-EndDeq(d) == /\ POFifo!EndDeq(d)
+EndPODeq(d) == /\ POFifo!EndPODeq(d)
              /\ elts' = elts \ {p[1]}
              /\ p' = Tail(p)
 
-Next == \/ \E e \in EnQers : \/ BeginEnq(e)
-                             \/ EndEnq(e)
-        \/ \E d \in DeQers :  \/ BeginDeq(d)
-                              \/ EndDeq(d)
+Next == \/ \E e \in EnQers : \/ BeginPOEnq(e)
+                             \/ EndPOEnq(e)
+        \/ \E d \in DeQers :  \/ BeginPODeq(d)
+                              \/ EndPODeq(d)
 
 
 v == POFifo!v \o p
