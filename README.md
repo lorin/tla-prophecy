@@ -23,12 +23,12 @@ technique to resolve the problems in refinement mapping revealed by Herlihy and 
 Prophecy variables are described in:
 
 * [A science of concurrent programs][science] by Lamport
-* [Prophecy Made Simple][simple] by Lamport and Mertz
-* [Auxiliary Variables in TLA+][aux] by Lamport and Mertz
+* [Prophecy Made Simple][simple] by Lamport and Merz
+* [Auxiliary Variables in TLA+][aux] by Lamport and Merz
 
 [science]: https://lamport.azurewebsites.net/tla/science.pdf
 
-As it happens, Lamport and Mertz note that prophecy variables aren't actually
+As it happens, Lamport and Merz note that prophecy variables aren't actually
 necessary for defining a refinement mapping for the example provided by Herlihy
 and Wing, provided changes are made to the high-level specification:
 
