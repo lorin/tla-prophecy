@@ -42,6 +42,8 @@ DoDeq(d) == /\ deq[d] = Busy
             /\ deqInner[d] = NoData
             /\ queue # <<>>
             /\ deqInner' = [deqInner EXCEPT ![d]=Head(queue)]
+            /\ queue' = Tail(queue)
+            /\ UNCHANGED <<enq,deq,enqInner>>
 
 EndDeq(d) == /\ deq[d] = Busy
              /\ deqInner[d] # NoData
