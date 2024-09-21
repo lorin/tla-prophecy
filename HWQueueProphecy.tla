@@ -1,7 +1,8 @@
 -------------------------- MODULE HWQueueProphecy --------------------------
 (***************************************************************************)
 (*                                                                         *)
-(* Queue representation type (REP) from Herlihy & Wing 1990                *)
+(* Queue representation type (REP) from Herlihy & Wing 1990.               *)
+(* Augmented with a prophecy variable.                                     *)
 (*                                                                         *)
 (***************************************************************************)
 EXTENDS Naturals, Sequences
