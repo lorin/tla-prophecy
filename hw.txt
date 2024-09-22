@@ -1,0 +1,6 @@
+t1: enq(A) a
+t2: enq(B) a
+t3: enq(C) a
+t1: END a
+t3: END a
+t2: END a

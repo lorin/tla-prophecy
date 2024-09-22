@@ -194,8 +194,7 @@ This repo contains multiple TLA+ specs, including:
 * [POFifo.tla](POFifo.tla) - Lamport's IPOFifo spec [A science of concurrent programs][science]
 * [POFifop.tla](POFifop.tla) - Lamports' IPOFifo spec augmented with a prophecy variable, as sketched in [A science of concurrent programs][science]
 * [POFifopq.tla](POFifopq.tla) - Lamports' IPOFifo spec augmented with a prophecy variable and history variables to support a refinement mapping to Fifo.tla, as sketched in [A science of concurrent programs][science] . Also contains the refinement maping.
-* [QueueRep.tla](QueueRep.tla) - a PlusCal model of the Herlihy & Wing queue, which is closer in fidelity than POFifo.
-* [QueueRepIds.tla](QueueRepIds.tla) - the QueueRep model augmented with history variables to support a refinement mapping to POFifo, as well as the refinement mapping.
-
+* [HWQueue.tla](HWQueue.tla) - a PlusCal model of the Herlihy & Wing queue
+* [HWQueueIds.tla](HWQueueIds.tla) - the HWQueue model augmented with history variables to support a refinement mapping to POFifo, as well as the refinement mapping.
 
 

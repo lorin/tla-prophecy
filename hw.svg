@@ -1,0 +1,32 @@
+<svg version="1.1" width="36ch" height="135px" xmlns="http://www.w3.org/2000/svg">
+<defs>
+    <style type="text/css">
+        @media (prefers-color-scheme: dark) {
+            text {
+                fill: #eceff4;
+            }
+            line {
+                stroke: #eceff4;
+            }
+        }
+    </style>
+</defs>
+<text text-anchor="middle" alignment-baseline="middle" font-family="monospace" x="4ch" y="26.0px">t1</text>
+<line x1="9.0ch" y1="15px" x2="9.0ch" y2="37px" stroke="black" />
+<text text-anchor="middle" alignment-baseline="middle" font-family="monospace" x="4ch" y="56.0px">t2</text>
+<line x1="9.0ch" y1="45px" x2="9.0ch" y2="67px" stroke="black" />
+<text text-anchor="middle" alignment-baseline="middle" font-family="monospace" x="4ch" y="86.0px">t3</text>
+<line x1="9.0ch" y1="75px" x2="9.0ch" y2="97px" stroke="black" />
+<line x1="12ch" y1="30px" x2="20ch" y2="30px" stroke="black" />
+<line x1="12ch" y1="22px" x2="12ch" y2="38px" stroke="black" />
+<line x1="20ch" y1="22px" x2="20ch" y2="38px" stroke="black" />
+<text text-anchor="middle" alignment-baseline="baseline" x="16.0ch" y="26px">enq(A)</text>
+<line x1="18ch" y1="90px" x2="28ch" y2="90px" stroke="black" />
+<line x1="18ch" y1="82px" x2="18ch" y2="98px" stroke="black" />
+<line x1="28ch" y1="82px" x2="28ch" y2="98px" stroke="black" />
+<text text-anchor="middle" alignment-baseline="baseline" x="24.0ch" y="86px">enq(C)</text>
+<line x1="15ch" y1="60px" x2="32ch" y2="60px" stroke="black" />
+<line x1="15ch" y1="52px" x2="15ch" y2="68px" stroke="black" />
+<line x1="32ch" y1="52px" x2="32ch" y2="68px" stroke="black" />
+<text text-anchor="middle" alignment-baseline="baseline" x="24.0ch" y="56px">enq(B)</text>
+</svg>
