@@ -1,91 +1,29 @@
-------------------------------- MODULE Queue -------------------------------
-(***************************************************************************)
-(* A high-level specification for a sequential queue                       *)
-(***************************************************************************)
+---- MODULE queue ----
+EXTENDS Sequences
 
-EXTENDS Sequences, Naturals
+CONSTANTS Values,none
+VARIABLES op,arg,rval,d
 
-CONSTANTS Val, null, Producers, Consumers
+ASSUME none \notin Values
 
-ASSUME null \notin Val
+Enq ==  /\ op' = "enq"
+        /\ rval' = none
+        /\ arg' \in Values
+        /\ d' = Append(d, arg')
 
-(*--algorithm Queue {
-    variable items = << >>
+Deq == /\ d # <<>>
+       /\ op' = "deq"
+       /\ arg' = none
+       /\ rval' = Head(d)
+       /\ d' = Tail(d)
 
+Init == /\ op = ""
+        /\ arg = none
+        /\ rval = none
+        /\ d = <<>>
 
-    \*
-    \* Enq(x)
-    \* 
-    process (producer \in Producers)
-    variable x \in Val;
-    {
-      E: 
-          items := Append(items, x);
-    }
+Next == Enq \/ Deq
 
-    \*
-    \* Deq() -> retVal
-    \*
-    process (consumer \in Consumers) 
-    variable retVal = null;
-    {
-        D:
-            await items /= <<>>;
-            retVal := Head(items);
-            items := Tail(items);
-    }
-}*)
+Spec == Init /\ [][Next]_<<op,arg,rval,d>>
 
-\* BEGIN TRANSLATION (chksum(pcal) = "c6445a49" /\ chksum(tla) = "8fa9040")
-VARIABLES pc, items, x, retVal
-
-vars == << pc, items, x, retVal >>
-
-ProcSet == (Producers) \cup (Consumers)
-
-Init == (* Global variables *)
-        /\ items = << >>
-        (* Process producer *)
-        /\ x \in [Producers -> Val]
-        (* Process consumer *)
-        /\ retVal = [self \in Consumers |-> null]
-        /\ pc = [self \in ProcSet |-> CASE self \in Producers -> "E"
-                                        [] self \in Consumers -> "D"]
-
-E(self) == /\ pc[self] = "E"
-           /\ items' = Append(items, x[self])
-           /\ pc' = [pc EXCEPT ![self] = "Done"]
-           /\ UNCHANGED << x, retVal >>
-
-producer(self) == E(self)
-
-D(self) == /\ pc[self] = "D"
-           /\ items /= <<>>
-           /\ retVal' = [retVal EXCEPT ![self] = Head(items)]
-           /\ items' = Tail(items)
-           /\ pc' = [pc EXCEPT ![self] = "Done"]
-           /\ x' = x
-
-consumer(self) == D(self)
-
-(* Allow infinite stuttering to prevent deadlock on termination. *)
-Terminating == /\ \A self \in ProcSet: pc[self] = "Done"
-               /\ UNCHANGED vars
-
-Next == (\E self \in Producers: producer(self))
-           \/ (\E self \in Consumers: consumer(self))
-           \/ Terminating
-
-Spec == Init /\ [][Next]_vars
-
-Termination == <>(\A self \in ProcSet: pc[self] = "Done")
-
-\* END TRANSLATION 
-
-Inv == items = <<>>
-              
-
-=============================================================================
-\* Modification History
-\* Last modified Thu Nov 08 19:07:01 PST 2018 by lhochstein
-\* Created Fri Apr 20 23:43:41 PDT 2018 by lhochstein
+====
