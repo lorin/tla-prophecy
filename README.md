@@ -130,8 +130,8 @@ The `||` operator means that the operations happen in parallel, which is a handy
 procedure Enq(x)
 variable i;
 begin
-E1: x := x+1 || i := x; (* Allocate a new slot *)
-E2: q.items[i] := x;    (* Fill it *)
+E1: q.back := q.back+1 || i := q.back; (* Allocate a new slot *)
+E2: q.items[i] := x;                   (* Fill it *)
 E3: return;
 end procedure;
 ```
