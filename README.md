@@ -188,10 +188,9 @@ linearizable queue specification (IFifo) and a more general specification
 higher level of abstraction than the pseudocode. Lamport also sketches how to
 augment POFifo with history and prophecy variables in order to define a refinement mapping from IPOFifo to IFifo.
 
+
+
 ## Specs in repo
-
-![mappings](img/mappings.png)
-
 
 This repo contains multiple TLA+ specs, including:
 
@@ -201,5 +200,14 @@ This repo contains multiple TLA+ specs, including:
 * [POFifopq.tla](POFifopq.tla) - Lamports' IPOFifo spec augmented with a prophecy variable and history variables to support a refinement mapping to Fifo.tla, as sketched in [A science of concurrent programs][science] . Also contains the refinement maping.
 * [HWQueue.tla](HWQueue.tla) - a PlusCal model of the Herlihy & Wing queue
 * [HWQueueIds.tla](HWQueueIds.tla) - the HWQueue model augmented with history variables to support a refinement mapping to POFifo, as well as the refinement mapping.
+
+
+Relationship between models:
+
+![img](img/mappings.png)
+
+Example behavior for HWQueue, with POFifoPq and Fifo refinements.
+
+![img](img/POFifo-example-behavior.png)
 
 
