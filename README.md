@@ -178,7 +178,7 @@ D9:     j:= j+1;
 end procedure;
 ```
 
-The full spec can be found in [QueueRep.tla](QueueRep.tla)
+The full spec can be found in [HWQueue.tla](HWQueue.tla)
 
 ## Refinement mappings
 
@@ -187,6 +187,11 @@ linearizable queue specification (IFifo) and a more general specification
 (IPOFifo) that captures the behavior of the Herlihy & Wing queue, but at a
 higher level of abstraction than the pseudocode. Lamport also sketches how to
 augment POFifo with history and prophecy variables in order to define a refinement mapping from IPOFifo to IFifo.
+
+## Specs in repo
+
+![mappings](img/mappings.png)
+
 
 This repo contains multiple TLA+ specs, including:
 
